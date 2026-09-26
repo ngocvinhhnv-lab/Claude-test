@@ -48,6 +48,8 @@ DEFAULTS = {
     "audio_volume": 1.0,   # âm lượng tiếng gốc
     "voice": None,         # file giọng đọc, đặt từ giây 0 của video
     "voice_volume": 1.0,
+    "duck": True,          # tự hạ nhạc khi có giọng đọc
+    "safe_zone": False,    # tránh vùng TikTok che (thanh tab, cột nút, caption)
     "font": "DejaVu Sans",
     "crf": 20,
 }
@@ -134,8 +136,11 @@ def atempo_chain(speed):
     return ",".join(filters)
 
 
-def frame_filter(ratio, fit, src_w, src_h):
-    """Filter đưa video về khung hình đích. Trả về (filter, W, H)."""
+def frame_filter(ratio, fit, src_w, src_h, tag=""):
+    """Filter đưa video về khung hình đích. Trả về (filter, W, H).
+
+    tag: hậu tố cho nhãn nội bộ, cần khi dùng nhiều lần trong cùng một filtergraph.
+    """
     if ratio == "original":
         w, h = (src_w or 1920) // 2 * 2, (src_h or 1080) // 2 * 2
         return f"scale={w}:{h},setsar=1", w, h
@@ -148,10 +153,11 @@ def frame_filter(ratio, fit, src_w, src_h):
         f = (f"scale={w}:{h}:force_original_aspect_ratio=decrease,"
              f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:black,setsar=1")
     elif fit == "blur":
-        f = (f"split=2[bg][fg];"
-             f"[bg]scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},boxblur=25:5[bg2];"
-             f"[fg]scale={w}:{h}:force_original_aspect_ratio=decrease[fg2];"
-             f"[bg2][fg2]overlay=(W-w)/2:(H-h)/2,setsar=1")
+        f = (f"split=2[bg{tag}][fg{tag}];"
+             f"[bg{tag}]scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},"
+             f"boxblur=25:5[bg2{tag}];"
+             f"[fg{tag}]scale={w}:{h}:force_original_aspect_ratio=decrease[fg2{tag}];"
+             f"[bg2{tag}][fg2{tag}]overlay=(W-w)/2:(H-h)/2,setsar=1")
     else:
         raise ValueError(f"fit không hợp lệ: {fit} (blur | crop | pad)")
     return f, w, h
@@ -171,16 +177,25 @@ def build_ass(opts, w, h, total, path, top_min=0):
     """Viết file phụ đề ASS cho chữ tiêu đề và caption theo thời gian.
 
     top_min: khoảng cách tối thiểu từ mép trên (để chữ không đè logo).
+    Với khung dọc và safe_zone bật, chữ tránh các vùng TikTok che: thanh tab
+    phía trên, cột nút bên phải và phần tên kênh/caption phía dưới.
     """
     align = {"top": 8, "center": 5, "bottom": 2}
     base = min(w, h)  # tính theo cạnh ngắn để chữ đều nhau ở mọi khung hình
     size = round(base / 14)
     margin_v = round(base * 0.08)
+    ml = mr = round(base * 0.06)
+    bottom_v = round(h * 0.15)
+    if opts.get("safe_zone") and h > w:
+        margin_v = max(margin_v, round(h * 0.09))
+        mr = round(w * 0.15)
+        bottom_v = round(h * 0.22)
     if opts["text_pos"] == "top":
         margin_v = max(margin_v, top_min)
-    # BorderStyle=3: nền hộp mờ sau chữ, dễ đọc trên mọi nền
-    style = ("Style: {name},{font},{size},&H00FFFFFF,&H00FFFFFF,&H80000000,&H80000000,"
-             "-1,0,0,0,100,100,0,0,3,{pad},0,{align},{mh},{mh},{mv},1")
+    # BorderStyle=3: nền hộp mờ sau chữ; BorderStyle=1: chữ trắng viền đen kiểu phụ đề TikTok
+    style = ("Style: {name},{font},{size},{color},&H00FFFFFF,&H{outline},&H80000000,"
+             "-1,0,0,0,100,100,0,0,{border},{pad},0,{align},{ml},{mr},{mv},1")
+    common = dict(font=opts["font"], ml=ml, mr=mr, color="&H00FFFFFF")
     lines = [
         "[Script Info]", "ScriptType: v4.00+", f"PlayResX: {w}", f"PlayResY: {h}",
         "WrapStyle: 0", "",
@@ -188,14 +203,16 @@ def build_ass(opts, w, h, total, path, top_min=0):
         "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, "
         "BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, "
         "BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
-        style.format(name="Title", font=opts["font"], size=size, pad=round(size * 0.25),
-                     align=align.get(opts["text_pos"], 8), mh=round(base * 0.06), mv=margin_v),
-        style.format(name="Caption", font=opts["font"], size=round(size * 0.9),
-                     pad=round(size * 0.2), align=2, mh=round(base * 0.06), mv=round(h * 0.15)),
-        style.format(name="CapTop", font=opts["font"], size=size, pad=round(size * 0.25),
-                     align=8, mh=round(base * 0.06), mv=margin_v),
-        style.format(name="CapCenter", font=opts["font"], size=size, pad=round(size * 0.25),
-                     align=5, mh=round(base * 0.06), mv=0),
+        style.format(name="Title", size=size, pad=round(size * 0.25), border=3, outline="80000000",
+                     align=align.get(opts["text_pos"], 8), mv=margin_v, **common),
+        style.format(name="Caption", size=round(size * 0.9), pad=round(size * 0.2), border=3,
+                     outline="80000000", align=2, mv=bottom_v, **common),
+        style.format(name="CapTop", size=size, pad=round(size * 0.25), border=3,
+                     outline="80000000", align=8, mv=margin_v, **common),
+        style.format(name="CapCenter", size=round(size * 1.1), pad=round(size * 0.25), border=3,
+                     outline="80000000", align=5, mv=0, **common),
+        style.format(name="Sub", size=round(size * 0.95), pad=max(3, round(size * 0.09)),
+                     border=1, outline="00000000", align=2, mv=bottom_v, **common),
         "",
         "[Events]",
         "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
@@ -203,7 +220,7 @@ def build_ass(opts, w, h, total, path, top_min=0):
     if opts.get("text"):
         lines.append(f"Dialogue: 0,{ass_time(0)},{ass_time(total)},Title,,0,0,0,,"
                      f"{ass_escape(opts['text'])}")
-    styles = {"bottom": "Caption", "top": "CapTop", "center": "CapCenter"}
+    styles = {"bottom": "Caption", "top": "CapTop", "center": "CapCenter", "sub": "Sub"}
     for cap in opts.get("captions") or []:
         start = parse_time(cap.get("start", 0))
         end = parse_time(cap.get("end", total))
@@ -219,17 +236,43 @@ def filter_path(path):
     return path.replace("\\", "/").replace(":", "\\:").replace("'", "\\'")
 
 
+_PROBE_CACHE = {}
+
+
+def probe_cached(path):
+    key = (path, os.path.getmtime(path))
+    if key not in _PROBE_CACHE:
+        _PROBE_CACHE[key] = probe(path)
+    return _PROBE_CACHE[key]
+
+
+def clip_segments(source, info, clips):
+    """Chuẩn hoá danh sách clip thành (nguồn, info, start, end, tốc độ, giây giữ khung cuối).
+
+    Clip dạng dict có thể chỉ định "source" (video khác), "speed" và "pad".
+    """
+    segs = []
+    for clip in clips:
+        opt = clip if isinstance(clip, dict) else {}
+        src = opt.get("source") or source
+        sinfo = info if src == source and info else probe_cached(src)
+        start, end = parse_clip(clip, sinfo["duration"])
+        segs.append((src, sinfo, start, end, float(opt.get("speed", 1.0)), float(opt.get("pad", 0.0))))
+    return segs
+
+
 def render(source, info, opts, ratio, out_path, tmpdir):
-    clips = [parse_clip(c, info["duration"]) for c in opts["clips"]]
+    segs = clip_segments(source, info, opts["clips"])
     speed = float(opts["speed"])
-    total = sum(e - s for s, e in clips) / speed
+    seg_lens = [(e - s) / sp + pad for _, _, s, e, sp, pad in segs]
+    total = sum(seg_lens) / speed
     fade = float(opts["fade"] or 0)
 
     cmd = [FFMPEG, "-hide_banner", "-loglevel", "error", "-y"]
     # Mỗi đoạn là một input riêng với -ss để tua nhanh, không phải giải mã từ đầu
-    for s, e in clips:
-        cmd += ["-ss", f"{s:.3f}", "-t", f"{e - s:.3f}", "-i", source]
-    next_input = len(clips)
+    for src, _, s, e, _, _ in segs:
+        cmd += ["-ss", f"{s:.3f}", "-t", f"{e - s:.3f}", "-i", src]
+    next_input = len(segs)
     logo_idx = music_idx = voice_idx = None
     if opts.get("logo"):
         cmd += ["-i", opts["logo"]]
@@ -241,15 +284,29 @@ def render(source, info, opts, ratio, out_path, tmpdir):
         cmd += ["-i", opts["voice"]]
         voice_idx = next_input
 
-    use_src_audio = info["has_audio"] and (opts["keep_audio"] or music_idx is None)
+    use_src_audio = (any(si["has_audio"] for _, si, *_ in segs)
+                     and (opts["keep_audio"] or music_idx is None)
+                     and float(opts["audio_volume"]) > 0)
+    first = segs[0][1]
+    _, w, h = frame_filter(ratio, opts["fit"], first["width"], first["height"])
     graph = []
-    n = len(clips)
-    for i in range(n):
-        graph.append(f"[{i}:v]{TONEMAP + ',' if info['hdr'] else ''}"
-                     f"setpts=PTS-STARTPTS,fps={opts['fps']}[v{i}]")
+    for i, (_, sinfo, s, e, sp, pad) in enumerate(segs):
+        # Đưa từng đoạn về cùng khung hình trước khi nối, vì các nguồn có thể khác kích thước
+        ff, _, _ = frame_filter(ratio, opts["fit"], first["width"], first["height"], tag=str(i))
+        vf = f"[{i}:v]{TONEMAP + ',' if sinfo['hdr'] else ''}setpts=(PTS-STARTPTS)/{sp},fps={opts['fps']}"
+        if pad > 0:
+            vf += f",tpad=stop_mode=clone:stop_duration={pad:.3f}"
+        graph.append(f"{vf},{ff},format=yuv420p,trim=duration={seg_lens[i]:.3f}[v{i}]")
         if use_src_audio:
-            graph.append(f"[{i}:a:0]asetpts=PTS-STARTPTS,aresample=44100,"
-                         f"volume={opts['audio_volume']}[a{i}]")
+            if sinfo["has_audio"]:
+                af = f"[{i}:a:0]asetpts=PTS-STARTPTS,aresample=44100,aformat=channel_layouts=stereo"
+                if sp != 1.0:
+                    af += "," + atempo_chain(sp)
+                af += f",volume={opts['audio_volume']}"
+            else:
+                af = "aevalsrc=0:c=stereo:s=44100"
+            graph.append(f"{af},apad,atrim=0:{seg_lens[i]:.3f}[a{i}]")
+    n = len(segs)
     if use_src_audio:
         pairs = "".join(f"[v{i}][a{i}]" for i in range(n))
         graph.append(f"{pairs}concat=n={n}:v=1:a=1[vc][ac]")
@@ -264,10 +321,6 @@ def render(source, info, opts, ratio, out_path, tmpdir):
         if a:
             graph.append(f"{a}{atempo_chain(speed)}[as]")
             a = "[as]"
-
-    ff, w, h = frame_filter(ratio, opts["fit"], info["width"], info["height"])
-    graph.append(f"{v}{ff}[vf]")
-    v = "[vf]"
 
     top_min = 0
     if logo_idx is not None:
@@ -294,22 +347,31 @@ def render(source, info, opts, ratio, out_path, tmpdir):
         graph.append(f"{v}fade=t=in:st=0:d={fade},fade=t=out:st={max(0, total - fade):.3f}:d={fade}[vfd]")
         v = "[vfd]"
 
-    if music_idx is not None:
-        graph.append(f"[{music_idx}:a]volume={opts['music_volume']},aresample=44100,"
-                     f"atrim=0:{total:.3f},asetpts=PTS-STARTPTS[mu]")
-        if a:
-            graph.append(f"{a}[mu]amix=inputs=2:duration=first:dropout_transition=0:normalize=0[am]")
-            a = "[am]"
-        else:
-            a = "[mu]"
+    mix = [a] if a else []
     if voice_idx is not None:
         graph.append(f"[{voice_idx}:a]volume={opts['voice_volume']},aresample=44100,"
-                     f"apad,atrim=0:{total:.3f},asetpts=PTS-STARTPTS[vo]")
-        if a:
-            graph.append(f"{a}[vo]amix=inputs=2:duration=first:dropout_transition=0:normalize=0[amv]")
-            a = "[amv]"
-        else:
-            a = "[vo]"
+                     f"aformat=channel_layouts=stereo,apad,atrim=0:{total:.3f},"
+                     f"asetpts=PTS-STARTPTS,asplit=2[vo][vosc]")
+    if music_idx is not None:
+        graph.append(f"[{music_idx}:a]volume={opts['music_volume']},aresample=44100,"
+                     f"aformat=channel_layouts=stereo,atrim=0:{total:.3f},asetpts=PTS-STARTPTS[mu]")
+        mu = "[mu]"
+        if voice_idx is not None and opts.get("duck", True):
+            # Tự hạ nhạc khi có giọng đọc, nhạc lớn lại khi giọng dừng
+            graph.append("[mu][vosc]sidechaincompress=threshold=0.02:ratio=8:attack=20:release=400[mud]")
+            mu = "[mud]"
+        elif voice_idx is not None:
+            graph.append("[vosc]anullsink")
+        mix.append(mu)
+    elif voice_idx is not None:
+        graph.append("[vosc]anullsink")
+    if voice_idx is not None:
+        mix.append("[vo]")
+    if len(mix) > 1:
+        graph.append(f"{''.join(mix)}amix=inputs={len(mix)}:duration=first:dropout_transition=0:normalize=0[amx]")
+        a = "[amx]"
+    elif mix:
+        a = mix[0]
     if a:
         graph.append(f"{a}alimiter=limit=0.95[alim]")  # tránh vỡ tiếng khi trộn
         a = "[alim]"

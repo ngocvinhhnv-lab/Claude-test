@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TikTok Video Studio</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect width=%2216%22 height=%2216%22 rx=%224%22 fill=%22%23e5364f%22/%3E%3Cpath d=%22M6 4.5v7l5.5-3.5z%22 fill=%22white%22/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">TikTok <span>Video</span> Studio</div>
+  <nav class="tabs" id="tabs">
+    <button data-page="scripts" class="on">1. Kịch bản</button>
+    <button data-page="sources">2. Video nguồn</button>
+    <button data-page="studio">3. Dựng video</button>
+    <button data-page="settings">Cài đặt</button>
+  </nav>
+  <div class="jobs" id="jobs"></div>
+</header>
+
+<main>
+  <!-- ========== KỊCH BẢN ========== -->
+  <section class="page on" id="page-scripts">
+    <div class="split">
+      <div class="stack">
+        <div class="card stack">
+          <div>
+            <h3>Bóc kịch bản từ video đối thủ</h3>
+            <p class="muted small">Upload video đối thủ (tải từ TikTok về) hoặc dán link. AI xem khung hình, nghe lời thoại, tách thành từng cảnh.</p>
+          </div>
+          <label class="f">Video đối thủ<input type="file" id="imp-file" accept="video/*"></label>
+          <label class="f">hoặc link video<input type="url" id="imp-url" placeholder="https://www.tiktok.com/@..."></label>
+          <label class="f">Ghi chú (tuỳ chọn)<input type="text" id="imp-notes" placeholder="VD: top 1 ngách tranh Nề Nếp, 1,4 tr view"></label>
+          <button class="btn primary" id="imp-go">Phân tích kịch bản</button>
+          <div class="err" id="imp-err"></div>
+        </div>
+        <div class="card">
+          <div class="row" style="margin-bottom:8px"><h3 class="grow">Thư viện kịch bản</h3>
+            <button class="btn sm" id="script-new">+ Tự viết</button></div>
+          <div class="list" id="script-list"></div>
+        </div>
+      </div>
+      <div id="script-detail"><div class="card empty">Chọn một kịch bản bên trái, hoặc phân tích video đối thủ để bắt đầu.</div></div>
+    </div>
+  </section>
+
+  <!-- ========== VIDEO NGUỒN ========== -->
+  <section class="page" id="page-sources">
+    <div class="stack">
+      <div class="card stack">
+        <div><h3>Video nguồn tự quay</h3>
+          <p class="muted small">Upload video quay bằng điện thoại (quay dọc là tốt nhất). App tự tạo bản xem thử và chia thành các đoạn ngắn để chọn cảnh. Video iPhone HDR được chuyển màu tự động.</p></div>
+        <div class="drop" id="drop">Kéo thả video vào đây hoặc bấm để chọn (chọn được nhiều file)
+          <input type="file" id="src-file" accept="video/*" multiple hidden></div>
+      </div>
+      <div class="grid" id="source-grid"></div>
+    </div>
+  </section>
+
+  <!-- ========== DỰNG VIDEO ========== -->
+  <section class="page" id="page-studio">
+    <div class="split">
+      <div class="card">
+        <div class="row" style="margin-bottom:8px"><h3 class="grow">Dự án</h3>
+          <button class="btn sm" id="project-new">+ Dự án trống</button></div>
+        <div class="list" id="project-list"></div>
+      </div>
+      <div id="studio"><div class="card empty">Chọn dự án bên trái. Để tạo dự án từ kịch bản, vào tab <b>Kịch bản</b> và bấm <b>Dựng video từ kịch bản này</b>.</div></div>
+    </div>
+  </section>
+
+  <!-- ========== CÀI ĐẶT ========== -->
+  <section class="page" id="page-settings">
+    <div class="stack" style="max-width:760px">
+      <div class="card stack">
+        <h3>AI (Claude)</h3>
+        <p class="muted small">Dùng để bóc kịch bản đối thủ, viết lại lời cho sản phẩm và tự ghép cảnh. Lấy key tại console.anthropic.com.</p>
+        <label class="f">Anthropic API key<input type="password" id="set-anthropic" autocomplete="off"></label>
+      </div>
+      <div class="card stack">
+        <h3>Giọng đọc mặc định</h3>
+        <div class="fields">
+          <label class="f">Nhà cung cấp<select id="set-provider"></select></label>
+          <label class="f">Giọng<select id="set-voice"></select></label>
+          <label class="f">Tốc độ đọc (%)<input type="number" id="set-rate" min="-50" max="50" step="5"></label>
+        </div>
+        <div class="fields">
+          <label class="f">Azure Speech key<input type="password" id="set-azure" autocomplete="off"></label>
+          <label class="f">Azure region<input type="text" id="set-azure-region"></label>
+          <label class="f">FPT.AI API key<input type="password" id="set-fpt" autocomplete="off"></label>
+        </div>
+        <div class="row"><input type="text" id="set-test-text" class="grow" value="Xin chào, đây là giọng đọc thử của shop mình nha."><button class="btn" id="set-test">Nghe thử</button></div>
+        <audio id="set-audio" controls hidden></audio>
+        <div class="err" id="set-tts-err"></div>
+      </div>
+      <div class="card stack">
+        <h3>Thương hiệu</h3>
+        <label class="f">Tên shop<input type="text" id="set-shop"></label>
+        <div class="row"><img id="set-logo-img" alt="" style="max-height:48px" hidden>
+          <label class="btn">Upload logo (PNG nền trong)<input type="file" id="set-logo" accept="image/png,image/*" hidden></label>
+          <button class="btn ghost" id="set-logo-del" hidden>Bỏ logo</button></div>
+      </div>
+      <div class="row"><button class="btn primary" id="set-save">Lưu cài đặt</button><span class="muted small" id="set-msg"></span></div>
+    </div>
+  </section>
+</main>
+
+<dialog id="picker">
+  <div class="dlg-h"><h3 class="grow">Chọn đoạn video cho cảnh <span id="pk-n"></span></h3>
+    <button class="btn ghost" id="pk-close">Đóng</button></div>
+  <div class="dlg-b">
+    <div class="row" style="margin-bottom:12px"><label class="f grow">Video nguồn<select id="pk-source"></select></label></div>
+    <div class="picker">
+      <div class="stack">
+        <video id="pk-video" controls playsinline muted></video>
+        <div class="row">
+          <label class="f grow">Bắt đầu (s)<input type="number" id="pk-start" step="0.1" min="0"></label>
+          <label class="f grow">Kết thúc (s)<input type="number" id="pk-end" step="0.1" min="0"></label>
+        </div>
+        <div class="row"><button class="btn sm" id="pk-set-start">Bắt đầu = vị trí đang xem</button>
+          <button class="btn sm" id="pk-set-end">Kết thúc = vị trí đang xem</button></div>
+        <button class="btn primary" id="pk-ok">Dùng đoạn này</button>
+      </div>
+      <div><p class="muted small" style="margin-top:0">Bấm một đoạn để chọn nhanh, rồi chỉnh điểm đầu/cuối nếu cần. Nếu đoạn ngắn hơn lời đọc, app tự lấy dài thêm hoặc quay chậm cho khớp.</p>
+        <div class="shots" id="pk-shots"></div></div>
+    </div>
+  </div>
+</dialog>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

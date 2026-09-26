@@ -41,7 +41,8 @@
           "text": "Mẫu 30x40 chỉ 48k\nBấm giỏ chọn đúng mẫu bé nhà mình",
           "pos": "center"
         }
-      ]
+      ],
+      "_ten": "KB1 · Lời bố mẹ chưa nói"
     },
     {
       "name": "KB2_tra_loi_binh_luan",
@@ -55,9 +56,21 @@
           "text": "Trả lời @[tên]: [bình luận thật, vd: Có mẫu bé trai không?]",
           "sub": "Có nha chị, đây là 3 mẫu bé trai bán chạy nhất."
         },
-        { "canh": "Mẫu 1 (~2s), cận tên hoặc ảnh in trên tranh", "clip": null, "text": "Mẫu 1" },
-        { "canh": "Mẫu 2 (~2s)", "clip": null, "text": "Mẫu 2" },
-        { "canh": "Mẫu 3 (~2s)", "clip": null, "text": "Mẫu 3" },
+        {
+          "canh": "Mẫu 1 (~2s), cận tên hoặc ảnh in trên tranh",
+          "clip": null,
+          "text": "Mẫu 1"
+        },
+        {
+          "canh": "Mẫu 2 (~2s)",
+          "clip": null,
+          "text": "Mẫu 2"
+        },
+        {
+          "canh": "Mẫu 3 (~2s)",
+          "clip": null,
+          "text": "Mẫu 3"
+        },
         {
           "canh": "15–22s: Khổ 30x40 và 40x60 cạnh nhau trên tường thật",
           "clip": null,
@@ -69,7 +82,8 @@
           "text": "Bấm giỏ, chọn mẫu [số] khổ 30x40\nGhi tên bé ở phần ghi chú là xong",
           "pos": "center"
         }
-      ]
+      ],
+      "_ten": "KB2 · Trả lời bình luận"
     },
     {
       "name": "KB3_gia_noi_ra_khong_ai_tin",
@@ -103,7 +117,8 @@
           "text": "Đang giảm\nBấm giỏ vàng bên dưới",
           "pos": "center"
         }
-      ]
+      ],
+      "_ten": "KB3 · Giá này nói ra không ai tin"
     }
   ]
 }

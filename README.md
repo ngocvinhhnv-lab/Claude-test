@@ -1,4 +1,51 @@
-# Tạo nhiều video từ 1 video gốc
+# TikTok Video Studio
+
+Ứng dụng web dựng video bán hàng TikTok: **tự quay source → lấy kịch bản từ video đối thủ → lồng giọng tiếng Việt → đầy đủ chữ và phụ đề → xuất video 9:16**.
+
+## Chạy ứng dụng web
+
+Cần **Python 3.10+** và **ffmpeg** (bản đầy đủ, có `libass` và `zscale`).
+
+| Hệ điều hành | Cài ffmpeg | Chạy app |
+|---|---|---|
+| Windows | Tải bản "full" tại gyan.dev/ffmpeg, thêm thư mục `bin` vào PATH | Bấm đúp `chay_app.bat` |
+| macOS | `brew install ffmpeg` | `./chay_app.sh` |
+| Linux | `sudo apt install ffmpeg` | `./chay_app.sh` |
+
+App mở tại http://127.0.0.1:8000. Để máy khác trong mạng nội bộ dùng chung: `./chay_app.sh --host 0.0.0.0`. Dữ liệu (video, kịch bản, video xuất ra) lưu trong thư mục `data/`.
+
+### Quy trình
+
+1. **Kịch bản.** Upload video đối thủ (tải từ TikTok về) hoặc dán link. AI xem khung hình, đọc chữ, nghe lời thoại, rồi tách thành từng cảnh: cảnh quay gì, lời đọc, chữ trên màn hình, độ dài. Sau đó bấm **Viết lại cho sản phẩm của tôi**: AI giữ cấu trúc và nhịp nhưng viết lời mới, không bịa giá hay khuyến mãi. Thư viện có sẵn 3 kịch bản mẫu KB1–KB3.
+2. **Video nguồn.** Upload video tự quay, được nhiều file một lúc. App tạo bản xem thử, chia thành các đoạn ngắn và tự chuyển màu video HDR của iPhone.
+3. **Dựng video.** Từ kịch bản bấm **Dựng video từ kịch bản này**, rồi:
+   - **Chọn cảnh:** bấm **AI ghép cảnh tự động** (AI chọn đoạn nguồn cho từng cảnh và báo cảnh còn thiếu), hoặc tự chọn từng đoạn.
+   - **Giọng đọc và nhạc:** chọn giọng, nhạc nền, khung hình.
+   - **Xuất:** bấm **Xuất video**.
+
+### Video xuất ra
+
+- **Giọng đọc quyết định nhịp dựng.** Mỗi cảnh dài đúng bằng lời đọc. Nếu đoạn quay ngắn hơn lời, app tự lấy dài thêm trong video nguồn, quay chậm, hoặc giữ khung cuối.
+- **Chữ đầy đủ:** chữ trên màn hình theo từng cảnh, phụ đề chạy theo lời đọc (chữ trắng viền đen). Tất cả nằm trong vùng an toàn, không bị thanh tab, cột nút và caption của TikTok che.
+- **Âm thanh:** nhạc nền tự nhỏ lại khi có giọng đọc. Có thể giảm tiếng gốc của video.
+- **Đăng bài:** caption và hashtag sẵn để sao chép.
+
+### Cài đặt trong app
+
+- **Anthropic API key** (console.anthropic.com): cần cho bóc kịch bản, viết lại và ghép cảnh tự động. Dùng model `claude-opus-5`, có bật fallback khi bị từ chối.
+- **Giọng đọc tiếng Việt:**
+  - **Microsoft Edge:** miễn phí, không cần key. Giọng Hoài My (nữ), Nam Minh (nam).
+  - **Azure AI Speech:** cùng giọng, qua API chính thức, cần key.
+  - **FPT.AI:** 8 giọng Bắc/Trung/Nam, cần key.
+  - **Offline:** giọng máy, chỉ để thử khi không có mạng. Cần cài `espeak-ng`.
+- **Logo:** chèn góc trên phải video.
+- **Tuỳ chọn thêm:**
+  - `pip install faster-whisper` để chuyển lời thoại video đối thủ thành chữ, giúp AI bóc kịch bản chính xác hơn.
+  - `pip install yt-dlp` để tải video đối thủ trực tiếp từ link.
+
+---
+
+# Công cụ dòng lệnh: tạo nhiều video từ 1 video gốc
 
 `make_videos.py` cắt một video gốc thành nhiều video ngắn. Công cụ đổi khung hình cho từng nền tảng (TikTok, Reels, Shopee Video, YouTube) và có thể chèn chữ, logo, nhạc nền.
 

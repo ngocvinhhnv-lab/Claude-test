@@ -7,3 +7,5 @@ output/
 *.wav
 __pycache__/
 *.deb
+data/
+.venv/

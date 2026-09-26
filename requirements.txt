@@ -1,0 +1,12 @@
+# Bắt buộc
+fastapi
+uvicorn
+python-multipart
+anthropic
+numpy
+edge-tts
+imageio-ffmpeg   # ffmpeg dự phòng nếu máy chưa cài ffmpeg
+
+# Tuỳ chọn
+# faster-whisper   # chuyển lời thoại video đối thủ thành chữ (tải model ~500MB lần đầu)
+# yt-dlp           # tải video đối thủ trực tiếp từ link
