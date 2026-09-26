@@ -1,0 +1,30 @@
+{
+  "_ghi_chu": "SỐ LIỆU VÍ DỤ — hãy sửa theo biểu phí thực tế của từng shop (phí thay đổi theo ngành hàng, gói Freeship/Voucher Xtra, shop Mall...). Phần trăm tính trên giá bán; *_vnd là số tiền cố định mỗi đơn.",
+  "shopee": {
+    "phi_co_dinh_pct": 9.0,
+    "phi_thanh_toan_pct": 4.9,
+    "phi_dich_vu_pct": 6.0,
+    "phi_moi_don_vnd": 3000,
+    "dong_goi_vnd": 2000,
+    "quang_cao_pct": 5.0,
+    "thue_pct": 1.5
+  },
+  "tiktok": {
+    "phi_co_dinh_pct": 8.0,
+    "phi_thanh_toan_pct": 5.0,
+    "phi_dich_vu_pct": 5.0,
+    "phi_moi_don_vnd": 3000,
+    "dong_goi_vnd": 2000,
+    "quang_cao_pct": 10.0,
+    "thue_pct": 1.5
+  },
+  "website": {
+    "phi_co_dinh_pct": 0,
+    "phi_thanh_toan_pct": 1.0,
+    "phi_dich_vu_pct": 0,
+    "phi_moi_don_vnd": 0,
+    "dong_goi_vnd": 2000,
+    "quang_cao_pct": 10.0,
+    "thue_pct": 1.5
+  }
+}
