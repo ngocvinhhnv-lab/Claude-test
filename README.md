@@ -54,6 +54,10 @@ python3 -m tools.loi_nhuan --file san_pham.xlsx --bien-muc-tieu 20 --kenh shopee
 
 Kết quả Excel có mỗi kênh một sheet, tô màu: đỏ = lỗ, vàng = lãi dưới mục tiêu, xanh = đạt.
 
+## 3. Ứng dụng web — `app/so-kho-lai.html`
+
+Bản chạy trên trình duyệt của cả hai công cụ trên (cùng cách tính): kéo thả file Excel/CSV là ra kết quả, tải về Excel được. Biểu phí sàn lưu chung cho mọi người dùng, chỉ người có quyền Chỉnh sửa mới đổi được.
+
 ## Chạy test
 
 ```bash
