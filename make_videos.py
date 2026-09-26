@@ -63,6 +63,9 @@ def find_ffmpeg():
 
 FFMPEG = find_ffmpeg()
 
+TONEMAP = ("zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,"
+           "tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv,format=yuv420p")
+
 
 def parse_time(value):
     """Nhận 12, "12.5", "1:05", "01:02:03.5" -> số giây."""
@@ -88,11 +91,15 @@ def probe(path):
     size = re.search(r"Video: .*?(\d{2,5})x(\d{2,5})", out)
     if not dur and not size:
         sys.exit(f"Không đọc được file: {path}\n{out}")
+    if size and re.search(r"rotation of -?90", out):
+        size = (None, size[2], size[1])  # video quay dọc: ffmpeg tự xoay khi xuất
     return {
         "duration": int(dur[1]) * 3600 + int(dur[2]) * 60 + float(dur[3]) if dur else 0.0,
         "width": int(size[1]) if size else None,
         "height": int(size[2]) if size else None,
         "has_audio": "Audio:" in out,
+        # Video HDR của iPhone (HLG) hoặc HDR10 cần chuyển về SDR, nếu không sẽ bạc màu
+        "hdr": bool(re.search(r"arib-std-b67|smpte2084", out)),
     }
 
 
@@ -232,9 +239,10 @@ def render(source, info, opts, ratio, out_path, tmpdir):
     graph = []
     n = len(clips)
     for i in range(n):
-        graph.append(f"[{i}:v]setpts=PTS-STARTPTS,fps={opts['fps']}[v{i}]")
+        graph.append(f"[{i}:v]{TONEMAP + ',' if info['hdr'] else ''}"
+                     f"setpts=PTS-STARTPTS,fps={opts['fps']}[v{i}]")
         if use_src_audio:
-            graph.append(f"[{i}:a]asetpts=PTS-STARTPTS,aresample=44100[a{i}]")
+            graph.append(f"[{i}:a:0]asetpts=PTS-STARTPTS,aresample=44100[a{i}]")
     if use_src_audio:
         pairs = "".join(f"[v{i}][a{i}]" for i in range(n))
         graph.append(f"{pairs}concat=n={n}:v=1:a=1[vc][ac]")

@@ -1,0 +1,90 @@
+{
+  "_ghi_chu": "3 video từ IMG_2272.mov (12s, máy in đang in liễn đỏ chữ vàng). Dựa trên KB5 'Tết sớm' và kiểu video hậu trường xưởng in (kênh nhà tự quay như 24H Decor). Không nêu giá hay khuyến mãi vì chưa có số liệu.",
+  "source": "IMG_2272.mov",
+  "output_dir": "output_lien_tet",
+  "defaults": {
+    "ratio": "9:16",
+    "fit": "blur",
+    "fade": 0.3,
+    "keep_audio": true
+  },
+  "videos": [
+    {
+      "name": "V1_tet_som_xuong_da_chay_may",
+      "_kich_ban": "KB5 · Tết sớm",
+      "_caption_dang": "Chuẩn bị Tết 2027 từ bây giờ 🧧 #lientet #trangtritet #tet2027 #xuonginlich",
+      "beats": [
+        {
+          "canh": "Hook: máy đang chạy",
+          "clip": ["0:00", "0:03.5"],
+          "text": "Còn hơn 4 tháng nữa là Tết",
+          "sub": "Mà xưởng em đã chạy máy in liễn Tết rồi đây"
+        },
+        {
+          "canh": "Đầu in lướt qua dãy liễn đỏ",
+          "clip": ["0:03.5", "0:08.5"],
+          "text": "Nền đỏ, chữ vàng\nIn nét từng chữ"
+        },
+        {
+          "canh": "CTA",
+          "clip": ["0:08.5", "0:11.9"],
+          "text": "Đặt sớm còn đủ mẫu\nBấm giỏ hàng bên dưới",
+          "pos": "center"
+        }
+      ]
+    },
+    {
+      "name": "V2_hau_truong_xuong_in",
+      "_kich_ban": "Hậu trường xưởng (quay chậm)",
+      "_caption_dang": "Liễn Tết được in ra như thế này nè 😍 #xuongin #lientet #hautruong #trangtritet",
+      "speed": 0.8,
+      "beats": [
+        {
+          "canh": "Hook",
+          "clip": ["0:00", "0:03"],
+          "text": "Liễn Tết nhà em\nđược in ra như thế này"
+        },
+        {
+          "canh": "Cận đầu in chạy",
+          "clip": ["0:03", "0:07.5"],
+          "sub": "In trực tiếp tại xưởng, xong là đóng gói gửi đi luôn"
+        },
+        {
+          "canh": "Dãy liễn ra máy",
+          "clip": ["0:07.5", "0:10"],
+          "sub": "Một lượt máy ra cả dãy liễn đỏ"
+        },
+        {
+          "canh": "CTA",
+          "clip": ["0:10", "0:11.9"],
+          "text": "Xem mẫu trong giỏ hàng",
+          "pos": "center"
+        }
+      ]
+    },
+    {
+      "name": "V3_tet_2027_treo_gi",
+      "_kich_ban": "Câu hỏi mở đầu · Tết sớm",
+      "_caption_dang": "Tết Đinh Mùi 2027 treo gì cho nhà đỏ rực? 🧧 #tet2027 #lientet #trangtritet #xuhuong",
+      "speed": 0.9,
+      "beats": [
+        {
+          "canh": "Hook: dãy liễn đỏ",
+          "clip": ["0:06", "0:09"],
+          "text": "Tết Đinh Mùi 2027\ntreo gì cho nhà đỏ rực?"
+        },
+        {
+          "canh": "Đầu in chạy",
+          "clip": ["0:00", "0:05"],
+          "sub": "Liễn đỏ chữ vàng, treo phòng khách là có không khí Tết liền"
+        },
+        {
+          "canh": "CTA",
+          "clip": ["0:09", "0:11.9"],
+          "text": "Tết 06/02/2027\nĐặt sớm, bấm giỏ hàng",
+          "pos": "center"
+        }
+      ]
+    }
+  ]
+}
