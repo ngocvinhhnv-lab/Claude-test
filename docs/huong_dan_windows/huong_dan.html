@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Hướng dẫn cài đặt TikTok Video Studio trên Windows</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 18mm; }
+  :root { --ink: #1c1d21; --mu: #5d616a; --ac: #d92f47; --bd: #d9d6ce; --soft: #f5f3ee; --ok: #2f7d4f; --wn: #9a5a07; }
+  * { box-sizing: border-box; }
+  body { font-family: "Liberation Sans", "DejaVu Sans", Arial, sans-serif; color: var(--ink); font-size: 10.6pt; line-height: 1.5; margin: 0; }
+  h1 { font-size: 23pt; line-height: 1.15; margin: 0 0 6px; letter-spacing: -.01em; }
+  h2 { font-size: 15pt; margin: 0 0 10px; padding-top: 2px; color: var(--ac); break-after: avoid; }
+  h3 { font-size: 11.8pt; margin: 16px 0 6px; break-after: avoid; }
+  p { margin: 5px 0; }
+  ul, ol { margin: 5px 0; padding-left: 20px; }
+  li { margin: 3px 0; }
+  code, .k { font-family: "Liberation Mono", "DejaVu Sans Mono", monospace; font-size: 9.6pt; background: var(--soft); border: 1px solid var(--bd); border-radius: 4px; padding: 0 4px; white-space: nowrap; }
+  pre { font-family: "Liberation Mono", "DejaVu Sans Mono", monospace; font-size: 10pt; background: #1f2126; color: #f2f2f2; border-radius: 6px; padding: 8px 12px; margin: 6px 0; white-space: pre-wrap; }
+  .page-break { break-before: page; }
+  .cover { border-bottom: 3px solid var(--ac); padding-bottom: 12px; margin-bottom: 14px; }
+  .sub { color: var(--mu); font-size: 11pt; }
+  .meta { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 10px; font-size: 10pt; }
+  .meta b { display: block; font-size: 9pt; color: var(--mu); font-weight: normal; text-transform: uppercase; letter-spacing: .05em; }
+  .box { border: 1px solid var(--bd); border-radius: 8px; padding: 10px 14px; margin: 10px 0; break-inside: avoid; }
+  .box.warn { border-color: #e7b25d; background: #fff7e8; }
+  .box.tip { border-color: #9fcdb2; background: #eef8f2; }
+  .box.stop { border-color: #eda0aa; background: #fdeef0; }
+  .box > b:first-child { display: block; margin-bottom: 2px; }
+  .step { display: grid; grid-template-columns: 34px 1fr; gap: 10px; margin: 14px 0 8px; break-inside: avoid-page; }
+  .num { width: 30px; height: 30px; border-radius: 50%; background: var(--ac); color: #fff; font-weight: bold; font-size: 13pt; display: grid; place-items: center; }
+  .step h3 { margin-top: 3px; }
+  figure { margin: 8px 0 12px; break-inside: avoid; }
+  figure img { display: block; width: auto; max-width: 100%; max-height: 92mm; margin: 0 auto; border: 1px solid var(--bd); border-radius: 6px; }
+  figcaption { text-align: center; }
+  figcaption { font-size: 9pt; color: var(--mu); margin-top: 4px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 10pt; }
+  th, td { border: 1px solid var(--bd); padding: 6px 8px; text-align: left; vertical-align: top; }
+  th { background: var(--soft); font-size: 9.5pt; }
+  tr { break-inside: avoid; }
+  .check li { list-style: none; margin-left: -18px; }
+  .check li::before { content: "☐  "; font-size: 11pt; }
+  .toc { columns: 2; column-gap: 26px; font-size: 10.2pt; }
+  .toc li { break-inside: avoid; }
+  .btn { display: inline-block; border: 1px solid var(--bd); border-radius: 5px; padding: 0 6px; background: #fff; font-weight: bold; font-size: 9.8pt; white-space: nowrap; }
+  .btn.red { background: var(--ac); border-color: var(--ac); color: #fff; }
+  .muted { color: var(--mu); }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="sub">Tài liệu nội bộ · dành cho nhân viên làm video</div>
+  <h1>Hướng dẫn cài đặt và sử dụng<br>TikTok Video Studio trên Windows</h1>
+  <p class="sub">App dựng video bán hàng TikTok: quay source → lấy kịch bản đối thủ → lồng giọng đọc tiếng Việt → chữ và phụ đề → xuất video dọc 9:16.</p>
+  <div class="meta">
+    <div><b>Thời gian cài lần đầu</b>khoảng 20 phút</div>
+    <div><b>Máy tính</b>Windows 10 hoặc 11 (64-bit)</div>
+    <div><b>Phiên bản tài liệu</b>26/09/2026</div>
+  </div>
+</div>
+
+<h2>Trước khi bắt đầu, chuẩn bị</h2>
+<ul class="check">
+  <li>Máy tính Windows 10/11, có Internet, còn trống ít nhất <b>3 GB</b> ổ đĩa.</li>
+  <li>File <b>TikTokVideoStudio.zip</b> do quản lý gửi (qua Zalo hoặc email).</li>
+  <li><b>Anthropic API key</b> do quản lý cung cấp (một dãy ký tự bắt đầu bằng <code>sk-ant-</code>). Key này phát sinh chi phí theo lượt dùng: <b>không gửi cho người ngoài công ty</b>.</li>
+  <li>File logo shop dạng PNG nền trong suốt (nếu có).</li>
+</ul>
+
+<h3>Nội dung</h3>
+<ol class="toc">
+  <li>Phần A · Cài đặt (làm 1 lần)
+    <ol><li>Cài Python</li><li>Cài ffmpeg</li><li>Giải nén app</li><li>Chạy app lần đầu</li><li>Cài đặt trong app</li></ol></li>
+  <li>Phần B · Làm video hằng ngày
+    <ol><li>Mở app</li><li>Lấy kịch bản</li><li>Quay và upload video nguồn</li><li>Dựng và xuất video</li><li>Tắt app, sao lưu</li></ol></li>
+  <li>Phần C · Xử lý lỗi thường gặp</li>
+  <li>Phần D · Dùng chung 1 máy cho cả nhóm (tuỳ chọn)</li>
+</ol>
+
+<!-- ================= PHẦN A ================= -->
+<div class="page-break"></div>
+<h2>Phần A · Cài đặt (chỉ làm 1 lần trên mỗi máy)</h2>
+
+<div class="step"><div class="num">1</div><div>
+  <h3>Cài Python</h3>
+  <ol>
+    <li>Mở trình duyệt, vào <b>python.org/downloads</b>.</li>
+    <li>Bấm nút vàng <span class="btn">Download Python 3.x</span> (bản 3.12 trở lên), rồi mở file vừa tải về.</li>
+    <li>Ở màn hình cài đặt đầu tiên, <b>tick vào ô “Add python.exe to PATH”</b> ở phía dưới cửa sổ.</li>
+    <li>Bấm <span class="btn">Install Now</span> và đợi đến khi hiện “Setup was successful”, rồi bấm <span class="btn">Close</span>.</li>
+  </ol>
+  <div class="box stop"><b>Quan trọng nhất của cả bước 1</b>Nếu quên tick ô “Add python.exe to PATH”, app sẽ không chạy. Khi đó, mở lại file cài Python, chọn <b>Uninstall</b>, rồi cài lại và nhớ tick ô này.</div>
+  <p><b>Kiểm tra:</b> bấm nút Start, gõ <code>cmd</code>, Enter để mở cửa sổ Command Prompt. Gõ lệnh dưới rồi Enter:</p>
+  <pre>python --version</pre>
+  <p>Hiện dòng <code>Python 3.12.x</code> (hoặc số cao hơn) là đúng. Nếu cửa sổ Microsoft Store tự mở ra hoặc báo <i>“not recognized”</i>, xem mục C1 ở Phần C.</p>
+</div></div>
+
+<div class="step"><div class="num">2</div><div>
+  <h3>Cài ffmpeg (bộ xử lý video)</h3>
+  <p><b>Cách nhanh (khuyên dùng):</b></p>
+  <ol>
+    <li>Bấm Start, gõ <code>PowerShell</code>, bấm <b>Windows PowerShell</b>.</li>
+    <li>Gõ (hoặc dán) lệnh dưới rồi Enter. Nếu được hỏi đồng ý điều khoản thì gõ <code>Y</code> rồi Enter.</li>
+  </ol>
+  <pre>winget install --id Gyan.FFmpeg -e</pre>
+  <ol start="3">
+    <li>Đợi đến khi hiện <i>“Successfully installed”</i>, rồi <b>đóng PowerShell</b>.</li>
+    <li><b>Kiểm tra:</b> mở một cửa sổ <code>cmd</code> <b>mới</b>, gõ <code>ffmpeg -version</code> rồi Enter. Hiện dòng bắt đầu bằng <i>“ffmpeg version …”</i> là đúng.</li>
+  </ol>
+  <div class="box"><b>Nếu máy báo “winget is not recognized” (cách thủ công)</b>
+    <ol>
+      <li>Vào <b>gyan.dev/ffmpeg/builds</b>, mục <i>release builds</i>, tải file <b>ffmpeg-release-full.7z</b>.</li>
+      <li>Giải nén file đó. Windows 11 mở trực tiếp được; Windows 10 cần cài thêm 7-Zip (7-zip.org).</li>
+      <li>Đổi tên thư mục vừa giải nén thành <code>ffmpeg</code> rồi chép vào ổ <code>C:\</code>. Kết quả phải có file <code>C:\ffmpeg\bin\ffmpeg.exe</code>.</li>
+      <li>Bấm Start, gõ <code>environment</code>, chọn <b>Edit the system environment variables</b>, rồi bấm <span class="btn">Environment Variables…</span>.</li>
+      <li>Ở ô phía trên (<i>User variables</i>), chọn dòng <b>Path</b> và bấm <span class="btn">Edit…</span>, tiếp theo bấm <span class="btn">New</span> và gõ <code>C:\ffmpeg\bin</code>. Bấm <span class="btn">OK</span> 3 lần để đóng hết.</li>
+      <li>Mở cửa sổ <code>cmd</code> mới và kiểm tra bằng <code>ffmpeg -version</code>.</li>
+    </ol></div>
+</div></div>
+
+<div class="step"><div class="num">3</div><div>
+  <h3>Giải nén app</h3>
+  <ol>
+    <li>Chuột phải vào file <b>TikTokVideoStudio.zip</b>, chọn <b>Extract All…</b> (Giải nén tất cả).</li>
+    <li>Ở ô đường dẫn, gõ <code>D:\</code> (máy không có ổ D thì gõ <code>C:\</code>), rồi bấm <span class="btn">Extract</span>.</li>
+    <li>Kết quả là thư mục <code>D:\TikTokVideoStudio</code>, bên trong có file <b>chay_app.bat</b>.</li>
+  </ol>
+  <div class="box warn"><b>Lưu ý</b>
+    <ul>
+      <li>Đường dẫn thư mục <b>không dùng tiếng Việt có dấu</b> (tránh kiểu <code>D:\Tài liệu\…</code>).</li>
+      <li>Không chạy app ngay bên trong file zip: phải giải nén ra trước.</li>
+      <li>Không để trong thư mục OneDrive hoặc Desktop đang đồng bộ, vì video xuất ra khá nặng.</li>
+    </ul></div>
+</div></div>
+
+<div class="step"><div class="num">4</div><div>
+  <h3>Chạy app lần đầu</h3>
+  <ol>
+    <li>Mở thư mục <code>D:\TikTokVideoStudio</code> và <b>bấm đúp vào file chay_app.bat</b>.</li>
+    <li>Nếu Windows hiện bảng xanh <i>“Windows protected your PC”</i>: bấm <b>More info</b>, rồi <span class="btn">Run anyway</span>.</li>
+    <li>Một cửa sổ đen hiện ra với dòng <i>“Lan dau chay: dang cai dat…”</i>. Lần đầu mất khoảng <b>2–5 phút</b> để tự tải thư viện; các lần sau chỉ vài giây.</li>
+    <li>Xong, trình duyệt tự mở trang <b>http://127.0.0.1:8000</b>. Nếu không tự mở, hãy mở Chrome và gõ địa chỉ này.</li>
+    <li>Nếu Windows Firewall hỏi quyền cho Python: tick <b>Private networks</b>, rồi bấm <span class="btn">Allow access</span>.</li>
+  </ol>
+  <div class="box stop"><b>Giữ cửa sổ đen luôn mở trong lúc dùng app</b>Cửa sổ đen chính là app đang chạy. Đóng cửa sổ này thì app tắt và trang web báo lỗi kết nối.</div>
+  <div class="box tip"><b>Mẹo: tạo biểu tượng ngoài màn hình</b>Chuột phải vào <b>chay_app.bat</b>, chọn <b>Send to</b> rồi <b>Desktop (create shortcut)</b>. Hằng ngày chỉ cần bấm đúp biểu tượng này.</div>
+</div></div>
+
+<div class="step"><div class="num">5</div><div>
+  <h3>Cài đặt trong app (1 lần)</h3>
+  <p>Trên trang app, bấm tab <b>Cài đặt</b> ở góc trên:</p>
+  <ol>
+    <li><b>Anthropic API key:</b> dán key quản lý gửi. Không có key thì app vẫn dựng video được, nhưng không dùng được các nút AI (bóc kịch bản, viết lại, ghép cảnh tự động).</li>
+    <li><b>Giọng đọc mặc định:</b> chọn <b>Microsoft Edge (miễn phí)</b>, giọng <b>Hoài My</b> (nữ) hoặc <b>Nam Minh</b> (nam). Bấm <span class="btn">Nghe thử</span> để kiểm tra có tiếng.</li>
+    <li><b>Tốc độ đọc:</b> để <code>0</code>. Muốn đọc nhanh hơn kiểu TikTok thì đặt <code>10</code>–<code>20</code>.</li>
+    <li><b>Thương hiệu:</b> gõ tên shop và bấm <b>Upload logo</b> (file PNG nền trong suốt).</li>
+    <li>Bấm <span class="btn red">Lưu cài đặt</span>.</li>
+  </ol>
+  <p class="muted">Ô Azure và FPT.AI để trống, trừ khi quản lý đưa key riêng.</p>
+</div></div>
+<figure><img src="s_settings.png" alt=""><figcaption>Hình 1. Tab Cài đặt: dán API key, chọn giọng đọc, upload logo, rồi bấm “Lưu cài đặt”.</figcaption></figure>
+
+<!-- ================= PHẦN B ================= -->
+<h2 style="margin-top:22px">Phần B · Làm video hằng ngày</h2>
+<p>App có 3 tab chính, làm lần lượt từ trái sang phải: <b>1. Kịch bản</b>, <b>2. Video nguồn</b>, <b>3. Dựng video</b>.</p>
+
+<div class="step"><div class="num">1</div><div>
+  <h3>Mở app</h3>
+  <p>Bấm đúp biểu tượng <b>chay_app.bat</b> (ngoài Desktop). Đợi trình duyệt mở trang app. Nhớ giữ cửa sổ đen mở.</p>
+</div></div>
+
+<div class="step"><div class="num">2</div><div>
+  <h3>Lấy kịch bản (tab “1. Kịch bản”)</h3>
+  <p><b>Cách 1: Dùng kịch bản mẫu có sẵn.</b> Thư viện đã có KB1, KB2, KB3. Bấm vào một kịch bản để xem từng cảnh: quay gì, lời đọc, chữ trên màn hình, số giây.</p>
+  <p><b>Cách 2: Bóc kịch bản từ video đối thủ đang bán chạy.</b></p>
+  <ol>
+    <li>Tải video đối thủ về máy: trên app TikTok, bấm <b>Chia sẻ</b> rồi <b>Lưu video</b>, sau đó chuyển file vào máy tính.</li>
+    <li>Ở ô <b>Video đối thủ</b>, chọn file đó. Ghi chú thêm nếu muốn (ví dụ “top 1 ngách tranh Nề Nếp”).</li>
+    <li>Bấm <span class="btn red">Phân tích kịch bản</span> và đợi 1–2 phút. Kịch bản mới hiện trong thư viện với nhãn <b>Đối thủ</b>.</li>
+  </ol>
+  <p><b>Viết lại cho sản phẩm nhà:</b> mở kịch bản, kéo xuống phần <b>Viết lại cho sản phẩm của tôi</b>, điền tên sản phẩm, giá, quy cách, điểm nổi bật, rồi bấm <span class="btn red">Viết lại bằng AI</span>. Bản mới có nhãn <b>Đã viết lại</b>. Nếu AI báo <b>Cần bổ sung</b> (ví dụ thiếu giá), hãy điền thêm thông tin.</p>
+  <p>Có thể sửa tay mọi ô trong bảng các cảnh rồi bấm <span class="btn">Lưu thay đổi</span>.</p>
+</div></div>
+<figure><img src="s_scripts.png" alt=""><figcaption>Hình 2. Tab Kịch bản: bóc kịch bản đối thủ (trái trên), thư viện kịch bản (trái dưới), chi tiết từng cảnh (phải).</figcaption></figure>
+<figure><img src="s_rewrite.png" alt=""><figcaption>Hình 3. Viết lại kịch bản cho sản phẩm nhà. Chỉ điền thông tin đúng sự thật; ô nào để trống thì AI sẽ không bịa ra.</figcaption></figure>
+<div class="box warn"><b>Quy tắc nội dung</b>
+  <ul>
+    <li>Không chép nguyên văn lời đối thủ; luôn bấm “Viết lại”.</li>
+    <li>Giá nói trong video phải đúng giá lúc đăng.</li>
+    <li>Không bịa bình luận hay đánh giá của khách.</li>
+    <li>Với tranh tôn giáo, phong thuỷ: không hứa tài lộc hay công dụng.</li>
+  </ul></div>
+
+<div class="step"><div class="num">3</div><div>
+  <h3>Quay và upload video nguồn (tab “2. Video nguồn”)</h3>
+  <p><b>Quay theo cột “Cảnh quay” của kịch bản:</b></p>
+  <ul>
+    <li><b>Quay dọc</b>, mỗi cảnh 3–10 giây, đủ sáng, cầm chắc tay.</li>
+    <li>Mỗi cảnh quay dư ra 1–2 giây ở đầu và cuối để dễ cắt.</li>
+    <li>Không cần thu tiếng nói: app tự lồng giọng đọc.</li>
+  </ul>
+  <p><b>Chuyển video từ điện thoại sang máy tính</b> bằng cáp, Google Drive, hoặc Zalo PC. Nếu dùng Zalo, phải gửi <b>dạng file</b>: gửi dạng video thì Zalo nén làm mờ.</p>
+  <p><b>Upload:</b> ở tab <b>2. Video nguồn</b>, kéo thả các video vào khung (chọn được nhiều file cùng lúc). Mỗi video hiện nhãn <b>Đang xử lý</b>; khoảng vài chục giây sau sẽ hiện ảnh và số đoạn. App tự chia video thành các đoạn ngắn để chọn cảnh. Video quay bằng iPhone (HDR) được chỉnh màu tự động.</p>
+</div></div>
+<figure><img src="s_sources.png" alt=""><figcaption>Hình 4. Tab Video nguồn sau khi upload: mỗi video hiện ảnh, độ dài và số đoạn đã chia.</figcaption></figure>
+
+<div class="step"><div class="num">4</div><div>
+  <h3>Dựng và xuất video (tab “3. Dựng video”)</h3>
+  <ol>
+    <li>Ở tab <b>1. Kịch bản</b>, mở kịch bản muốn dùng và bấm <span class="btn red">Dựng video từ kịch bản này →</span>. App chuyển sang tab Dựng video với đủ các cảnh.</li>
+    <li><b>Chọn đoạn video cho từng cảnh</b>, có 2 cách:
+      <ul>
+        <li>Bấm <span class="btn">AI ghép cảnh tự động</span>: AI tự chọn đoạn phù hợp, và báo khung vàng <b>Cần quay thêm</b> nếu thiếu cảnh.</li>
+        <li>Hoặc tự chọn: ở mỗi cảnh bấm <span class="btn">Chọn đoạn</span>, bấm vào ảnh đoạn muốn dùng, rồi bấm <span class="btn red">Dùng đoạn này</span>. Muốn cắt chính xác thì xem video và dùng nút “Bắt đầu = vị trí đang xem”.</li>
+      </ul></li>
+    <li><b>Kiểm tra lời đọc:</b> sửa chữ trong ô <b>Lời đọc</b> cho tự nhiên, bấm <span class="btn">Nghe thử lời đọc</span>. Nên để câu ngắn, khoảng 3–4 chữ mỗi giây.</li>
+    <li><b>Chữ trên màn hình:</b> ngắn gọn, tối đa khoảng 8 chữ mỗi dòng. Chọn vị trí Trên (hook), Giữa (CTA) hoặc Dưới.</li>
+    <li><b>Nhạc nền:</b> để <b>Tự tạo nhạc Tết</b> (không lo bản quyền), chọn <b>Không nhạc</b> nếu sẽ thêm nhạc trong app TikTok, hoặc bấm <b>Upload nhạc riêng</b>.</li>
+    <li>Bấm <span class="btn red">Xuất video</span>. Thanh trên cùng hiện tiến độ; mỗi video mất khoảng 1–3 phút.</li>
+    <li>Video xong hiện ở mục <b>Video đã xuất</b> cuối trang: xem thử, rồi bấm <span class="btn">Tải về</span>.</li>
+    <li>Bấm <span class="btn">Sao chép caption</span> để dán vào lúc đăng TikTok.</li>
+  </ol>
+  <div class="box tip"><b>App tự lo phần khớp nhịp</b>
+    <ul>
+      <li>Mỗi cảnh dài đúng bằng lời đọc; đoạn quay ngắn hơn lời thì app tự kéo dài hoặc quay chậm.</li>
+      <li>Phụ đề chạy theo lời đọc.</li>
+      <li>Chữ tự tránh vùng nút bấm và caption của TikTok.</li>
+      <li>Nhạc tự nhỏ lại khi có giọng đọc.</li>
+    </ul></div>
+</div></div>
+<figure><img src="s_studio.png" alt=""><figcaption>Hình 5. Tab Dựng video. Thanh trên cùng là nút AI ghép cảnh, Xuất video và các lựa chọn giọng đọc, nhạc, khung hình; bên dưới là từng cảnh.</figcaption></figure>
+<figure><img src="s_picker.png" alt=""><figcaption>Hình 6. Hộp chọn đoạn video: bấm một ảnh đoạn (viền đỏ) rồi bấm “Dùng đoạn này”.</figcaption></figure>
+<div class="box"><b>Làm nhiều video từ 1 kịch bản</b>
+  <ul>
+    <li>Ở tab Dựng video có dòng <b>Hook khác cho cảnh 1</b>: bấm một hook để thay, rồi xuất thêm bản mới.</li>
+    <li>Có thể đổi đoạn video hoặc giọng đọc (nam/nữ) để các video không trùng nhau.</li>
+  </ul></div>
+
+<div class="step"><div class="num">5</div><div>
+  <h3>Tắt app và sao lưu</h3>
+  <ul>
+    <li><b>Tắt app:</b> đóng cửa sổ đen.</li>
+    <li><b>Mọi dữ liệu</b> (video nguồn, kịch bản, video đã xuất) nằm trong thư mục <code>D:\TikTokVideoStudio\data</code>. <b>Không xoá thư mục này.</b></li>
+    <li><b>Sao lưu:</b> cuối tuần, copy thư mục <code>data</code> sang ổ khác, NAS hoặc Google Drive.</li>
+    <li>Video đã xuất nằm trong <code>data\projects\</code>. Có thể mở trực tiếp bằng File Explorer.</li>
+  </ul>
+</div></div>
+
+<!-- ================= PHẦN C ================= -->
+<h2 style="margin-top:22px">Phần C · Xử lý lỗi thường gặp</h2>
+<table>
+  <tr><th style="width:4%">#</th><th style="width:36%">Hiện tượng</th><th>Cách xử lý</th></tr>
+  <tr><td>C1</td><td>Cửa sổ đen báo <i>“Chua cai Python”</i>, gõ <code>python</code> thì Microsoft Store tự mở, hoặc báo <i>“not recognized”</i></td>
+    <td>Python chưa được thêm vào PATH. Cài lại Python và <b>tick “Add python.exe to PATH”</b> (bước A1). Nếu Store vẫn mở, vào Settings, chọn Apps, rồi Advanced app settings, rồi <b>App execution aliases</b>, và <b>tắt</b> 2 dòng python.exe / python3.exe.</td></tr>
+  <tr><td>C2</td><td>Cửa sổ đen báo <i>“Canh bao: chua thay ffmpeg”</i>, hoặc lúc xuất video báo lỗi</td>
+    <td>Làm lại bước A2. Sau khi cài xong phải <b>đóng cửa sổ đen và bấm đúp chay_app.bat lại</b>.</td></tr>
+  <tr><td>C3</td><td><i>“Loi cai thu vien, kiem tra mang Internet”</i></td>
+    <td>Kiểm tra mạng, rồi chạy lại chay_app.bat. Nếu vẫn lỗi, xoá thư mục <code>.venv</code> trong thư mục app rồi chạy lại.</td></tr>
+  <tr><td>C4</td><td>Trình duyệt báo <i>“This site can’t be reached”</i> / không kết nối được</td>
+    <td>Cửa sổ đen đã bị đóng. Bấm đúp chay_app.bat để mở lại, đợi vài giây rồi tải lại trang (F5).</td></tr>
+  <tr><td>C5</td><td>Cửa sổ đen báo <i>“address already in use”</i> hoặc <i>“port 8000”</i></td>
+    <td>App đã đang chạy ở một cửa sổ đen khác. Dùng cửa sổ đó, hoặc đóng hết cửa sổ đen rồi mở lại.</td></tr>
+  <tr><td>C6</td><td>Bấm Nghe thử giọng đọc báo lỗi <i>“Không gọi được giọng Edge”</i></td>
+    <td>Kiểm tra Internet. Nếu mạng công ty chặn dịch vụ này, báo quản lý để lấy key Azure hoặc FPT.AI và nhập ở tab Cài đặt.</td></tr>
+  <tr><td>C7</td><td>Nút AI bị mờ, hoặc báo <i>“API key không hợp lệ”</i></td>
+    <td>Vào tab Cài đặt, dán lại API key đúng và bấm Lưu. Nếu báo “giới hạn tần suất” thì đợi vài phút rồi thử lại.</td></tr>
+  <tr><td>C8</td><td>Video nguồn hiện nhãn <b>Lỗi</b></td>
+    <td>File có thể bị hỏng hoặc chưa tải xong. Chép lại file từ điện thoại rồi upload lại.</td></tr>
+  <tr><td>C9</td><td>Xuất video báo <i>“Cảnh X chưa chọn đoạn video”</i></td>
+    <td>Cảnh đó chưa có đoạn. Bấm <b>Chọn đoạn</b> ở cảnh đó, hoặc bấm AI ghép cảnh tự động.</td></tr>
+  <tr><td>C10</td><td>Chữ tiếng Việt trong video bị lỗi font, mất dấu</td>
+    <td>Chụp màn hình video lỗi, gửi quản lý.</td></tr>
+  <tr><td>C11</td><td>Windows hiện <i>“Windows protected your PC”</i> khi bấm chay_app.bat</td>
+    <td>Bấm <b>More info</b>, rồi <b>Run anyway</b>. Đây là cảnh báo bình thường với file tự tạo trong công ty.</td></tr>
+</table>
+<div class="box tip"><b>Khi cần báo lỗi cho quản lý, gửi kèm</b>
+  <ol>
+    <li>Ảnh chụp trang app (có dòng báo lỗi).</li>
+    <li>Ảnh chụp cửa sổ đen (kéo xuống cuối).</li>
+    <li>Mô tả vừa bấm nút gì.</li>
+  </ol></div>
+
+<!-- ================= PHẦN D ================= -->
+<h2 style="margin-top:22px">Phần D · Dùng chung 1 máy cho cả nhóm (tuỳ chọn)</h2>
+<p>Nếu muốn chỉ cài trên 1 máy mạnh và các máy khác trong văn phòng dùng qua trình duyệt:</p>
+<ol>
+  <li><b>Trên máy chính:</b> chuột phải vào shortcut chay_app.bat ngoài Desktop, chọn <b>Properties</b>. Ở ô <b>Target</b>, thêm vào cuối một dấu cách và <code>--host 0.0.0.0</code>, rồi bấm OK. Mở app bằng shortcut này. Khi Firewall hỏi, bấm <b>Allow access</b> cho <b>Private networks</b>.</li>
+  <li><b>Xem địa chỉ IP của máy chính:</b> mở <code>cmd</code>, gõ <code>ipconfig</code>, rồi tìm dòng <b>IPv4 Address</b> (ví dụ <code>192.168.1.25</code>).</li>
+  <li><b>Trên các máy khác cùng mạng</b>, mở Chrome và gõ <code>http://192.168.1.25:8000</code> (thay bằng IP vừa xem).</li>
+</ol>
+<div class="box warn"><b>Chỉ dùng trong mạng nội bộ</b>
+  <ul>
+    <li>App không có đăng nhập, nên ai vào được mạng văn phòng đều dùng được. Không mở ra Internet.</li>
+    <li>Máy chính phải bật và mở cửa sổ đen thì các máy khác mới dùng được.</li>
+    <li>Nhiều người cùng xuất video một lúc sẽ chậm hơn.</li>
+  </ul></div>
+
+</body>
+</html>

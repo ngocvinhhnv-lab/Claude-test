@@ -12,6 +12,8 @@ Cần **Python 3.10+** và **ffmpeg** (bản đầy đủ, có `libass` và `zsc
 | macOS | `brew install ffmpeg` | `./chay_app.sh` |
 | Linux | `sudo apt install ffmpeg` | `./chay_app.sh` |
 
+Hướng dẫn từng bước cho nhân viên (Windows): [`HUONG_DAN_WINDOWS.pdf`](HUONG_DAN_WINDOWS.pdf) (nguồn HTML ở `docs/huong_dan_windows/`).
+
 App mở tại http://127.0.0.1:8000. Để máy khác trong mạng nội bộ dùng chung: `./chay_app.sh --host 0.0.0.0`. Dữ liệu (video, kịch bản, video xuất ra) lưu trong thư mục `data/`.
 
 ### Quy trình
