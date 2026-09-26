@@ -1,0 +1,44 @@
+{
+  "source": "goc.mp4",
+  "output_dir": "output",
+  "defaults": {
+    "ratio": "9:16",
+    "fit": "blur",
+    "logo": "logo.png",
+    "logo_pos": "top-right",
+    "music": "nhac.mp3",
+    "music_volume": 0.25,
+    "fade": 0.4
+  },
+  "videos": [
+    {
+      "name": "tiktok_hook_1",
+      "clips": [["0:00", "0:08"]],
+      "text": "Trà sữa pha chuẩn quán chỉ 5 phút!"
+    },
+    {
+      "name": "tiktok_highlight",
+      "clips": [["0:02", "0:06"], ["0:14", "0:18"], ["0:25", "0:30"]],
+      "speed": 1.25,
+      "captions": [
+        {"start": 0, "end": 3, "text": "Bước 1: Ủ trà"},
+        {"start": 3, "end": 6, "text": "Bước 2: Thêm sữa"},
+        {"start": 6, "end": 10, "text": "Bước 3: Lắc đều và thưởng thức"}
+      ]
+    },
+    {
+      "name": "da_nen_tang",
+      "clips": ["0:12-0:22"],
+      "ratio": ["9:16", "1:1", "16:9"],
+      "fit": "crop",
+      "text": "Giảm 20% hôm nay",
+      "text_pos": "bottom"
+    },
+    {
+      "name": "khong_nhac",
+      "clips": [["0:30", "end"]],
+      "music": null,
+      "fit": "pad"
+    }
+  ]
+}
