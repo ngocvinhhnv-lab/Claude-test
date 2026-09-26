@@ -50,7 +50,8 @@ DEFAULTS = {
     "voice_volume": 1.0,
     "duck": True,          # tự hạ nhạc khi có giọng đọc
     "safe_zone": False,    # tránh vùng TikTok che (thanh tab, cột nút, caption)
-    "font": "DejaVu Sans",
+    # Arial có sẵn trên Windows/macOS và đủ dấu tiếng Việt; Linux thường có DejaVu Sans
+    "font": "Arial" if sys.platform in ("win32", "darwin") else "DejaVu Sans",
     "crf": 20,
 }
 
