@@ -182,6 +182,10 @@ def build_ass(opts, w, h, total, path, top_min=0):
                      align=align.get(opts["text_pos"], 8), mh=round(base * 0.06), mv=margin_v),
         style.format(name="Caption", font=opts["font"], size=round(size * 0.9),
                      pad=round(size * 0.2), align=2, mh=round(base * 0.06), mv=round(h * 0.15)),
+        style.format(name="CapTop", font=opts["font"], size=size, pad=round(size * 0.25),
+                     align=8, mh=round(base * 0.06), mv=margin_v),
+        style.format(name="CapCenter", font=opts["font"], size=size, pad=round(size * 0.25),
+                     align=5, mh=round(base * 0.06), mv=0),
         "",
         "[Events]",
         "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
@@ -189,10 +193,12 @@ def build_ass(opts, w, h, total, path, top_min=0):
     if opts.get("text"):
         lines.append(f"Dialogue: 0,{ass_time(0)},{ass_time(total)},Title,,0,0,0,,"
                      f"{ass_escape(opts['text'])}")
+    styles = {"bottom": "Caption", "top": "CapTop", "center": "CapCenter"}
     for cap in opts.get("captions") or []:
         start = parse_time(cap.get("start", 0))
         end = parse_time(cap.get("end", total))
-        lines.append(f"Dialogue: 0,{ass_time(start)},{ass_time(end)},Caption,,0,0,0,,"
+        style_name = styles.get(cap.get("pos", "bottom"), "Caption")
+        lines.append(f"Dialogue: 0,{ass_time(start)},{ass_time(end)},{style_name},,0,0,0,,"
                      f"{ass_escape(cap['text'])}")
     with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
@@ -352,6 +358,30 @@ def build_jobs_from_args(args):
     }
 
 
+def apply_beats(opts, duration):
+    """Dựng video theo từng cảnh của kịch bản.
+
+    Mỗi cảnh: {"clip": ["0:05", "0:08"], "text": chữ trên màn hình,
+    "pos": vị trí chữ (top | center | bottom), "sub": lời thoại hiện ở dưới,
+    "canh": mô tả cảnh (chỉ để ghi chú)}. Thời gian chữ tự tính theo cảnh.
+    """
+    clips, captions, t = [], list(opts.get("captions") or []), 0.0
+    for beat in opts["beats"]:
+        if not beat.get("clip"):
+            sys.exit(f"{opts.get('name', 'video')}: cảnh \"{beat.get('canh', '?')}\" "
+                     f"chưa có mốc thời gian (clip)")
+        start, end = parse_clip(beat["clip"], duration)
+        length = (end - start) / float(opts["speed"])
+        clips.append([start, end])
+        if beat.get("text"):
+            captions.append({"start": t, "end": t + length, "text": beat["text"],
+                             "pos": beat.get("pos", "top")})
+        if beat.get("sub"):
+            captions.append({"start": t, "end": t + length, "text": beat["sub"], "pos": "bottom"})
+        t += length
+    opts["clips"], opts["captions"] = clips, captions
+
+
 def run(config, base_dir, dry_run=False):
     source = os.path.join(base_dir, config["source"])
     out_dir = os.path.join(base_dir, config.get("output_dir", "output"))
@@ -366,6 +396,8 @@ def run(config, base_dir, dry_run=False):
         for key in ("logo", "music"):
             if opts.get(key):
                 opts[key] = os.path.join(base_dir, opts[key])
+        if opts.get("beats"):
+            apply_beats(opts, info["duration"])
         opts.setdefault("clips", [[0, "end"]])
         ratios = opts["ratio"] if isinstance(opts["ratio"], list) else [opts["ratio"]]
         name = opts.get("name", f"video_{idx:02d}")

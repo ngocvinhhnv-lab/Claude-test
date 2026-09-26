@@ -48,6 +48,20 @@ Xem file mẫu tại [`vi_du/config_mau.json`](vi_du/config_mau.json). Đường
 }
 ```
 
+### Dựng theo kịch bản (từng cảnh)
+
+Thay cho `clips`, dùng `beats`. Mỗi cảnh gồm một đoạn cắt và chữ riêng, thời gian hiện chữ được tính tự động theo độ dài cảnh:
+
+```json
+"beats": [
+  { "canh": "Hook", "clip": ["0:03", "0:06"], "text": "Những điều bố mẹ chưa từng nói với con",
+    "sub": "Có những điều bố mẹ ngại nói..." },
+  { "canh": "CTA", "clip": ["1:10", "1:14"], "text": "Chỉ 48k\nBấm giỏ ngay", "pos": "center" }
+]
+```
+
+`text` là chữ trên màn hình (`pos`: `top` / `center` / `bottom`, mặc định `top`), `sub` là lời thoại hiện ở dưới, `canh` chỉ để ghi chú. Kịch bản KB1–KB3 dựng sẵn nằm ở [`kich_ban/kb1_kb3.json`](kich_ban/kb1_kb3.json).
+
 `defaults` áp dụng cho mọi video. Tuỳ chọn đặt trong từng video sẽ ghi đè lên `defaults`.
 
 | Tuỳ chọn | Ý nghĩa | Mặc định |
@@ -57,7 +71,7 @@ Xem file mẫu tại [`vi_du/config_mau.json`](vi_du/config_mau.json). Đường
 | `fit` | `blur` (nền mờ), `crop` (cắt tràn khung), `pad` (viền đen) | `blur` |
 | `speed` | Tốc độ, ví dụ `1.25` hoặc `0.5` | `1.0` |
 | `text` / `text_pos` | Chữ hiện suốt video, vị trí `top` / `center` / `bottom` | — / `top` |
-| `captions` | Chữ theo thời gian: `[{"start":0,"end":3,"text":"..."}]`, tính theo giây của video xuất ra | — |
+| `captions` | Chữ theo thời gian: `[{"start":0,"end":3,"text":"...","pos":"bottom"}]`, tính theo giây của video xuất ra | — |
 | `logo` / `logo_pos` / `logo_size` | Ảnh logo (PNG nền trong), góc đặt, kích thước so với cạnh ngắn | — / `top-right` / `0.18` |
 | `music` / `music_volume` | Nhạc nền (tự lặp nếu ngắn hơn video), âm lượng | — / `0.3` |
 | `keep_audio` | Giữ tiếng gốc khi có nhạc nền | `true` |

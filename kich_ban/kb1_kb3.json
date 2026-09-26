@@ -1,0 +1,109 @@
+{
+  "_ghi_chu": "3 kịch bản KB1–KB3 lấy từ tab 'Đối thủ & kịch bản' của báo cáo Thị trường tranh & lịch TikTok. Điền 'source' và mốc 'clip' cho từng cảnh sau khi xem video gốc. Các chỗ [..] cần thay bằng thông tin thật.",
+  "source": "SOURCE.mp4",
+  "output_dir": "output_kich_ban",
+  "defaults": {
+    "ratio": "9:16",
+    "fit": "blur",
+    "fade": 0.3,
+    "keep_audio": true
+  },
+  "videos": [
+    {
+      "name": "KB1_loi_bo_me_chua_noi",
+      "_dung_cho": "Tranh Nề Nếp / Bố mẹ gửi con 48k (Tường Vip)",
+      "_caption_dang": "Treo cho con đọc mỗi ngày 🥹 #bomeguicon #tranhchobe #gochoctap #tranhtreogochoctap #tranhnenepgiadinh",
+      "_nhac": "Nhạc piano nhẹ — thêm trong app TikTok khi đăng",
+      "beats": [
+        {
+          "canh": "0–3s: Cận tay mẹ vuốt phẳng tranh trên bàn học",
+          "clip": null,
+          "text": "Những điều bố mẹ chưa từng nói với con",
+          "sub": "Có những điều bố mẹ ngại nói, nên bố mẹ treo nó lên tường."
+        },
+        {
+          "canh": "3–12s: Đọc chậm 2–3 câu đắt nhất trong tranh, máy lia theo dòng chữ",
+          "clip": null
+        },
+        {
+          "canh": "12–20s: Treo lên góc học tập, con đi học về đứng đọc (quay lưng cũng được)",
+          "clip": null
+        },
+        {
+          "canh": "20–27s: Cận chất canvas, khổ 30x40 cạnh bàn học để thấy kích thước",
+          "clip": null,
+          "text": "Khổ 30x40 · canvas",
+          "sub": "Có bản bé trai, bé gái, in được tên con."
+        },
+        {
+          "canh": "CTA",
+          "clip": null,
+          "text": "Mẫu 30x40 chỉ 48k\nBấm giỏ chọn đúng mẫu bé nhà mình",
+          "pos": "center"
+        }
+      ]
+    },
+    {
+      "name": "KB2_tra_loi_binh_luan",
+      "_dung_cho": "Mọi SP có nhiều mẫu: Nề Nếp, thời khóa biểu, in ảnh tráng gương",
+      "_caption_dang": "Trả lời @[tên] dạ đây ạ 🥰 #tranhchobe #bomeguicon #gochoctap",
+      "_luu_y": "Dùng bình luận có câu hỏi thật, không bịa bình luận.",
+      "beats": [
+        {
+          "canh": "0–2s: Sticker bình luận thật",
+          "clip": null,
+          "text": "Trả lời @[tên]: [bình luận thật, vd: Có mẫu bé trai không?]",
+          "sub": "Có nha chị, đây là 3 mẫu bé trai bán chạy nhất."
+        },
+        { "canh": "Mẫu 1 (~2s), cận tên hoặc ảnh in trên tranh", "clip": null, "text": "Mẫu 1" },
+        { "canh": "Mẫu 2 (~2s)", "clip": null, "text": "Mẫu 2" },
+        { "canh": "Mẫu 3 (~2s)", "clip": null, "text": "Mẫu 3" },
+        {
+          "canh": "15–22s: Khổ 30x40 và 40x60 cạnh nhau trên tường thật",
+          "clip": null,
+          "text": "30x40 và 40x60"
+        },
+        {
+          "canh": "CTA",
+          "clip": null,
+          "text": "Bấm giỏ, chọn mẫu [số] khổ 30x40\nGhi tên bé ở phần ghi chú là xong",
+          "pos": "center"
+        }
+      ]
+    },
+    {
+      "name": "KB3_gia_noi_ra_khong_ai_tin",
+      "_dung_cho": "In ảnh tráng gương, tranh khổ lớn, set tranh decor",
+      "_caption_dang": "Rẻ mà sang dã man 😳 #inanhtrangguong #tranhtreotuong #xuhuong",
+      "_luu_y": "Giá trong video phải đúng giá lúc đăng; đổi giá thì ẩn video cũ.",
+      "beats": [
+        {
+          "canh": "0–3s: Cầm tranh ngang mặt",
+          "clip": null,
+          "text": "Bức to thế này mà chỉ [giá]?!",
+          "sub": "Bức to thế này mà có [giá], nói ra chắc không ai tin."
+        },
+        {
+          "canh": "3–10s: Bóc hộp, cận viền, mặt tráng gương hoặc canvas, gõ nhẹ nghe độ cứng",
+          "clip": null
+        },
+        {
+          "canh": "10–20s: Treo lên, lùi máy lấy toàn cảnh căn phòng",
+          "clip": null
+        },
+        {
+          "canh": "20–25s: So sánh giá ngoài tiệm",
+          "clip": null,
+          "text": "Ngoài tiệm: 150–200k",
+          "sub": "Ngoài tiệm khổ này em hỏi 150–200k."
+        },
+        {
+          "canh": "CTA",
+          "clip": null,
+          "text": "Đang giảm\nBấm giỏ vàng bên dưới",
+          "pos": "center"
+        }
+      ]
+    }
+  ]
+}
