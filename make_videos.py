@@ -45,6 +45,9 @@ DEFAULTS = {
     "music": None,
     "music_volume": 0.3,
     "keep_audio": True,    # giữ tiếng gốc khi chèn nhạc
+    "audio_volume": 1.0,   # âm lượng tiếng gốc
+    "voice": None,         # file giọng đọc, đặt từ giây 0 của video
+    "voice_volume": 1.0,
     "font": "DejaVu Sans",
     "crf": 20,
 }
@@ -227,13 +230,16 @@ def render(source, info, opts, ratio, out_path, tmpdir):
     for s, e in clips:
         cmd += ["-ss", f"{s:.3f}", "-t", f"{e - s:.3f}", "-i", source]
     next_input = len(clips)
-    logo_idx = music_idx = None
+    logo_idx = music_idx = voice_idx = None
     if opts.get("logo"):
         cmd += ["-i", opts["logo"]]
         logo_idx, next_input = next_input, next_input + 1
     if opts.get("music"):
         cmd += ["-stream_loop", "-1", "-i", opts["music"]]
-        music_idx = next_input
+        music_idx, next_input = next_input, next_input + 1
+    if opts.get("voice"):
+        cmd += ["-i", opts["voice"]]
+        voice_idx = next_input
 
     use_src_audio = info["has_audio"] and (opts["keep_audio"] or music_idx is None)
     graph = []
@@ -242,7 +248,8 @@ def render(source, info, opts, ratio, out_path, tmpdir):
         graph.append(f"[{i}:v]{TONEMAP + ',' if info['hdr'] else ''}"
                      f"setpts=PTS-STARTPTS,fps={opts['fps']}[v{i}]")
         if use_src_audio:
-            graph.append(f"[{i}:a:0]asetpts=PTS-STARTPTS,aresample=44100[a{i}]")
+            graph.append(f"[{i}:a:0]asetpts=PTS-STARTPTS,aresample=44100,"
+                         f"volume={opts['audio_volume']}[a{i}]")
     if use_src_audio:
         pairs = "".join(f"[v{i}][a{i}]" for i in range(n))
         graph.append(f"{pairs}concat=n={n}:v=1:a=1[vc][ac]")
@@ -295,6 +302,17 @@ def render(source, info, opts, ratio, out_path, tmpdir):
             a = "[am]"
         else:
             a = "[mu]"
+    if voice_idx is not None:
+        graph.append(f"[{voice_idx}:a]volume={opts['voice_volume']},aresample=44100,"
+                     f"apad,atrim=0:{total:.3f},asetpts=PTS-STARTPTS[vo]")
+        if a:
+            graph.append(f"{a}[vo]amix=inputs=2:duration=first:dropout_transition=0:normalize=0[amv]")
+            a = "[amv]"
+        else:
+            a = "[vo]"
+    if a:
+        graph.append(f"{a}alimiter=limit=0.95[alim]")  # tránh vỡ tiếng khi trộn
+        a = "[alim]"
     if a and fade > 0:
         graph.append(f"{a}afade=t=in:st=0:d={fade},afade=t=out:st={max(0, total - fade):.3f}:d={fade}[afd]")
         a = "[afd]"
@@ -401,7 +419,7 @@ def run(config, base_dir, dry_run=False):
     jobs = []
     for idx, video in enumerate(config["videos"], 1):
         opts = {**shared, **video}
-        for key in ("logo", "music"):
+        for key in ("logo", "music", "voice"):
             if opts.get(key):
                 opts[key] = os.path.join(base_dir, opts[key])
         if opts.get("beats"):

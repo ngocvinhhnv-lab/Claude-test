@@ -74,8 +74,18 @@ Thay cho `clips`, dùng `beats`. Mỗi cảnh gồm một đoạn cắt và ch�
 | `captions` | Chữ theo thời gian: `[{"start":0,"end":3,"text":"...","pos":"bottom"}]`, tính theo giây của video xuất ra | — |
 | `logo` / `logo_pos` / `logo_size` | Ảnh logo (PNG nền trong), góc đặt, kích thước so với cạnh ngắn | — / `top-right` / `0.18` |
 | `music` / `music_volume` | Nhạc nền (tự lặp nếu ngắn hơn video), âm lượng | — / `0.3` |
-| `keep_audio` | Giữ tiếng gốc khi có nhạc nền | `true` |
+| `keep_audio` / `audio_volume` | Giữ tiếng gốc khi có nhạc nền, âm lượng tiếng gốc | `true` / `1.0` |
+| `voice` / `voice_volume` | File giọng đọc (thu âm hoặc TTS), phát từ giây 0 của video | — / `1.0` |
 | `fade` | Số giây fade in/out cho hình và tiếng | `0` |
 | `fps`, `crf`, `font` | Số khung hình/giây, chất lượng (càng nhỏ càng nét), phông chữ | `30`, `20`, `DejaVu Sans` |
 
 Video xuất ra ở dạng MP4 (H.264 + AAC), dùng được cho TikTok, Facebook, Shopee và YouTube.
+
+## Nhạc nền không bản quyền
+
+`tao_nhac.py` tự tổng hợp một bản nhạc ngũ cung phong cách Tết: tiếng gảy như đàn tranh, bass trầm và mõ gõ nhịp. Nhạc tự tạo nên không vướng bản quyền.
+
+```bash
+pip install numpy
+python tao_nhac.py nhac_tet.m4a --seconds 20 --bpm 104
+```
