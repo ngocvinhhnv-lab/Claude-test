@@ -58,6 +58,14 @@ Kết quả Excel có mỗi kênh một sheet, tô màu: đỏ = lỗ, vàng = l
 
 Bản chạy trên trình duyệt của cả hai công cụ trên (cùng cách tính): kéo thả file Excel/CSV là ra kết quả, tải về Excel được. Biểu phí sàn lưu chung cho mọi người dùng, chỉ người có quyền Chỉnh sửa mới đổi được.
 
+## 4. Bộ dựng báo cáo thị trường TikTok — `tools/bao_cao_tiktok/`
+
+Dựng trang "Thị trường [ngành] TikTok" từ dữ liệu quét FastMoss + video TikTok trong chưa tới 1 giây: 5 nhóm, ma trận cơ hội, top SP kèm video/KOC, shop, thương hiệu nhà, so sánh với lần quét trước. Claude chỉ cần đọc bản tóm tắt ~20 KB để viết nhận định. Xem [HUONG_DAN.md](tools/bao_cao_tiktok/HUONG_DAN.md).
+
+```bash
+python3 -m tools.bao_cao_tiktok.chay --nganh tranh_lich --du-lieu du_lieu/tranh_lich/2026-10-10 --truoc du_lieu/tranh_lich/2026-09-26
+```
+
 ## Chạy test
 
 ```bash

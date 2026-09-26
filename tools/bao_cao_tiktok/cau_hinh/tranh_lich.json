@@ -1,0 +1,77 @@
+{
+  "_ghi_chu": "Cấu hình ngành tranh, liễn & lịch Tết. Mọi regex so trên tên SP đã bỏ dấu, chữ thường (đ -> d). Luật chia nhóm/ngách xét từ trên xuống, gặp luật khớp đầu tiên thì dừng.",
+  "tieu_de_trang": "Thị trường tranh & lịch TikTok",
+  "tieu_de_lon": "Thị trường <em>tranh, liễn</em> & lịch Tết",
+  "cho_ai": "Tường Vip, Nhà Sách Newshop, Sách Hay Newshop",
+  "giao_dien": {"nhan": "#A12F28", "nhan_dark": "#E8746B", "nha": "#8A6A1C", "nha_dark": "#D9B45A"},
+
+  "loc": {
+    "hang_muc": [
+      "Khung ảnh", "Áp phích & tài liệu in", "Hình dán trang trí", "Dụng cụ thuyết trình dùng trong văn phòng",
+      "Sách giáo dục sớm & sách mềm", "Đồ dùng học tập & giáo dục", "Đồ trang trí phong thủy",
+      "Đồ chơi trí tuệ & giáo dục sớm", "Sách tranh", "Đồ treo trang trí", "Đồ trang trí theo tôn giáo",
+      "Đồng hồ", "Lịch & Phụ kiện", "Đồ trang trí lễ hội", "Đồ trang trí", "Tấm & Biển hiệu", "Gương",
+      "Đồ chơi học ngôn ngữ", "Đồ chơi học toán học"
+    ],
+    "phai_co": "tranh|\\blich\\b|bloc|\\blien\\b|cau doi|trang guong|khung anh|in anh|anh go|chu cai|cuu chuong|thoi khoa bieu|ban do|poster|dong ho|thu phap",
+    "loai": "tang kem|khong ban|xep hinh|ghep hinh|mo hinh|to mau|so hoa|dinh da|phong nen|trung thu|puzzle|sticker|nhan dan|lich su|du lich|thanh lich|the tam duong|truyen tranh|tu lam|thu cong|tranh dan tuong tang|tranh tang ",
+    "ban_toi_thieu_28_ngay": 1
+  },
+
+  "nhom": [
+    {"ma": "giadinh", "ten": "Tranh gia đình, liễn & chữ", "mau": 1},
+    {"ma": "guong", "ten": "Tráng gương, phong thủy & tôn giáo", "mau": 2},
+    {"ma": "be", "ten": "Tranh & bảng học cho bé", "mau": 3},
+    {"ma": "lich", "ten": "Lịch Tết & lịch để bàn", "mau": 4},
+    {"ma": "decor", "ten": "Tranh decor dán tường", "mau": 5}
+  ],
+  "luat_nhom": [
+    {"nhom": "lich", "khop": "\\blich\\b|bloc", "tru": "thoi khoa bieu"},
+    {"nhom": "be", "khop": "thoi khoa bieu|cuu chuong|chu cai|song ngu|ban do|thi giac|14 chu de|12 chu de"},
+    {"nhom": "be", "khop": "cho be|hoc sinh|lop hoc|mam non|goc hoc tap", "tru": "ne nep|bo me|ba me|cha me|quy tac gia dinh|nhung dieu bo me|be ca|ho ca|anime"},
+    {"nhom": "giadinh", "khop": "ne nep|bo me|ba me|cha me|quy tac|\\blien\\b|cau doi|nhung dieu|dong luc|slogan|loi day|thu phap chu", "tru": "phong thuy|dong ho|phat"},
+    {"nhom": "guong", "khop": "trang guong|in anh|anh go|khung anh|mica|phong thuy|thu phap|phat|di lac|quan am|cuu huyen|ban tho|phong tho|bac ho|cong giao|chua giesu|duc me|thanh gia|quan the am|bo tat|dong ho|den 3d|\\bled\\b|son thuy|ma dao thanh cong"},
+    {"nhom": "decor", "khop": ""}
+  ],
+
+  "ngach": [
+    {"ten": "Thời khóa biểu", "nhom": "be", "khop": "thoi khoa bieu"},
+    {"ten": "Bảng cửu chương & phép tính", "nhom": "be", "khop": "cuu chuong|cong, tru|phep tinh"},
+    {"ten": "Bảng chữ cái điện tử", "nhom": "be", "khop": "chu cai.*(dien tu|thong minh|giong noi)|(dien tu|thong minh|giong noi).*chu cai|bang noi"},
+    {"ten": "Bản đồ", "nhom": "be", "khop": "ban do"},
+    {"ten": "Tranh chủ đề cho bé", "nhom": "be", "khop": "chu de|thi giac|song ngu"},
+    {"ten": "Góc học tập & động lực", "nhom": "be", "khop": ""},
+    {"ten": "Lịch để bàn", "nhom": "lich", "khop": "lich de ban|de ban.*lich|lich.*de ban|lich ban"},
+    {"ten": "Lịch treo tường & vạn niên", "nhom": "lich", "khop": "van nien|lich treo|lich sinh nhat"},
+    {"ten": "Bloc & lịch Tết", "nhom": "lich", "khop": ""},
+    {"ten": "Nề nếp & bố mẹ gửi con", "nhom": "giadinh", "khop": "ne nep|bo me|ba me|cha me|quy tac|nhung dieu|con nen"},
+    {"ten": "Động lực & slogan", "nhom": "giadinh", "khop": "dong luc|slogan|met thi nghi"},
+    {"ten": "Liễn thư pháp & câu đối", "nhom": "giadinh", "khop": ""},
+    {"ten": "Tranh đồng hồ", "nhom": "guong", "khop": "dong ho"},
+    {"ten": "Tranh thờ & Cửu Huyền", "nhom": "guong", "khop": "cuu huyen|ban tho|phong tho"},
+    {"ten": "Tranh Bác Hồ", "nhom": "guong", "khop": "bac ho"},
+    {"ten": "Phật & tôn giáo", "nhom": "guong", "khop": "phat|di lac|quan am|quan the am|cong giao|chua giesu|duc me|bo tat"},
+    {"ten": "In ảnh theo yêu cầu", "nhom": "guong", "khop": "in anh|theo yeu cau|anh go|khung anh|bo vien|chinh sua anh"},
+    {"ten": "Tranh gỗ, đèn 3D & LED", "nhom": "guong", "khop": "\\bled\\b|den 3d|3d trang guong|trang guong uv|go mdf"},
+    {"ten": "Phong thủy & thư pháp", "nhom": "guong", "khop": ""},
+    {"ten": "Poster", "nhom": "decor", "khop": "poster|anime"},
+    {"ten": "Decal bếp & 3D", "nhom": "decor", "khop": "dan bep|\\b3d\\b|decal"},
+    {"ten": "Canvas & đầu giường", "nhom": "decor", "khop": "dau giuong|canvas|phong canh|nghe thuat|\\d+ mau tranh"},
+    {"ten": "Set tranh dán tường", "nhom": "decor", "khop": ""}
+  ],
+
+  "shop_nha": {
+    "khop": "newtea|t[ưu][ờo]ng ?vip|newshop|tranh ?vip",
+    "da_xac_nhan": ["Tường Vip", "Nhà Sách Newshop", "Sách Hay Newshop", "Newteavn", "Xưởng Tranh Vip"]
+  },
+
+  "khung_gia": [
+    {"ten": "Dưới 50k", "den": 50000},
+    {"ten": "50–100k", "den": 100000},
+    {"ten": "100–200k", "den": 200000},
+    {"ten": "Từ 200k", "den": null}
+  ],
+
+  "bang": {"top_moi_nhom": 50, "chi_tiet_moi_nhom": 10, "ngach_toi_thieu_sp": 3, "top_video": 40, "top_koc": 40},
+  "tab_giu_lai": ["t40", "doithu", "koc"]
+}
