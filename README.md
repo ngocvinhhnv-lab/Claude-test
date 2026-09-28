@@ -72,11 +72,19 @@ Mở file Photoshop (.psd) hoặc ảnh (.jpg, .png) của tờ lịch, thay log
 
 Cách dùng: mở `app/maket-lich.html` bằng Chrome/Edge (để nguyên thư mục `app/thu-vien/` bên cạnh).
 
+Phần mềm có 4 tab: **Maket từng khách**, **Làm hàng loạt**, **Thiết kế mẫu**, **Demo lịch**.
+
 1. **File thiết kế**: kéo file PSD vào. Phần mềm đọc từng lớp (layer), gồm cả hiệu ứng thường dùng: đổ bóng, viền chữ, phủ màu, phủ chuyển màu vàng kim, mặt nạ, clipping.
-2. **Thông tin khách**: nhập tên, địa chỉ, điện thoại, email, chọn logo. Logo nền trắng được tự xoá nền. Ô để trống thì dòng đó ẩn đi.
-3. **Lớp trong file**: phần mềm tự đoán lớp chữ nào là tên, địa chỉ, điện thoại… theo tên lớp và nội dung. Chữ mới giữ nguyên phông, cỡ, màu, căn lề, hiệu ứng của lớp cũ; dài quá thì tự thu nhỏ cho vừa. “Khuôn chữ” giữ phần nhãn, ví dụ `Điện thoại: {}`.
-4. **Khung thông tin như mẫu**: với file ảnh JPG/PNG hoặc PSD không có lớp chữ, bật mục này để vẽ khung logo trái, tên to ở giữa, địa chỉ, dòng ĐT trái và Email phải. Chọn nền “Che kín thông tin cũ” để phủ header cũ có sẵn trong ảnh.
-5. **Phông chữ**: máy thiếu phông của file PSD thì tải file .ttf/.otf lên.
+2. **Khổ in & thông số file**: chọn khổ thành phẩm (A4, A3, 35×50, 40×60, A2, 50×70, 60×90 cm hoặc tự nhập), tràn lề, vùng an toàn. Ảnh lệch tỉ lệ khổ thì chọn “Cắt cho vừa khổ” hoặc “Thu vào khổ, thêm nền”. Bảng thông số cho biết kích thước px/cm, **DPI thực khi in** (đạt/tạm được/thấp), hệ màu, số lớp, phông chữ; bản xem có đường xén (đỏ) và vùng an toàn (xanh), chữ/logo sát mép được cảnh báo. File PSD xuất ra ghi đúng DPI theo khổ.
+3. **Thông tin khách**: mỗi dòng có nhãn (ví dụ “Hotline: ”) và nội dung; kéo ⠿ (hoặc phím mũi tên trên nút kéo) để **đổi thứ tự**, maket tự xếp lại. **+ Thêm dòng** / “Thêm nhanh” (Hotline, Zalo, Fanpage, MST, Chi nhánh, Slogan): với PSD, dòng thêm tự lấy kiểu chữ của file và xếp bên dưới; có thể kéo lại vị trí trên maket. Logo nền trắng được tự xoá nền. Ô trống thì dòng đó ẩn.
+4. **Lớp trong file**: phần mềm tự đoán lớp chữ nào là chỗ ghi thông tin theo tên lớp và nội dung. Các chỗ ghi được điền lần lượt theo thứ tự dòng (trên xuống, trái sang phải). Chữ mới giữ nguyên phông, cỡ, màu, căn lề, hiệu ứng; dài quá thì tự thu nhỏ.
+5. **Khung thông tin như mẫu**: với file ảnh JPG/PNG hoặc PSD không có lớp chữ, vẽ khung logo trái, dòng đầu là tên chữ to, dòng đánh dấu “Cùng hàng dòng trên” xếp ngang trái – phải. Nền “Che kín thông tin cũ” phủ header cũ có sẵn trong ảnh.
+6. **Phông chữ**: máy thiếu phông của file PSD thì tải file .ttf/.otf lên.
+7. **Bảng quy cách trên maket duyệt**: thêm dải dưới maket gồm khách hàng, sản phẩm, khổ, chất liệu, gia công, số lượng, ngày giao, đơn vị thực hiện và ô “Khách hàng duyệt” để ký.
+
+Tab **Thiết kế mẫu**: 8 phong cách vẽ sẵn (Sơn mài đỏ vàng, Thủy mặc, Mai đào rực rỡ, Hiện đại tối giản, Doanh nghiệp xanh, Đèn lồng phố cổ, Vàng kim sang trọng, Đồng quê bình yên), đổi năm (tự tính can chi, ngày Tết trên bloc), câu chúc, màu nhấn; dựng đúng khổ đã chọn ở 100/150/300 DPI. **Nhờ AI gợi ý**: gõ mô tả khách, Claude chọn phong cách, màu, câu chúc, slogan (mở file trên máy thì dùng gợi ý theo từ khoá). **Mẫu tương tự từ ảnh**: lấy bảng màu của ảnh mẫu, chọn phong cách gần nhất. “Dùng mẫu này” tạo file nhiều lớp như PSD thật, chữ và câu đối sửa được.
+
+Tab **Demo lịch**: ghép maket lên tường (sơn kem, xám, ốp gỗ, gạch) với nẹp thiếc vàng/bạc/đỏ, dây treo, bóng đổ, đúng tỉ lệ khổ thành phẩm (đã bỏ tràn lề); có thể vẽ thêm bloc lịch và chỉnh vị trí, cỡ; tải ảnh demo gửi khách.
 
 **Sửa chi tiết trên maket** (thanh công cụ trên khung xem trước):
 
