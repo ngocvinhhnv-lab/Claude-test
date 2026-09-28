@@ -196,6 +196,8 @@ dialog.lb::backdrop{background:var(--scrim)}
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:18px}
 .chip{border:1px solid var(--line);background:var(--sheet);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:500;cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+.chip.chip-sug{border-color:var(--cyan);color:var(--cyan);font-weight:600}
+.chip.chip-sug[aria-pressed="true"]{background:var(--cyan);border-color:var(--cyan);color:#fff}
 .toolbar input{margin-left:auto;min-width:200px;background:var(--sheet);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:13px}
 .lib-title{font-family:var(--ff-d);font-size:26px;letter-spacing:-.01em;margin:30px 0 4px}
 .lib-sub{color:var(--muted);margin:0 0 14px;font-size:13.5px}
@@ -563,7 +565,7 @@ function card(t){
   stage.appendChild(buildFrame(t));
   const body=document.createElement("div"); body.className="body";
   body.innerHTML=`
-    <div><span class="flag">Được gợi ý cho bạn</span><h4>${esc(t.name)}</h4><div class="meta">Tỉ lệ ${t.ratio}</div></div>
+    <div><span class="flag">Được gợi ý cho bạn</span><h4>${esc(t.name)}</h4><div class="meta">Tỉ lệ ${t.ratio}<span data-adapt></span></div></div>
     <p class="use">${esc(t.use)}</p>
     <ul class="check">${t.check.map((x,i)=>`<li><input type="checkbox" id="c-${t.id}-${i}"><label for="c-${t.id}-${i}">${esc(x)}</label></li>`).join("")}</ul>
     <details class="prompt"><summary>Prompt mẫu</summary><div class="ptext"></div></details>
@@ -580,7 +582,8 @@ function card(t){
     if(a.dataset.act==="gen"){loadIntoStudio({src:t,text:fillBody(t),ratio:t.ratio}); generate()}
     if(a.dataset.act==="load"){loadIntoStudio({src:t,text:fillBody(t),ratio:t.ratio}); $("s-prompt").focus()}
   });
-  c._refresh=()=>{pt.innerHTML=promptHTML(t)};
+  const ad=body.querySelector("[data-adapt]");
+  c._refresh=()=>{pt.innerHTML=promptHTML(t); ad.textContent=t.adapted?" · prompt đã chỉnh theo sản phẩm":""};
   c._refresh();
   return c;
 }
@@ -599,20 +602,28 @@ GROUPS.forEach(g=>{
 // filters
 let active="Tất cả";
 const chipsEl=$("chips");
-["Tất cả",...GROUPS].forEach(g=>{
-  const b=document.createElement("button"); b.type="button"; b.className="chip"; b.textContent=g;
-  b.setAttribute("aria-pressed",g===active);
-  b.onclick=()=>{active=g;chipsEl.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x.textContent===g));applyFilter()};
-  chipsEl.appendChild(b);
-});
+function renderChips(){
+  const hasSug=document.querySelector(".card.suggested")!==null;
+  if(!hasSug&&active==="Hợp với sản phẩm") active="Tất cả";
+  chipsEl.innerHTML="";
+  [...(hasSug?["Hợp với sản phẩm"]:[]),"Tất cả",...GROUPS].forEach(g=>{
+    const b=document.createElement("button"); b.type="button"; b.className="chip"+(g==="Hợp với sản phẩm"?" chip-sug":""); b.textContent=g;
+    b.setAttribute("aria-pressed",g===active);
+    b.onclick=()=>setLibFilter(g);
+    chipsEl.appendChild(b);
+  });
+  applyFilter();
+}
+function setLibFilter(g){active=g;chipsEl.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x.textContent===g));applyFilter()}
 const q=$("q");
 q.addEventListener("input",applyFilter);
+renderChips();
 function applyFilter(){
   const term=q.value.trim().toLowerCase(); let shown=0;
   document.querySelectorAll("section.group").forEach(s=>{
     let n=0;
     s.querySelectorAll(".card").forEach(c=>{
-      const ok=(active==="Tất cả"||c.dataset.g===active)&&(!term||c.dataset.search.includes(term));
+      const ok=(active==="Tất cả"||c.dataset.g===active||(active==="Hợp với sản phẩm"&&c.classList.contains("suggested")))&&(!term||c.dataset.search.includes(term));
       c.classList.toggle("hidden",!ok); if(ok) n++;
     });
     s.classList.toggle("hidden",n===0); shown+=n;
@@ -755,8 +766,7 @@ function sMsg(t,kind){const m=$("s-msg");m.className="s-msg"+(kind?" "+kind:"");
 
 // ---------- ảnh sản phẩm thật (nhiều ảnh, lưu trong trình duyệt) ----------
 const MAX_PROD=4;
-const SUG={status:"idle",data:null,msg:"",via:""};
-try{const d=JSON.parse(store.get("xa-sug")||"null"); if(d&&d.data){SUG.status="done";SUG.data=d.data;SUG.via=d.via||""}}catch(e){}
+const SUG={status:"idle",data:null,msg:"",via:"",adapt:{},prev:null,applied:false,picks:[],msgs:[]};
 const prodFile=$("prod-file");
 function renderProducts(){
   const canva=S.engine==="canva", n=S.products.length, full=n>=MAX_PROD;
@@ -765,7 +775,7 @@ function renderProducts(){
              :`<button type="button" class="pup big" data-up><i>⤒</i>Tải ảnh sản phẩm lên</button>`;
   const html=`<div class="prods-top"><b>Ảnh sản phẩm thật${n?` (${n}/${MAX_PROD})`:""}</b><span>${n?"Gửi kèm mỗi lần tạo để giữ đúng nhãn":"Kéo thả hoặc bấm tải, tối đa "+MAX_PROD+" ảnh (nhiều góc chụp)"}</span></div>
     <div class="prods-row">${thumbs}${add}</div>
-    ${SUG.status==="loading"?`<p class="pbusy">Đang đọc ảnh để gợi ý brief…</p>`:""}
+    ${SUG.status==="loading"?`<p class="pbusy">Đang đọc ảnh, chọn mẫu và điền brief…</p>`:""}
     ${canva&&n?`<p class="pwarn">Canva trong Claude chưa nhận ảnh đính kèm. Chọn Gemini hoặc OpenAI để AI dùng ảnh sản phẩm này.</p>`:""}`;
   document.querySelectorAll("[data-prods]").forEach(el=>{el.innerHTML=html});
   renderSug();
@@ -1308,9 +1318,11 @@ sel.addEventListener("change",()=>{tool=sel.value;store.set("brief-tool",tool);r
 $("fill-demo").onclick=()=>setAll(DEMO);
 $("clear").onclick=()=>setAll({});
 
-/* ---------- gợi ý brief từ ảnh sản phẩm ---------- */
-const SUG_FIELDS=[["thuong_hieu","Thương hiệu"],["san_pham","Sản phẩm"],["mau_chu_dao","Màu chủ đạo"],["phong_cach","Phong cách"]];
+/* ---------- tự chọn mẫu và điền brief từ ảnh sản phẩm ---------- */
+const SUG_FIELDS=[["thuong_hieu","Thương hiệu"],["san_pham","Sản phẩm"],["mau_chu_dao","Màu chủ đạo"],["phong_cach","Phong cách"],["thong_diep","Thông điệp"]];
 const VISION={gemini:["gemini-3.5-flash","gemini-3-flash-preview","gemini-2.5-flash"],openai:["gpt-5-mini","gpt-4.1-mini","gpt-4o-mini"]};
+const SUG_CHIP="Hợp với sản phẩm";
+TYPES.forEach(t=>{t.p0=t.p});
 let sugCtl=null;
 function sugVia(){
   if(sampleFn) return "claude";
@@ -1318,39 +1330,35 @@ function sugVia(){
   return null;
 }
 const VIA_NAME={claude:"Claude",gemini:"Gemini",openai:"OpenAI"};
-function setField(k,v){
-  const el=document.querySelector(`[data-key="${k}"]`); if(!el) return;
-  el.value=v; vals[k]=v; afterBrief();
-}
+function saveSug(){store.set("xa-sug",JSON.stringify({data:SUG.data,via:SUG.via,adapt:SUG.adapt,prev:SUG.prev,applied:SUG.applied,picks:SUG.picks}))}
 function sugAsk(){
-  const v=k=>(vals[k]||"").trim();
-  return `Bạn là art director và chuyên gia marketing tại Việt Nam. Các ảnh đính kèm là ảnh chụp thật của MỘT sản phẩm (có thể nhiều góc). Đọc kỹ ảnh rồi gợi ý thông tin brief để tạo ảnh quảng cáo cho đúng sản phẩm này.
+  const lib=TYPES.map(t=>`- id: ${t.id} | ${t.name} | tỉ lệ ${t.ratio} | dùng cho: ${t.use}\n  prompt mẫu: ${t.p0}`).join("\n");
+  return `Bạn là art director tại Việt Nam. Các ảnh đính kèm là ảnh chụp thật của MỘT sản phẩm (có thể nhiều góc).
+Nhiệm vụ: đọc ảnh, rồi CHỈ CHỌN trong thư viện mẫu dưới đây 3 mẫu hợp nhất để làm ảnh quảng cáo cho sản phẩm này, và chỉnh prompt của từng mẫu cho khớp sản phẩm.
 
-Brief hiện tại (chỉ để tham khảo, có thể đang ghi cho sản phẩm khác):
-- Thương hiệu: ${v("thuong_hieu")||"trống"}
-- Sản phẩm: ${v("san_pham")||"trống"}
-- Màu chủ đạo: ${v("mau_chu_dao")||"trống"}
-- Phong cách: ${v("phong_cach")||"trống"}
-- Thông điệp: ${v("thong_diep")||"trống"}
+THƯ VIỆN MẪU:
+${lib}
 
-Danh sách mẫu ấn phẩm (id | tên | tỉ lệ):
-${TYPES.map(t=>`${t.id} | ${t.name} | ${t.ratio}`).join("\n")}
+Quy tắc chỉnh prompt mẫu:
+- Giữ nguyên loại ấn phẩm, tỉ lệ, bố cục, vị trí chủ thể và thứ tự các câu của prompt mẫu.
+- Giữ nguyên các chỗ giữ trong ngoặc nhọn {thuong_hieu}, {san_pham}, {mau_chu_dao}, {phong_cach}, {thong_diep} (trang sẽ tự điền), không viết thẳng giá trị vào.
+- Thay những đạo cụ, bối cảnh, nhân vật, hành động hoặc chữ cố định không hợp với sản phẩm này (VD: nước bắn, chạy bộ, "Bù khoáng", "GIẢM 30%") bằng thứ hợp với sản phẩm và dịp dùng của nó.
+- Viết tiếng Việt, cùng độ dài với prompt mẫu.
 
-Chỉ trả về JSON đúng dạng, tất cả bằng tiếng Việt:
+Chỉ trả về JSON đúng dạng:
 {"thuong_hieu":"tên thương hiệu đọc được trên sản phẩm/bao bì; không đọc được thì để rỗng",
-"san_pham":"mô tả ngoại hình để model tạo ảnh vẽ lại đúng: loại sản phẩm, chất liệu, hình dáng, kích thước ước lượng, màu, nhãn và hoạ tiết nổi bật; 1–2 câu",
-"mau_chu_dao":"2–3 màu nên dùng cho ảnh quảng cáo, hợp với sản phẩm, kèm mã HEX",
+"san_pham":"mô tả ngoại hình để model tạo ảnh vẽ lại đúng: loại, chất liệu, hình dáng, kích thước ước lượng, màu, nhãn và hoạ tiết nổi bật; 1–2 câu",
+"mau_chu_dao":"2–3 màu hợp với sản phẩm, kèm mã HEX",
 "phong_cach":"3–6 từ",
-"thong_diep":["3 tiêu đề ngắn, tối đa 7 chữ, hấp dẫn, không hứa hẹn sai sự thật"],
-"chu_can_giu":"chữ in trên sản phẩm cần giữ nguyên khi tạo ảnh, ghi chính xác; không có thì rỗng",
-"mau_phu_hop":[{"id":"id trong danh sách","ly_do":"1 câu"}],
-"nhan_xet":"1 câu: ảnh đã đủ tốt làm ảnh sản phẩm tham chiếu chưa (nét, sáng, nền gọn) và nên chụp thêm góc nào"}
-"mau_phu_hop" chọn đúng 3 mẫu phù hợp nhất.`;
+"thong_diep":["3 tiêu đề ngắn, tối đa 7 chữ, không hứa hẹn sai sự thật"],
+"chu_can_giu":"chữ in trên sản phẩm cần giữ nguyên, ghi chính xác; không có thì rỗng",
+"mau":[{"id":"id trong thư viện","ly_do":"1 câu","prompt":"prompt mẫu đã chỉnh, còn nguyên các chỗ {…}"}]}
+"mau" có đúng 3 phần tử, xếp mẫu hợp nhất lên đầu.`;
 }
 function parseJSONLoose(t){
   if(t&&typeof t==="object") return t;
   t=String(t||"").trim().replace(/^```(?:json)?/i,"").replace(/```$/,"").trim();
-  try{return JSON.parse(t)}catch(_){const m=t.match(/\{[\s\S]*\}/); if(m) return JSON.parse(m[0]); throw new GenError("Kết quả gợi ý chưa đúng định dạng. Bấm Gợi ý lại.","json")}
+  try{return JSON.parse(t)}catch(_){const m=t.match(/\{[\s\S]*\}/); if(m) return JSON.parse(m[0]); throw new GenError("Kết quả gợi ý chưa đúng định dạng. Bấm Đọc lại ảnh.","json")}
 }
 async function visionGemini(ask,blobs,signal){
   const key=keyOf("gemini"); const parts=[{text:ask}];
@@ -1362,7 +1370,7 @@ async function visionGemini(ask,blobs,signal){
     const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body,signal});
     const j=await r.json().catch(()=>({})); const msg=j.error&&j.error.message||("HTTP "+r.status);
     if(r.status===404){last=msg;continue}
-    if(!r.ok) throw new GenError(r.status===429?"Gemini báo hết hạn mức, đợi một lúc rồi bấm Gợi ý lại.":"Gemini báo lỗi khi đọc ảnh: "+msg,"api");
+    if(!r.ok) throw new GenError(r.status===429?"Gemini báo hết hạn mức, đợi một lúc rồi bấm Đọc lại ảnh.":"Gemini báo lỗi khi đọc ảnh: "+msg,"api");
     store.set("xa-vision-gemini",m);
     const txt=((j.candidates||[])[0]?.content?.parts||[]).map(p=>p.text).filter(Boolean).join("");
     return parseJSONLoose(txt);
@@ -1379,11 +1387,51 @@ async function visionOpenAI(ask,blobs,signal){
       body:JSON.stringify({model:m,messages:[{role:"user",content}],response_format:{type:"json_object"}}),signal});
     const j=await r.json().catch(()=>({})); const msg=j.error&&j.error.message||("HTTP "+r.status);
     if(r.status===404||(j.error&&j.error.code==="model_not_found")){last=msg;continue}
-    if(!r.ok) throw new GenError(r.status===401?"OpenAI API key không hợp lệ.":r.status===429?"OpenAI báo hết hạn mức, đợi một lúc rồi bấm Gợi ý lại.":"OpenAI báo lỗi khi đọc ảnh: "+msg,"api");
+    if(!r.ok) throw new GenError(r.status===401?"OpenAI API key không hợp lệ.":r.status===429?"OpenAI báo hết hạn mức, đợi một lúc rồi bấm Đọc lại ảnh.":"OpenAI báo lỗi khi đọc ảnh: "+msg,"api");
     store.set("xa-vision-openai",m);
     return parseJSONLoose(j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content);
   }
   throw new GenError("Key OpenAI chưa dùng được model đọc ảnh nào. "+last,"model");
+}
+
+// Mẫu: gắn prompt đã chỉnh theo sản phẩm (vẫn giữ chỗ {…} để brief sửa sau vẫn chạy)
+function applyAdapt(){
+  TYPES.forEach(t=>{t.p=t.p0; t.adapted=false});
+  if(SUG.applied) Object.entries(SUG.adapt||{}).forEach(([id,p])=>{const t=TYPES.find(x=>x.id===id); if(t&&p){t.p=p; t.adapted=true}});
+  clearSuggest();
+  if(SUG.applied) (SUG.picks||[]).forEach(id=>{const c=document.querySelector(`.card[data-id="${id}"]`); if(c) c.classList.add("suggested")});
+  cards.forEach(c=>c._refresh()); renderChips();
+}
+function cleanAdapted(p){
+  p=String(p||"").trim(); if(!p) return "";
+  if(!p.includes("{san_pham}")) return "";            // AI viết thẳng giá trị: bỏ, dùng prompt gốc
+  return p.replace(/\{(\w+)\}/g,(m,k)=>LABELS[k]?m:"");  // bỏ chỗ giữ lạ
+}
+function applySuggestion(data){
+  const prev={}; ["thuong_hieu","san_pham","mau_chu_dao","phong_cach","thong_diep","them"].forEach(k=>prev[k]=vals[k]||"");
+  const msgs=(Array.isArray(data.thong_diep)?data.thong_diep:[data.thong_diep]).map(x=>String(x||"").trim()).filter(Boolean);
+  const next={...prev};
+  ["thuong_hieu","san_pham","mau_chu_dao","phong_cach"].forEach(k=>{const v=String(data[k]||"").trim(); if(v) next[k]=v});
+  if(msgs[0]) next.thong_diep=msgs[0];
+  const keep=String(data.chu_can_giu||"").trim();
+  if(keep&&!next.them.includes(keep)) next.them=(next.them.trim()+` Giữ nguyên chữ in trên sản phẩm: "${keep}".`).trim();
+  const picks=[], adapt={};
+  (data.mau||data.mau_phu_hop||[]).forEach(x=>{const id=String(x&&x.id||x); if(TYPES.some(t=>t.id===id)&&!picks.includes(id)){picks.push(id); const p=cleanAdapted(x&&x.prompt); if(p) adapt[id]=p}});
+  SUG.prev=prev; SUG.picks=picks.slice(0,3); SUG.adapt=adapt; SUG.applied=true; SUG.msgs=msgs;
+  inputs.forEach(i=>{const k=i.dataset.key; if(k in next){i.value=next[k]; vals[k]=next[k]}});
+  store.set("brief-vals",JSON.stringify(vals));
+  applyAdapt(); afterBrief();
+  const top=TYPES.find(t=>t.id===SUG.picks[0]);
+  if(top){loadIntoStudio({src:top,text:fillBody(top),ratio:top.ratio}); setLibFilter(SUG_CHIP)}
+  sMsg(top?`Đã đọc ảnh: chọn mẫu "${top.name}" và điền brief theo sản phẩm. Kiểm tra lại rồi bấm Tạo ảnh.`:"Đã điền brief theo sản phẩm.","ok");
+}
+function undoSuggestion(){
+  if(!SUG.prev) return;
+  inputs.forEach(i=>{const k=i.dataset.key; if(k in SUG.prev){i.value=SUG.prev[k]; vals[k]=SUG.prev[k]}});
+  SUG.applied=false; saveSug(); applyAdapt(); afterBrief();
+  if(active===SUG_CHIP) setLibFilter("Tất cả");
+  if(S.src&&!S.dirty) $("s-prompt").value=fillBody(S.src);
+  sMsg("Đã hoàn tác: brief và prompt mẫu trở lại như trước khi đọc ảnh.");
 }
 async function suggestFromProducts(){
   if(!S.products.length) return;
@@ -1391,6 +1439,8 @@ async function suggestFromProducts(){
   if(!via){SUG.status="need";renderProducts();return}
   if(sugCtl) sugCtl.abort();
   sugCtl=new AbortController(); const signal=sugCtl.signal;
+  // đọc lại từ trạng thái gốc để không chồng gợi ý cũ
+  if(SUG.applied&&SUG.prev){inputs.forEach(i=>{const k=i.dataset.key; if(k in SUG.prev){i.value=SUG.prev[k]; vals[k]=SUG.prev[k]}}); SUG.applied=false; applyAdapt()}
   SUG.status="loading"; SUG.msg=""; SUG.via=via; renderProducts();
   try{
     const blobs=S.products.map(p=>p.blob);
@@ -1400,15 +1450,14 @@ async function suggestFromProducts(){
       data=parseJSONLoose(await sampleFn.json(sugAsk(),{images:blobs.slice(0,max),signal}));
     }else if(via==="gemini") data=await visionGemini(sugAsk(),blobs,signal);
     else data=await visionOpenAI(sugAsk(),blobs,signal);
-    if(!data||typeof data!=="object") throw new GenError("Chưa đọc được ảnh. Bấm Gợi ý lại.","empty");
-    SUG.status="done"; SUG.data=data; store.set("xa-sug",JSON.stringify({data,via}));
-    const ids=(data.mau_phu_hop||[]).map(x=>String(x&&x.id||x));
-    clearSuggest(); ids.forEach(id=>{const c=document.querySelector(`.card[data-id="${id}"]`); if(c) c.classList.add("suggested")});
+    if(!data||typeof data!=="object") throw new GenError("Chưa đọc được ảnh. Bấm Đọc lại ảnh.","empty");
+    SUG.status="done"; SUG.data=data;
+    applySuggestion(data); saveSug();
   }catch(e){
     if(e&&e.code==="cancelled"||signal.aborted){return}
     SUG.status="error";
-    SUG.msg=e instanceof GenError?e.message:(e&&ERR[e.code])||("Chưa gợi ý được"+(e&&e.message?": "+e.message:"")+". Bấm Gợi ý lại.");
-    if(e&&HIDE.includes(e.code)){sampleFn=null; SUG.msg="Claude không đọc ảnh được ở đây. Dán API key Gemini hoặc OpenAI ở Xưởng tạo ảnh rồi bấm Gợi ý lại."}
+    SUG.msg=e instanceof GenError?e.message:(e&&ERR[e.code])||("Chưa đọc được ảnh"+(e&&e.message?": "+e.message:"")+". Bấm Đọc lại ảnh.");
+    if(e&&HIDE.includes(e.code)){sampleFn=null; SUG.msg="Claude không đọc ảnh được ở đây. Dán API key Gemini hoặc OpenAI ở Xưởng tạo ảnh rồi bấm Đọc lại ảnh."}
   }finally{ if(sugCtl&&sugCtl.signal===signal) sugCtl=null; renderProducts() }
 }
 function renderSug(){
@@ -1416,46 +1465,44 @@ function renderSug(){
   const has=S.products.length>0;
   box.classList.toggle("hidden",!has);
   if(!has) return;
-  const via=sugVia(), again=`<button class="btn" type="button" data-sug="run" ${via&&SUG.status!=="loading"?"":"disabled"}>${SUG.data?"Gợi ý lại":"Gợi ý từ ảnh"}</button>`;
-  const head=`<div class="sug-head"><b>Gợi ý từ ảnh sản phẩm</b>${again}</div>`;
-  if(SUG.status==="loading"){box.innerHTML=head+`<p class="sug-load">${esc(VIA_NAME[SUG.via]||"AI")} đang đọc ảnh và viết gợi ý, thường mất 5–30 giây…</p>`;return}
-  if(!via&&!SUG.data){box.innerHTML=head+`<p class="sug-note">Để AI tự đọc ảnh và gợi ý brief: dán API key Gemini hoặc OpenAI ở khung Xưởng tạo ảnh${IN_CLAUDE?"":", hoặc mở trang trong Claude"}, rồi bấm Gợi ý từ ảnh.</p>`;return}
-  if(SUG.status==="error"&&!SUG.data){box.innerHTML=head+`<p class="sug-err">${esc(SUG.msg)}</p>`;return}
-  if(!SUG.data){box.innerHTML=head;return}
-  const d=SUG.data, cur=k=>(vals[k]||"").trim();
-  const rows=SUG_FIELDS.filter(([k])=>String(d[k]||"").trim()).map(([k,l])=>{
-    const v=String(d[k]).trim(), same=cur(k)===v;
-    return `<div class="sug-row"><small>${l}</small><p>${esc(v)}</p>${same?`<span class="on">✓ Đang dùng</span>`:`<button class="btn" type="button" data-use="${k}">Dùng</button>`}</div>`;
-  }).join("");
-  const msgs=(Array.isArray(d.thong_diep)?d.thong_diep:[d.thong_diep]).map(x=>String(x||"").trim()).filter(Boolean).slice(0,4);
-  const msgRow=msgs.length?`<div class="sug-row"><small>Thông điệp · bấm để dùng</small><div class="sug-chips">${msgs.map((m,i)=>`<button type="button" class="sug-chip" data-msg="${i}" aria-pressed="${cur("thong_diep")===m}">${esc(m)}</button>`).join("")}</div></div>`:"";
-  const keep=String(d.chu_can_giu||"").trim(), keepLine=keep?`Giữ nguyên chữ in trên sản phẩm: "${keep}".`:"";
-  const keepRow=keep?`<div class="sug-row"><small>Chữ trên sản phẩm cần giữ</small><p>"${esc(keep)}"</p>${cur("them").includes(keep)?`<span class="on">✓ Đã thêm</span>`:`<button class="btn" type="button" data-keep>Thêm vào yêu cầu</button>`}</div>`:"";
-  const tpl=(d.mau_phu_hop||[]).map(x=>({id:String(x&&x.id||x),why:String(x&&x.ly_do||"")})).map(x=>({...x,t:TYPES.find(t=>t.id===x.id)})).filter(x=>x.t).slice(0,3);
-  const tplRow=tpl.length?`<div class="sug-row"><small>Mẫu hợp với sản phẩm · bấm để tạo ảnh</small><div class="sug-chips">${tpl.map(x=>`<button type="button" class="sug-chip" data-tpl="${x.id}" title="${esc(x.why)}">${esc(x.t.name)} · ${x.t.ratio}</button>`).join("")}</div></div>`:"";
-  const note=String(d.nhan_xet||"").trim();
-  box.innerHTML=head+rows+msgRow+keepRow+tplRow+
-    `<button class="btn primary" type="button" data-sug="all">Điền tất cả vào brief</button>`+
-    (note?`<p class="sug-note">Nhận xét ảnh: ${esc(note)}</p>`:"")+
+  const via=sugVia(), busy=SUG.status==="loading";
+  const again=`<button class="btn" type="button" data-sug="run" ${via&&!busy?"":"disabled"}>${SUG.data?"Đọc lại ảnh":"Đọc ảnh"}</button>`;
+  const head=`<div class="sug-head"><b>Tự chọn mẫu từ ảnh</b>${again}</div>`;
+  if(busy){box.innerHTML=head+`<p class="sug-load">${esc(VIA_NAME[SUG.via]||"AI")} đang đọc ảnh, chọn mẫu trong thư viện và điền brief… thường mất 10–40 giây.</p>`;return}
+  if(!via&&!SUG.data){box.innerHTML=head+`<p class="sug-note">Để hệ thống tự đọc ảnh, chọn mẫu và điền brief: dán API key Gemini hoặc OpenAI ở khung Xưởng tạo ảnh${IN_CLAUDE?"":", hoặc mở trang trong Claude"}, rồi bấm Đọc ảnh.</p>`;return}
+  if(!SUG.data){box.innerHTML=head+(SUG.status==="error"?`<p class="sug-err">${esc(SUG.msg)}</p>`:`<p class="sug-note">Bấm Đọc ảnh để hệ thống chọn mẫu và điền brief.</p>`);return}
+  if(!SUG.applied){
+    box.innerHTML=head+`<p class="sug-note">Đã hoàn tác gợi ý từ ảnh.</p><button class="btn primary" type="button" data-sug="reapply">Áp dụng lại gợi ý</button>`+(SUG.status==="error"?`<p class="sug-err">${esc(SUG.msg)}</p>`:"");
+    return;
+  }
+  const picks=(SUG.picks||[]).map(id=>TYPES.find(t=>t.id===id)).filter(Boolean);
+  const why=id=>{const x=(SUG.data.mau||SUG.data.mau_phu_hop||[]).find(m=>String(m&&m.id)===id); return x&&x.ly_do?String(x.ly_do):""};
+  const curSrc=S.src&&S.src.id;
+  const tplRow=picks.length?`<div class="sug-row"><small>Mẫu đã chọn · bấm để đổi</small><div class="sug-chips">${picks.map(t=>`<button type="button" class="sug-chip" data-tpl="${t.id}" aria-pressed="${curSrc===t.id}" title="${esc(why(t.id))}">${esc(t.name)} · ${t.ratio}</button>`).join("")}</div>${curSrc&&why(curSrc)?`<p class="sug-note" style="grid-column:1/-1">${esc(why(curSrc))}</p>`:""}</div>`:"";
+  const msgs=SUG.msgs||(Array.isArray(SUG.data.thong_diep)?SUG.data.thong_diep:[]).map(x=>String(x||"").trim()).filter(Boolean);
+  const cur=(vals.thong_diep||"").trim();
+  const msgRow=msgs.length>1?`<div class="sug-row"><small>Thông điệp · bấm để đổi</small><div class="sug-chips">${msgs.slice(0,4).map((m,i)=>`<button type="button" class="sug-chip" data-msg="${i}" aria-pressed="${cur===m}">${esc(m)}</button>`).join("")}</div></div>`:"";
+  const filled=SUG_FIELDS.filter(([k])=>SUG.prev&&(vals[k]||"")!==(SUG.prev[k]||"")).map(([,l])=>l);
+  box.innerHTML=head+tplRow+msgRow+
+    `<p class="sug-note">Đã tự điền: ${filled.length?esc(filled.join(", ")):"không đổi ô nào"}${Object.keys(SUG.adapt||{}).length?". Prompt của các mẫu đã chọn được chỉnh theo sản phẩm":""}. Muốn sửa thì sửa thẳng trong các ô brief hoặc ô prompt.</p>`+
+    `<div class="sug-chips"><button class="btn" type="button" data-sug="undo">Hoàn tác</button></div>`+
     (SUG.status==="error"?`<p class="sug-err">${esc(SUG.msg)}</p>`:"")+
-    `<p class="sug-note">Gợi ý bởi ${esc(VIA_NAME[SUG.via]||"AI")}. Luôn soát lại tên thương hiệu và chữ trước khi dùng.</p>`;
-  box._keepLine=keepLine; box._msgs=msgs;
+    `<p class="sug-note">Đọc bởi ${esc(VIA_NAME[SUG.via]||"AI")}. Soát lại tên thương hiệu và chữ trên ảnh trước khi dùng.</p>`;
+  box._msgs=msgs;
 }
 $("sug").addEventListener("click",e=>{
-  const b=e.target.closest("button"); if(!b) return; const box=$("sug"), d=SUG.data||{};
+  const b=e.target.closest("button"); if(!b) return; const box=$("sug");
   if(b.dataset.sug==="run"){suggestFromProducts();return}
-  if(b.dataset.use){setField(b.dataset.use,String(d[b.dataset.use]).trim())}
-  if(b.dataset.msg!=null){setField("thong_diep",box._msgs[+b.dataset.msg])}
-  if(b.hasAttribute("data-keep")){const t=(vals.them||"").trim(); setField("them",(t?t+" ":"")+box._keepLine)}
-  if(b.dataset.tpl){const t=TYPES.find(x=>x.id===b.dataset.tpl); if(t){loadIntoStudio({src:t,text:fillBody(t),ratio:t.ratio}); sMsg("Đã đưa mẫu "+t.name+" lên xưởng. Bấm Tạo ảnh khi sẵn sàng.")}return}
-  if(b.dataset.sug==="all"){
-    SUG_FIELDS.forEach(([k])=>{const v=String(d[k]||"").trim(); if(v){const el=document.querySelector(`[data-key="${k}"]`); el.value=v; vals[k]=v}});
-    if(box._msgs&&box._msgs[0]){$("f-thong_diep").value=box._msgs[0]; vals.thong_diep=box._msgs[0]}
-    if(box._keepLine&&!(vals.them||"").includes(String(d.chu_can_giu).trim())){vals.them=((vals.them||"").trim()+" "+box._keepLine).trim(); $("f-them").value=vals.them}
-    afterBrief(); sMsg("Đã điền gợi ý vào brief. Mọi prompt đã cập nhật theo sản phẩm mới.","ok");
-  }
+  if(b.dataset.sug==="undo"){undoSuggestion();return}
+  if(b.dataset.sug==="reapply"){applySuggestion(SUG.data);saveSug();renderSug();return}
+  if(b.dataset.msg!=null){const el=$("f-thong_diep"); el.value=box._msgs[+b.dataset.msg]; vals.thong_diep=el.value; afterBrief()}
+  if(b.dataset.tpl){const t=TYPES.find(x=>x.id===b.dataset.tpl); if(t){loadIntoStudio({src:t,text:fillBody(t),ratio:t.ratio}); sMsg(`Đã đổi sang mẫu "${t.name}". Bấm Tạo ảnh khi sẵn sàng.`)}}
   renderSug();
 });
+function restoreSug(){
+  try{const d=JSON.parse(store.get("xa-sug")||"null"); if(d&&d.data){Object.assign(SUG,{status:"done",data:d.data,via:d.via||"",adapt:d.adapt||{},prev:d.prev||null,applied:!!d.applied,picks:d.picks||[]});
+    SUG.msgs=(Array.isArray(d.data.thong_diep)?d.data.thong_diep:[]).map(x=>String(x||"").trim()).filter(Boolean); applyAdapt()}}catch(e){}
+}
 
 /* ---------- boot ---------- */
 (function boot(){
@@ -1464,7 +1511,7 @@ $("sug").addEventListener("click",e=>{
   const first=TYPES[0];
   S.src=first; S.ratio=first.ratio; $("s-prompt").value=fillBody(first);
   renderRatio(); renderSrc(); renderEngines(); renderResults(); syncRefSlot();
-  loadHistory(); loadProducts();
+  restoreSug(); loadHistory(); loadProducts();
 })();
 
 (async()=>{
