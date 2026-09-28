@@ -144,6 +144,24 @@ aside p.hint{color:var(--muted);font-size:13px;margin:0 0 14px}
 .ref-details summary{cursor:pointer;font-size:12.5px;font-weight:600}
 .ref-details dl.ana{margin:6px 0 0;font-size:12.5px;grid-template-columns:90px 1fr}
 .stage.mystage{padding:10px}
+.tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tabs [role=tab]{display:inline-flex;align-items:center;gap:8px;border:1px solid transparent;border-bottom:0;background:none;border-radius:6px 6px 0 0;padding:10px 16px;font-family:var(--ff-d);font-size:16px;font-weight:700;color:var(--muted);cursor:pointer;margin-bottom:-1px}
+.tabs [role=tab] i{font-style:normal;color:var(--mag)}
+.tabs [role=tab][aria-selected="true"]{background:var(--sheet);border-color:var(--line);color:var(--ink)}
+.tabs [role=tab]:hover{color:var(--ink)}
+.edit-eng{display:flex;align-items:center;gap:6px}
+.edit-eng select{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:6px 8px;font-size:13px}
+.dropzone{border:2px dashed var(--mag);border-radius:8px;background:var(--mag-soft);padding:28px 18px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.dropzone span{font-size:13px;color:var(--muted)}
+.dropzone .pup.big{background:var(--mag);border-color:var(--mag);color:#fff;font-size:15px;padding:12px 20px}
+.dropzone.drag{box-shadow:0 0 0 4px var(--mag);background:var(--sheet)}
+.edit-what{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.edit-what li{display:grid;grid-template-columns:auto 1fr;gap:0 10px;align-items:start;background:var(--paper);border-radius:6px;padding:10px 12px}
+.edit-what i{grid-row:span 2;font-style:normal;font-size:18px;color:var(--mag);width:24px;text-align:center}
+.edit-what b{font-size:13.5px}
+.edit-what span{font-size:12.5px;color:var(--muted)}
+.picklist .shot-img{cursor:pointer}
+.picklist .shot figcaption{gap:4px}
 .layoutbox{border-color:var(--wire-2);background:var(--paper)}
 .layoutbox .pup{border-color:var(--ink);color:var(--ink)}
 .layoutbox .pup.big{background:var(--ink);border-color:var(--ink);color:var(--sheet)}
@@ -410,6 +428,40 @@ dl.ana dd{margin:0;color:var(--muted)}
     </aside>
 
     <main>
+      <nav class="tabs" role="tablist" aria-label="Chức năng">
+        <button type="button" role="tab" id="tab-new" data-tab="new" aria-selected="true" aria-controls="pane-new"><i>✦</i>Tạo ảnh mới</button>
+        <button type="button" role="tab" id="tab-edit" data-tab="edit" aria-selected="false" aria-controls="pane-edit"><i>✎</i>Sửa ảnh có sẵn</button>
+      </nav>
+
+      <section class="studio edit-pane" id="pane-edit" role="tabpanel" aria-labelledby="tab-edit" hidden>
+        <div class="studio-head">
+          <div>
+            <h2>Sửa ảnh có sẵn</h2>
+            <p>Tải ảnh của bạn lên (ảnh chụp, ảnh cũ, ảnh sản phẩm trên sàn, ảnh AI tạo ở nơi khác) để khoanh vùng sửa bằng AI, thêm chữ tiếng Việt chuẩn dấu, chèn logo hoặc cắt ảnh.</p>
+          </div>
+          <label class="edit-eng"><span class="s-label">Sửa bằng AI dùng</span><select id="edit-eng"></select></label>
+        </div>
+        <div class="studio-body">
+          <div class="dropzone" id="edit-drop">
+            <button type="button" class="pup big" id="edit-pick"><i>⤒</i>Tải ảnh lên để chỉnh sửa</button>
+            <span>Kéo thả ảnh vào đây hoặc dán bằng Ctrl + V · JPG, PNG, WebP · chọn được nhiều ảnh</span>
+            <input type="file" id="edit-file" accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif" multiple hidden>
+          </div>
+          <ul class="edit-what" aria-label="Làm được gì">
+            <li><i>◯</i><b>Khoanh vùng, AI sửa đúng chỗ</b><span>Xoá vật thừa, đổi chữ, đổi màu, làm nét</span></li>
+            <li><i>T</i><b>Chữ tiếng Việt chuẩn dấu</b><span>6 font, viền, bóng, nền chữ, kiểu có sẵn</span></li>
+            <li><i>◈</i><b>Chèn logo, sticker</b><span>Kéo thả, đổi cỡ</span></li>
+            <li><i>✂</i><b>Cắt ảnh</b><span>Tự do hoặc 1:1, 4:5, 9:16, 16:9</span></li>
+          </ul>
+          <p class="s-msg" id="edit-msg" role="status" aria-live="polite"></p>
+        </div>
+        <div class="results-head">
+          <h3>Chọn ảnh để sửa<span id="edit-count"></span></h3>
+        </div>
+        <div class="results picklist" id="edit-list"></div>
+      </section>
+
+      <div id="pane-new" role="tabpanel" aria-labelledby="tab-new">
       <!-- Studio -->
       <section class="studio" id="studio" aria-label="Xưởng tạo ảnh">
         <div class="studio-head">
@@ -470,6 +522,7 @@ dl.ana dd{margin:0;color:var(--muted)}
       </div>
       <div id="groups"></div>
       <div id="none" class="empty-state hidden">Không có loại hình nào khớp. Thử từ khoá khác hoặc chọn "Tất cả".</div>
+      </div>
       <footer>Thông tin brief, API key, ảnh sản phẩm và ảnh đã tạo chỉ lưu trong trình duyệt này. Prompt và ảnh đính kèm chỉ được gửi đi khi bạn bấm Tạo ảnh (tới Canva, Google hoặc OpenAI tuỳ công cụ đang chọn) hoặc Phân tích và viết prompt (tới Claude).</footer>
     </main>
   </div>
@@ -763,7 +816,7 @@ function renderEngines(){
   renderAuto();
 }
 function keyOf(k){return store.get("xa-key-"+k)||""}
-function setEngine(k){S.engine=k;store.set("xa-engine",k);renderEngines()}
+function setEngine(k){S.engine=k;store.set("xa-engine",k);renderEngines(); if(typeof TAB!=="undefined"&&TAB==="edit") renderEditEng()}
 $("k-key").addEventListener("input",e=>{const v=e.target.value.trim(); v?store.set("xa-key-"+S.engine,v):store.del("xa-key-"+S.engine); renderEngines(); $("k-key").focus()});
 function modelOf(k){const e=ENGINES[k]; if(!e||!e.models) return ""; return (store.get("xa-model2-"+k)||e.models[0].id).trim()}
 function resOf(k){return store.get("xa-res-"+k)||"2K"}
@@ -1143,6 +1196,7 @@ function shotActions(rec){
   a.push(`<button class="btn" type="button" data-a="del">Xoá</button>`);
   return a.join("");
 }
+function engLabel(k,long){return k==="manual"?(long?"Chỉnh tay trong trình sửa":"Chỉnh tay"):k==="upload"?(long?"Ảnh bạn tải lên":"Tải lên"):(long?ENGINES[k]?.name:ENGINES[k]?.short)||k}
 function renderResults(){
   const box=$("results"); box.innerHTML="";
   pending.forEach(p=>{
@@ -1154,13 +1208,14 @@ function renderResults(){
     const f=document.createElement("figure"); f.className="shot"+(fresh.has(rec.id)?" new":""); f.dataset.id=rec.id;
     const img=rec.blob?`<button class="shot-img" type="button" data-a="view" aria-label="Xem lớn"><img src="${urlOf(rec)}" alt="${esc(rec.label)}" loading="lazy"></button>`
       :phHTML(rec.ratio,`<b>Ảnh nằm trong Canva</b><span>Không xem trước được ở đây</span>`);
-    f.innerHTML=`${img}<figcaption><div class="shot-meta"><b>${esc(rec.label)}</b><span>${esc(rec.engine==="manual"?"Chỉnh tay":(ENGINES[rec.engine]?.short||rec.engine))} · ${rec.ratio} · ${fmtTime(rec.created)}</span></div><div class="shot-act">${shotActions(rec)}</div></figcaption>`;
+    f.innerHTML=`${img}<figcaption><div class="shot-meta"><b>${esc(rec.label)}</b><span>${esc(engLabel(rec.engine))} · ${rec.ratio} · ${fmtTime(rec.created)}</span></div><div class="shot-act">${shotActions(rec)}</div></figcaption>`;
     box.appendChild(f);
   });
   if(!pending.length&&!HIST.length){
     box.innerHTML=`<div class="empty-shots"><div class="mini" aria-hidden="true">${["1:1","4:5","9:16"].map(r=>`<i data-r="${r}" style="aspect-ratio:${r.replace(":"," / ")}"></i>`).join("")}</div><div><b>Chưa có ảnh nào</b><span>Bấm Tạo ảnh ở trên, hoặc chọn một mẫu trong thư viện bên dưới. Ảnh tạo xong hiện ở đây và được giữ lại trong trình duyệt này.</span></div></div>`;
   }
   $("r-count").textContent=HIST.length?`${HIST.length} ảnh`:"";
+  renderEditList();
   $("r-clear").classList.toggle("hidden",!HIST.length);
 }
 setInterval(()=>{pending.forEach(p=>{const s=p.el&&p.el.querySelector("[data-sec]");if(s)s.textContent=`${Math.round((Date.now()-p.t0)/1000)} giây · ${ENGINES[p.engine].short}`})},1000);
@@ -1192,7 +1247,7 @@ let lbRec=null;
 function openLb(rec){
   lbRec=rec; $("lb-img").src=urlOf(rec); $("lb-img").alt=rec.label;
   $("lb-title").textContent=rec.label;
-  $("lb-meta").innerHTML=`<span>${esc(rec.engine==="manual"?"Chỉnh tay trong trình sửa":(ENGINES[rec.engine]?.name||rec.engine))}${rec.model?" · "+esc(rec.model):""} · ${rec.ratio} · ${fmtTime(rec.created)}</span>`;
+  $("lb-meta").innerHTML=`<span>${esc(engLabel(rec.engine,true))}${rec.model?" · "+esc(rec.model):""} · ${rec.ratio} · ${fmtTime(rec.created)}</span>`;
   $("lb-prompt").textContent=rec.prompt;
   $("lb-act").innerHTML=shotActions(rec)+`<button class="btn" type="button" data-a="copyp">Copy prompt</button>`;
   const d=$("lb"); try{d.showModal()}catch(_){d.setAttribute("open","")}
@@ -1426,7 +1481,9 @@ refFile.addEventListener("change",()=>{loadRefFile(refFile.files[0]);refFile.val
 refbox.addEventListener("drop",e=>{const f=e.dataTransfer.files[0]; if(f) loadRefFile(f)});
 document.addEventListener("paste",e=>{
   if(e.target&&(e.target.tagName==="TEXTAREA"||e.target.tagName==="INPUT")&&!(e.clipboardData?.items&&[...e.clipboardData.items].some(x=>x.type.startsWith("image/")))) return;
-  const it=[...(e.clipboardData?.items||[])].find(x=>x.type.startsWith("image/")); if(it){e.preventDefault(); loadRefFile(it.getAsFile())}
+  const it=[...(e.clipboardData?.items||[])].find(x=>x.type.startsWith("image/")); if(!it) return; e.preventDefault();
+  if(ED.open) return;
+  if(TAB==="edit") uploadForEdit([it.getAsFile()]); else loadRefFile(it.getAsFile());
 });
 async function restoreRef(){
   const all=await DB.all("misc"); const r=(all||[]).find(x=>x.id==="ref"); if(!r||!r.blob) return;
@@ -2141,6 +2198,73 @@ $("layoutbox").addEventListener("click",e=>{
     S.layout={boxes,ratio:S.ratio}; store.set("xa-layout",JSON.stringify(S.layout)); renderAuto(); sMsg("Đã lưu bố cục. Lần tạo ảnh tới AI sẽ đặt các thành phần theo sơ đồ này.","ok")}});
 });
 
+/* ---------- Tab: Sửa ảnh có sẵn ---------- */
+let TAB="new";
+function setTab(t,focus){
+  TAB=t==="edit"?"edit":"new"; store.set("xa-tab",TAB);
+  document.querySelectorAll(".tabs [role=tab]").forEach(b=>{const on=b.dataset.tab===TAB; b.setAttribute("aria-selected",on); b.tabIndex=on?0:-1});
+  $("pane-new").hidden=TAB!=="new"; $("pane-edit").hidden=TAB!=="edit";
+  if(TAB==="edit"){renderEditEng(); renderEditList()}
+  if(focus) $("tab-"+TAB).focus();
+}
+document.querySelector(".tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]"); if(b) setTab(b.dataset.tab)});
+document.querySelector(".tabs").addEventListener("keydown",e=>{if(e.key==="ArrowRight"||e.key==="ArrowLeft"){e.preventDefault(); setTab(TAB==="new"?"edit":"new",true)}});
+function renderEditEng(){
+  const sel=$("edit-eng");
+  sel.innerHTML=Object.entries(ENGINES).map(([k,e])=>`<option value="${k}" ${k===S.engine?"selected":""} ${avail[k].st==="no"?"disabled":""}>${esc(e.name)}${avail[k].st==="no"?" (không dùng được ở đây)":k!=="canva"&&!keyOf(k)?" (chưa có key)":""}</option>`).join("");
+  const a=avail[S.engine], m=$("edit-msg");
+  if(a.st==="no") {m.className="s-msg err"; m.textContent=a.msg}
+  else if(S.engine!=="canva"&&!keyOf(S.engine)){m.className="s-msg err"; m.innerHTML=`Chưa có ${esc(ENGINES[S.engine].keyLabel)}. Dán key ở tab <button type="button" class="btn" data-goto="new" style="padding:1px 8px;font-size:12px">Tạo ảnh mới</button> để dùng Sửa bằng AI. Thêm chữ, logo và cắt ảnh vẫn dùng được không cần key.`}
+  else if(S.engine==="canva"){m.className="s-msg"; m.textContent="Canva chỉ sửa được ảnh do chính Canva tạo. Ảnh bạn tải lên hãy sửa bằng Gemini hoặc OpenAI; thêm chữ, logo và cắt ảnh vẫn dùng được."}
+  else {m.className="s-msg"; m.textContent=`Sửa bằng AI sẽ dùng ${ENGINES[S.engine].name} (${modelOf(S.engine)}).`}
+}
+$("edit-eng").addEventListener("change",e=>{setEngine(e.target.value); renderEditEng()});
+$("edit-msg").addEventListener("click",e=>{if(e.target.closest("[data-goto]")){setTab("new"); $("k-key").focus()}});
+// ảnh tải lên để sửa: giữ độ nét tới 4096 px (ảnh lớn hơn mới thu nhỏ)
+async function prepEditBlob(f){
+  try{
+    const bmp=await createImageBitmap(f), m=Math.max(bmp.width,bmp.height);
+    if(m<=4096&&/^image\/(jpeg|png|webp)$/.test(f.type)){bmp.close&&bmp.close(); return f}
+    const k=Math.min(1,4096/m), c=mkCanvas(bmp.width*k,bmp.height*k); c.getContext("2d").drawImage(bmp,0,0,c.width,c.height); bmp.close&&bmp.close();
+    return await canvasBlob(c,f.type==="image/png"?"image/png":"image/jpeg",.93)||f;
+  }catch(e){ if(/^image\/(jpeg|png|webp)$/.test(f.type)) return f; throw e }
+}
+async function uploadForEdit(files){
+  files=[...files].filter(Boolean); if(!files.length) return;
+  const m=$("edit-msg"); const recs=[]; let bad=0;
+  for(const f of files){
+    if(!/^image\//.test(f.type)){bad++;continue}
+    let blob; try{blob=await prepEditBlob(f)}catch(e){bad++;continue}
+    let ratio="1:1"; try{const b=await createImageBitmap(blob); ratio=nearestRatio(b.width,b.height); b.close&&b.close()}catch(_){}
+    const now=Date.now()+recs.length;
+    recs.push({id:now.toString(36)+"-u-"+Math.random().toString(36).slice(2,6),created:now,blob,prompt:"",userPrompt:"",ratio,engine:"upload",model:"",
+      label:("Tải lên · "+String(f.name||"ảnh dán vào").replace(/\.[a-z0-9]+$/i,"")).slice(0,70)});
+  }
+  if(!recs.length){m.className="s-msg err"; m.textContent="Không đọc được ảnh này. Dùng ảnh JPG, PNG hoặc WebP."; return}
+  fresh.clear(); recs.forEach(r=>fresh.add(r.id)); await addRecords(recs.reverse()); renderResults();
+  m.className="s-msg ok"; m.textContent=`Đã tải lên ${recs.length} ảnh${bad?`, ${bad} file không đọc được`:""}. ${recs.length>1?"Ảnh đầu tiên đang mở; các ảnh khác nằm trong danh sách bên dưới.":""}`;
+  openResultEditor(recs[recs.length-1]);
+}
+$("edit-pick").onclick=()=>$("edit-file").click();
+$("edit-file").addEventListener("change",e=>{uploadForEdit(e.target.files); e.target.value=""});
+const dz=$("edit-drop");
+["dragenter","dragover"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add("drag")}));
+["dragleave","drop"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove("drag")}));
+dz.addEventListener("drop",e=>uploadForEdit(e.dataTransfer.files));
+function renderEditList(){
+  const box=$("edit-list"); if(!box||TAB!=="edit") return;
+  const list=HIST.filter(r=>r.blob);
+  $("edit-count").textContent=list.length?`${list.length} ảnh · ảnh tải lên và ảnh đã tạo`:"";
+  if(!list.length){box.innerHTML=`<p class="sug-note" style="grid-column:1/-1">Chưa có ảnh nào. Tải ảnh lên ở khung phía trên.</p>`; return}
+  box.innerHTML=list.map(r=>`<figure class="shot${fresh.has(r.id)?" new":""}" data-id="${r.id}"><button class="shot-img" type="button" data-pick="${r.id}" aria-label="Sửa ảnh ${esc(r.label)}"><img src="${urlOf(r)}" alt="" loading="lazy"></button>
+    <figcaption><div class="shot-meta"><b>${esc(r.label)}</b><span>${esc(engLabel(r.engine))} · ${r.ratio}</span></div><div class="shot-act"><button class="btn primary" type="button" data-pick="${r.id}">Chỉnh sửa</button><button class="btn" type="button" data-dl="${r.id}">Tải về</button></div></figcaption></figure>`).join("");
+}
+$("edit-list").addEventListener("click",e=>{
+  const p=e.target.closest("[data-pick]"), d=e.target.closest("[data-dl]");
+  const rec=HIST.find(r=>r.id===(p||d)?.dataset[p?"pick":"dl"]); if(!rec) return;
+  if(p) openResultEditor(rec); else download(rec);
+});
+
 /* ---------- boot ---------- */
 (function boot(){
   loadLayout();
@@ -2149,6 +2273,7 @@ $("layoutbox").addEventListener("click",e=>{
   const first=TYPES[0];
   S.src=first; S.ratio=first.ratio; $("s-prompt").value=fillBody(first);
   renderRatio(); renderSrc(); renderEngines(); renderResults();
+  setTab(location.hash==="#sua-anh"?"edit":(store.get("xa-tab")||"new"));
   restoreSug(); loadHistory(); loadProducts(); loadMyTpl(); restoreRef();
 })();
 
