@@ -79,7 +79,7 @@ Cách dùng: mở `app/maket-lich.html` bằng Chrome/Edge (để nguyên thư m
 5. **Khung thông tin doanh nghiệp**: với file ảnh JPG/PNG hoặc PSD không có lớp chữ, phần mềm dựng **nhóm lớp riêng “Thông tin doanh nghiệp”** (dải nền, logo, đường kẻ, mỗi dòng thông tin một lớp chữ). **Bấm đúp vào chữ trên maket để sửa trực tiếp**, Enter để xuống dòng (Ctrl+Enter hoặc bấm ra ngoài để lưu, Esc để huỷ); nội dung sửa được ghi ngược về mục Thông tin khách. Kéo từng dòng, đổi cỡ, màu riêng từng dòng; thêm hàng hay xuống dòng thì các dòng bên dưới và dải nền tự dạt theo, vẫn giữ phần đã chỉnh tay. Xuất PSD giữ nguyên nhóm lớp này (lớp chữ thật, sửa tiếp bằng Photoshop); nút **PNG thông tin** xuất riêng phần thông tin nền trong suốt.
    - **AI thiết kế** tự chọn bố cục (6 kiểu), phông, phối màu hợp với tranh; **Chọn lại** ra phương án khác, các phương án được giữ để quay lại. **Làm theo maket mẫu**: PSD mẫu thì chép đúng vị trí, cỡ, phông, màu, hiệu ứng; ảnh mẫu thì AI đọc bố cục.
    - **Kết nối AI**: chọn Claude (có sẵn khi mở trên claude.ai), **Google Gemini** hoặc **OpenAI ChatGPT** và dán API key (lấy tại aistudio.google.com/apikey hoặc platform.openai.com/api-keys), có nút kiểm tra kết nối. Key chỉ lưu trong trình duyệt của máy đó. Trang trên claude.ai chặn kết nối ra ngoài nên Gemini/ChatGPT chỉ dùng được ở bản mở từ file trên máy. Không có AI thì phần mềm tự phối theo màu tranh.
-6. **Phông chữ**: máy thiếu phông của file PSD thì tải file .ttf/.otf lên.
+6. **Phông chữ**: bấm **Dùng phông cài trên máy** (Chrome/Edge, bản mở từ file trên máy) để lấy toàn bộ phông Windows đang cài (UTM, SVN, VNI…); chữ trên maket vẽ đúng phông của file PSD, các ô chọn phông liệt kê phông máy, và PSD xuất ra ghi đúng tên PostScript để Photoshop nhận đúng phông. Máy thiếu phông nào thì tải file .ttf/.otf lên.
 7. **Bảng quy cách trên maket duyệt**: thêm dải dưới maket gồm khách hàng, sản phẩm, khổ, chất liệu, gia công, số lượng, ngày giao, đơn vị thực hiện và ô “Khách hàng duyệt” để ký.
 
 **Bloc lịch · xem cân đối**: tải ảnh bloc, nhập kích thước (cm), bloc hiện đúng tỉ lệ trên maket, kéo để thử vị trí (tự hút vào tâm), báo khoảng cách tới các mép, độ lệch tâm, bloc có đè lên chữ thông tin hay không. Bloc chỉ để xem, không in vào file xuất.
@@ -94,6 +94,8 @@ Cách dùng: mở `app/maket-lich.html` bằng Chrome/Edge (để nguyên thư m
 Xuất: **JPG/PNG** đủ độ phân giải, **Ảnh nhẹ gửi Zalo** (1600 px), **PSD** giữ nguyên các lớp với chữ và logo đã thay, có thể bật chữ chìm “MAKET CHỜ DUYỆT”.
 
 Giới hạn: file PSB (file lớn), 16-bit, và lớp điều chỉnh màu (Adjustment Layer) chưa hỗ trợ; hiệu ứng Bevel, Inner Shadow, Pattern chưa vẽ; file CMYK đọc được nhưng màu trên màn hình là quy đổi gần đúng. Nút “Bản gốc” hiện ảnh gộp Photoshop lưu trong file để so. Safari/iPhone giới hạn kích thước canvas nên file quá lớn nên xuất trên máy tính.
+
+Khi xuất PSD, hiệu ứng lớp (bóng, viền, chuyển màu, quầng sáng) được điền đủ các trường Photoshop yêu cầu, và lớp đã đổi hình được chuyển hẳn thành lớp ảnh thường (bỏ dữ liệu shape/smart object) để Photoshop không báo “Problems were encountered reading layers”.
 
 Thư viện đọc PSD: [ag-psd](https://github.com/Agamnentzar/ag-psd) 31.0.2 (MIT), bản trong `app/thu-vien/ag-psd.js` được sửa một dòng để mở được file CMYK.
 

@@ -340,8 +340,9 @@ input[type=color]{width:42px;height:32px;padding:2px;border:1px solid var(--line
 
       <section class="khoi">
         <div class="khoi-dau"><span class="buoc"></span><h2>Phông chữ</h2></div>
-        <p class="phu">Máy thiếu phông của file PSD thì chữ sẽ vẽ bằng phông thay thế. Tải file phông (.ttf, .otf) lên để maket giống bản gốc.</p>
-        <label class="nut" for="f-font">Thêm file phông…</label>
+        <p class="phu">Bấm “Dùng phông cài trên máy” để lấy toàn bộ phông Windows đang có (UTM, SVN, VNI…): chữ trên maket vẽ đúng phông của file PSD, và file PSD xuất ra ghi đúng tên phông để Photoshop nhận. Máy thiếu phông nào thì tải file phông (.ttf, .otf) lên.</p>
+        <div class="nhom-nut"><button class="nut chinh" id="b-font-may" type="button">Dùng phông cài trên máy</button><label class="nut" for="f-font">Thêm file phông…</label></div>
+        <span class="phu" id="font-may-tt" role="status"></span>
         <input type="file" id="f-font" accept=".ttf,.otf,.woff,.woff2" multiple hidden>
         <ul class="canh" id="ds-font"></ul>
       </section>
@@ -476,9 +477,34 @@ const MAU_CHU = "ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠƯẠẢẤẦẨẪẬ
 const daTai = new Map();
 function taiFont(f){ if (!daTai.has(f)) daTai.set(f, document.fonts.load(f, MAU_CHU).catch(() => [])); return daTai.get(f); }
 const coSanCache = new Map();
+/* Phông cài trên máy (Windows/Mac) qua Local Font Access của Chrome/Edge */
+S.fontMay = new Map();   // họ phông -> [{ps, style, w, it}]
+S.psMay = new Map();     // tên PostScript -> {family, w, it}
+function wTuStyle(st){ const k = khongDau(st); return /black|heavy/.test(k) ? 900 : /(extra|ultra) ?bold/.test(k) ? 800 : /semi ?bold|demi/.test(k) ? 600 : /bold/.test(k) ? 700 : /medium/.test(k) ? 500 : /(extra|ultra) ?light/.test(k) ? 200 : /light/.test(k) ? 300 : /thin|hairline/.test(k) ? 100 : 400; }
+async function napFontMay(hoi){
+  if (!("queryLocalFonts" in window)) return "khong_ho_tro";
+  try {
+    if (!hoi){ const st = navigator.permissions ? await navigator.permissions.query({name: "local-fonts"}).catch(() => null) : null; if (!st || st.state !== "granted") return "chua_cho"; }
+    const ds = await window.queryLocalFonts();
+    if (!ds.length) return "chua_cho";
+    S.fontMay.clear(); S.psMay.clear();
+    for (const f of ds){
+      const w = wTuStyle(f.style), it = /italic|oblique/i.test(f.style);
+      if (!S.fontMay.has(f.family)) S.fontMay.set(f.family, []);
+      S.fontMay.get(f.family).push({ps: f.postscriptName, style: f.style, w, it});
+      S.psMay.set(f.postscriptName, {family: f.family, w, it});
+    }
+    coSanCache.clear(); return "ok";
+  } catch (e){ console.warn(e); return e && e.name === "SecurityError" ? "bi_chan" : "chua_cho"; }
+}
+function psCua(fam, w){                 // tên PostScript thật để Photoshop nhận đúng phông
+  const ds = (S.fontMay.get(fam) || []).filter(x => !x.it);
+  if (ds.length) return ds.reduce((a, b) => Math.abs(b.w - w) < Math.abs(a.w - w) ? b : a).ps;
+  return fam.replace(/[^A-Za-z0-9]/g, "") + "-" + (TEN_W[w] || "Regular");
+}
 function coSan(family){
   if (!family) return false;
-  if (GOOGLE.includes(family) || S.fonts.some(f => f.family === family)) return true;
+  if (GOOGLE.includes(family) || S.fonts.some(f => f.family === family) || S.fontMay.has(family)) return true;
   if (coSanCache.has(family)) return coSanCache.get(family);
   const c = taoCv(10,10).getContext("2d"), mau = "mmmmmmmmmmlliiWWWQ@#Ặ";
   let ok = false;
@@ -514,7 +540,9 @@ function giaiFont(n){
   const st = kieuGoc(n), ps = (st.font && st.font.name) || "";
   const t = tachFont(ps);
   const weight = Math.max(t.weight, st.fauxBold ? 700 : 0);
-  if (n.font) return {family: n.font, weight, italic: t.italic || !!st.fauxItalic, thieu: false, ps, chon: true};
+  const may = S.psMay.get(ps);
+  if (n.font) return {family: n.font, weight: may && may.family === n.font ? may.w : weight, italic: t.italic || !!st.fauxItalic, thieu: false, ps, chon: true};
+  if (may) return {family: may.family, weight: Math.max(may.w, st.fauxBold ? 700 : 0), italic: may.it, thieu: false, ps};
   const gps = gon(ps), gho = gon(t.ho);
   const up = S.fonts.find(f => f.gon === gps || f.gon === gho || f.gon === gon(t.goc));
   if (up) return {family: up.family, weight: 400, italic: false, thieu: false, ps};
@@ -909,7 +937,7 @@ async function veMaket(opt){
 // Bản thiết kế của khung: AI, "Làm theo maket mẫu" hoặc chỉnh tay đều sửa đối tượng này.
 const FONT_W = {"Be Vietnam Pro": [400,500,600,700,800], "Noto Serif": [400,700,900], "Playfair Display": [700,900], "Roboto": [400,700,900], "Roboto Slab": [400,700],
   "Montserrat": [400,700,800], "Oswald": [500,700], "Lora": [400,700], "Dancing Script": [700], "Pattaya": [400], "Lobster": [400], "Paytone One": [400]};
-const wFont = (fam, w) => { const ds = FONT_W[fam]; return ds ? ds.reduce((a, b) => Math.abs(b - w) < Math.abs(a - w) ? b : a) : w; };
+const wFont = (fam, w) => { const ds = FONT_W[fam] || (S.fontMay.get(fam) || []).filter(x => !x.it).map(x => x.w); return ds && ds.length ? ds.reduce((a, b) => Math.abs(b - w) < Math.abs(a - w) ? b : a) : w; };
 const BO = {"logo-trai": "Logo trái, tên giữa, liên hệ hai bên", "giua": "Căn giữa, logo trên đầu", "trai": "Căn trái, logo cạnh tên", "phai": "Căn phải, logo bên phải", "dai-ngang": "Dải ngang: tên trái, liên hệ phải", "mau": "Theo maket mẫu"};
 const KHUNG_GOC = {bat: false, bo: "logo-trai", fontTen: "Noto Serif", wTen: 900, fontPhu: "Noto Serif", wPhu: 700, hoa: false, gian: 0,
   hu: "vang", mauTen: "#D99A1C", mauTen2: "#FFF4B8", mauPhu: "#F6CC4A", vien: null, bong: "toi", ke: false, nen: "khong", mauNen: "#7A0E0E", caoNen: 0, vitri: "tren", co: 100, slot: null, lyDo: ""};
@@ -919,7 +947,8 @@ function hopLeKhung(g, cu = KHUNG_GOC){           // kiểm tra, lọc bản thi
   const hex = v => /^#[0-9a-f]{6}$/i.test(v || "") ? v : null, trong = (v, ds, mac) => ds.includes(v) ? v : mac;
   const k = {...cu, ...KHUNG_GOC, bat: true, nen: cu.nen, caoNen: cu.caoNen, vitri: cu.vitri, co: cu.co, slot: cu.slot};
   k.bo = trong(g.bo, Object.keys(BO).filter(b => b !== "mau" || cu.slot), "logo-trai");
-  k.fontTen = trong(g.fontTen, GOOGLE, k.fontTen); k.fontPhu = trong(g.fontPhu, GOOGLE, k.fontPhu);
+  const coPhong = [...GOOGLE, ...S.fontMay.keys(), ...S.fonts.map(f => f.family)];
+  k.fontTen = trong(g.fontTen, coPhong, k.fontTen); k.fontPhu = trong(g.fontPhu, coPhong, k.fontPhu);
   k.wTen = wFont(k.fontTen, +g.wTen || 800); k.wPhu = wFont(k.fontPhu, +g.wPhu || 600);
   k.hu = trong(g.hu, ["vang", "chuyen", "phang"], "phang");
   k.mauTen = hex(g.mauTen) || k.mauTen; k.mauTen2 = hex(g.mauTen2) || mix(k.mauTen, "#FFFFFF", .55); k.mauPhu = hex(g.mauPhu) || k.mauTen;
@@ -1008,6 +1037,34 @@ function datKhung(h, dong, lg, W, H){
   }
   return {chu, logo, cao, ke};
 }
+/* Photoshop báo "program error" nếu hiệu ứng lớp thiếu trường; điền đủ như file Photoshop tự lưu */
+const pxU = v => (v && typeof v === "object" && "value" in v) ? v : {units: "Pixels", value: +v || 0};
+const THANG = () => ({name: "Linear", curve: [{x: 0, y: 0}, {x: 255, y: 255}]});
+function duHU(e, mac){
+  const o = {...mac, ...e};
+  for (const k of Object.keys(mac)) if (o[k] === undefined || o[k] === null) o[k] = mac[k];
+  for (const k of ["size", "distance", "choke"]) if (k in mac) o[k] = pxU(o[k]);
+  if ("contour" in mac && (!o.contour || !Array.isArray(o.contour.curve) || o.contour.curve.length < 2)) o.contour = THANG();
+  return o;
+}
+function chuanHoaHU(E){
+  if (!E) return E;
+  const o = {...E}, mang = v => Array.isArray(v) ? v : v ? [v] : undefined, CH = {enabled: true, present: true, showInDialog: true};
+  const bong = {...CH, blendMode: "multiply", color: {r: 0, g: 0, b: 0}, opacity: .75, useGlobalLight: false, angle: 120, distance: 5, choke: 0, size: 5, noise: 0, antialiased: false, contour: THANG()};
+  if (o.dropShadow) o.dropShadow = mang(o.dropShadow).map(e => duHU(e, {...bong, layerConceals: true}));
+  if (o.innerShadow) o.innerShadow = mang(o.innerShadow).map(e => duHU(e, bong));
+  const sang = {...CH, blendMode: "screen", color: {r: 255, g: 255, b: 190}, opacity: .75, noise: 0, technique: "softer", choke: 0, size: 5, range: .5, jitter: 0, antialiased: false, contour: THANG()};
+  if (o.outerGlow) o.outerGlow = duHU(o.outerGlow, sang);
+  if (o.innerGlow) o.innerGlow = duHU(o.innerGlow, {...sang, source: "edge"});
+  if (o.stroke) o.stroke = mang(o.stroke).map(e => duHU(e, {...CH, overprint: false, position: "outside", fillType: "color", blendMode: "normal", opacity: 1, size: 3, color: {r: 0, g: 0, b: 0}}));
+  if (o.solidFill) o.solidFill = mang(o.solidFill).map(e => duHU(e, {...CH, blendMode: "normal", color: {r: 255, g: 0, b: 0}, opacity: 1}));
+  if (o.gradientOverlay) o.gradientOverlay = mang(o.gradientOverlay).map(e => {
+    const g = duHU(e, {...CH, blendMode: "normal", opacity: 1, angle: 90, type: "linear", reverse: false, dither: false, align: true, scale: 1, offset: {x: 0, y: 0}});
+    if (g.gradient && g.gradient.type === "solid") g.gradient = {smoothness: 1, ...g.gradient};
+    return g;
+  });
+  return o;
+}
 const TEN_W = {100: "Thin", 200: "ExtraLight", 300: "Light", 400: "Regular", 500: "Medium", 600: "SemiBold", 700: "Bold", 800: "ExtraBold", 900: "Black"};
 function hieuUngChu(e, sz){
   const E = {};
@@ -1018,7 +1075,7 @@ function hieuUngChu(e, sz){
   if (e.vien) E.stroke = [{enabled: true, position: "outside", fillType: "color", size: {units: "Pixels", value: Math.max(1, sz*0.05)}, color: hexRgb(e.vien), opacity: 1}];
   if (e.bong === "toi") E.dropShadow = [{enabled: true, color: {r: 0, g: 0, b: 0}, opacity: .6, angle: 90, distance: {units: "Pixels", value: sz*0.04}, size: {units: "Pixels", value: sz*0.12}}];
   else if (e.bong === "sang") E.outerGlow = {enabled: true, color: {r: 255, g: 255, b: 255}, opacity: .75, size: {units: "Pixels", value: sz*0.15}};
-  return Object.keys(E).length ? E : undefined;
+  return Object.keys(E).length ? chuanHoaHU(E) : undefined;
 }
 /* Dựng khung thành nhóm lớp thật (dải nền, logo, từng dòng chữ) trong file: sửa, kéo, xuất PSD như lớp bình thường */
 const TEN_NHOM = "Thông tin doanh nghiệp (Maket Lịch)";
@@ -1095,7 +1152,7 @@ async function taoKhoi({giu = false} = {}){
   }
   const buoc = [];
   for (const r of bt.chu){
-    const w = wFont(r.fam, r.w), ps = r.fam.replace(/[^A-Za-z0-9]/g, "") + "-" + (TEN_W[w] || "Regular");
+    const w = wFont(r.fam, r.w), ps = psCua(r.fam, w);
     const them = {tracking: Math.round((r.gian || 0)*1000)}; if (r.hoa) them.fontCaps = 2;
     const L = lopChu(r.dong.ten, chuDong(r.dong) || r.dong.ten, ps, r.sz, hexRgb(r.hu === "vang" ? "#F6CC4A" : r.mau), r.al, ox + r.x, oy + r.y + dyC, hieuUngChu(r, r.sz), them);
     buoc.push({L, r});
@@ -1107,7 +1164,7 @@ async function taoKhoi({giu = false} = {}){
   if (nutLogo){ const n = con.find(x => x.layer === nutLogo); n.vai = "logo"; }
   for (const {L, r} of buoc){
     const n = con.find(x => x.layer === L);
-    n.vai = r.dong.vai; n.dongId = r.dong.id; n.font = GOOGLE.includes(r.fam) || S.fonts.some(f => f.family === r.fam) ? r.fam : "";
+    n.vai = r.dong.vai; n.dongId = r.dong.id; n.font = GOOGLE.includes(r.fam) || S.fonts.some(f => f.family === r.fam) || S.fontMay.has(r.fam) ? r.fam : "";
     n.maxW = r.mw;
   }
   if (cu){
@@ -1127,7 +1184,7 @@ function veBangKhung(){
   const h = S.khung;
   $("#h-bat").checked = h.bat;
   $("#h-bo").innerHTML = Object.entries(BO).filter(([b]) => b !== "mau" || h.slot).map(([b, t]) => `<option value="${b}"${h.bo === b ? " selected" : ""}>${t}</option>`).join("");
-  for (const id of ["h-font", "h-font2"]) $("#" + id).innerHTML = dsPhong().map(f => `<option${f === h[KH_O[id]] ? " selected" : ""}>${esc(f)}</option>`).join("");
+  for (const id of ["h-font", "h-font2"]) $("#" + id).innerHTML = optPhong(h[KH_O[id]]);
   for (const [id, k] of Object.entries(KH_O)) if (!["h-bo", "h-font", "h-font2"].includes(id)) $("#" + id).value = h[k];
   $("#h-vien").checked = !!h.vien; $("#h-mau-vien").value = h.vien || "#3A1A0A";
   $("#h-hoa").checked = h.hoa; $("#h-ke").checked = h.ke;
@@ -1241,7 +1298,7 @@ Có logo: ${S.logo ? "có" : "không"}.
 Màu vùng tranh nơi đặt khung (nhiều nhất trước): ${nen.bang.map(x => x.hex).join(", ")}; độ sáng trung bình ${Math.round(nen.bang.sang*100)}%, độ rối chi tiết ${Math.round(nen.bang.ron*100)}%.
 Màu toàn tranh: ${nen.toan.map(x => x.hex).join(", ")}.${anh ? "\nẢnh đính kèm là tờ lịch hiện tại (chưa có khung)." : ""}
 Chữ phải dễ đọc trên nền đó (tương phản đủ), hợp ngành nghề đoán từ tên, hài hoà với tranh.
-Phông có sẵn (đều có dấu tiếng Việt): ${MO_TA_PHONG}.
+Phông có sẵn (đều có dấu tiếng Việt): ${MO_TA_PHONG}.${S.fontMay.size ? `\nPhông cài trên máy (chỉ chọn phông chắc chắn có dấu tiếng Việt, vd tên bắt đầu bằng UTM, SVN, VNF, iCiel, hoặc phông Windows như Times New Roman, Arial, Tahoma, Segoe UI): ${[...S.fontMay.keys()].slice(0, 150).join(", ")}.` : ""}
 Bố cục: ${Object.entries(BO).filter(([b]) => b !== "mau" || S.khung.slot).map(([b, t]) => `${b} = ${t}`).join("; ")}.
 ${lamLai && cu.length ? `Các phương án đã có, hãy làm KHÁC hẳn (bố cục, phông, màu):\n${cu.join("\n")}\n` : ""}Chỉ trả về một JSON:
 {"bo":"<mã bố cục>","fontTen":"<phông tên>","wTen":<độ đậm 400-900>,"fontPhu":"<phông các dòng khác>","wPhu":<400-800>,"hoa":<true nếu viết IN HOA tên>,"gian":<giãn chữ tên 0-0.2>,"hu":"<vang = vàng kim ánh kim | chuyen = chuyển 2 màu | phang = một màu>","mauTen":"#RRGGBB","mauTen2":"#RRGGBB (màu sáng hơn, dùng khi chuyen)","mauPhu":"#RRGGBB","vien":"#RRGGBB hoặc null","bong":"toi|sang|khong","ke":<true để có đường kẻ dưới tên>,"nen":"khong|che|toi|sang|mau","mauNen":"#RRGGBB (khi nen = mau)","lyDo":"<một câu tiếng Việt giải thích>"}`;
@@ -1518,7 +1575,7 @@ function dongLop(n, cap){
     const tt = n.font ? `Đang dùng phông tự chọn “${esc(n.font)}”` : f.thieu ? `Máy thiếu phông “${esc(ps)}” → tạm dùng ${esc(f.family)}` : `Phông ${esc(ps)} ✓`;
     ct = `<div class="lop-ct">
       <div class="truong"><label for="p-${n.id}">Phông</label><select class="o" id="p-${n.id}" data-k="font">
-        <option value="">Tự động</option>${dsPhong().map(p => `<option${n.font === p ? " selected" : ""}>${esc(p)}</option>`).join("")}</select></div>
+        <option value="">Tự động</option>${optPhong(n.font)}</select></div>
       <label class="rong" for="r-${n.id}">Rộng tối đa <input type="range" id="r-${n.id}" data-k="maxW" min="10" max="100" value="${Math.min(100, pct)}"><span class="mono">${pct}%</span></label>
       <span class="font-tt ${f.thieu && !n.font ? "thieu" : "du"}">${tt}</span>
     </div>`;
@@ -1532,7 +1589,11 @@ function dongLop(n, cap){
   </div>`;
 }
 function timNut(id){ for (const n of duyet(S.doc.nodes)) if (n.id === id) return n; return null; }
-function dsPhong(){ return [...S.fonts.map(f => f.family), ...GOOGLE]; }
+function dsPhong(){ return [...new Set([...S.fonts.map(f => f.family), ...[...S.fontMay.keys()].sort((a, b) => a.localeCompare(b)), ...GOOGLE])]; }
+function optPhong(chon){
+  const nhom = (ten, ds) => ds.length ? `<optgroup label="${esc(ten)}">${ds.map(f => `<option${f === chon ? " selected" : ""}>${esc(f)}</option>`).join("")}</optgroup>` : "";
+  return nhom("Phông tải lên", S.fonts.map(f => f.family)) + nhom("Phông cài trên máy", [...S.fontMay.keys()].sort((a, b) => a.localeCompare(b))) + nhom("Phông Google (có tiếng Việt)", GOOGLE);
+}
 function suaLop(e){
   const row = e.target.closest(".lop"); if (!row || !S.doc) return;
   const n = timNut(+row.dataset.id), k = e.target.dataset.k; if (!n || !k) return;
@@ -1560,6 +1621,7 @@ $("#ds-lop").addEventListener("click", e => {
 
 function veDsFont(){
   const ul = $("#ds-font"), dong = [];
+  if (S.fontMay.size) dong.push(`<li class="tot">Đang dùng ${S.fontMay.size} họ phông cài trên máy</li>`);
   for (const f of S.fonts) dong.push(`<li class="tot">Đã thêm: ${esc(f.ten)} → ${esc(f.family)}</li>`);
   if (S.doc && S.doc.nodes){
     const thieu = new Set();
@@ -1838,6 +1900,17 @@ function themQuyCach(cv, info, K){
   return out;
 }
 for (const id of ["qc-bat", "qc-sp", "qc-giay", "qc-gc", "qc-sl", "qc-giao", "qc-dv", "qc-ghichu"]) $("#" + id).addEventListener("input", () => veLai());
+
+async function sauKhiNapFontMay(kq, hoi){
+  const tt = $("#font-may-tt");
+  const bao = {ok: `Đã lấy ${S.fontMay.size} họ phông trên máy.`, khong_ho_tro: "Trình duyệt này chưa hỗ trợ đọc phông máy. Dùng Chrome hoặc Edge bản mới, mở file Maket Lich.html trên máy.",
+    bi_chan: "Chế độ xem này không cho đọc phông máy (trang trên claude.ai). Dùng bản tải về máy.", chua_cho: hoi ? "Chưa được cho phép đọc phông. Bấm lại và chọn Cho phép (Allow)." : ""};
+  tt.textContent = bao[kq] || "";
+  if (kq !== "ok") return;
+  $("#b-font-may").textContent = "Cập nhật phông trên máy";
+  veBangKhung(); veDsLop(); veDsFont(); veThongSo(); veLai();
+}
+$("#b-font-may").addEventListener("click", async e => { const nut = e.currentTarget; nut.disabled = true; try { await sauKhiNapFontMay(await napFontMay(true), true); } finally { nut.disabled = false; } });
 
 /* ================= Thông tin khách, logo ================= */
 function layInfo(){ return {dong: S.dong.map(x => ({...x})), logo: S.logo}; }
@@ -2319,17 +2392,19 @@ async function xuatPsd(ten){
   for (const n of duyet(d.nodes)){
     const L = n.layer;
     giu(L, "hidden"); L.hidden = !hienThi(n, R);
+    if (L.effects){ giu(L, "effects"); L.effects = chuanHoaHU(L.effects); }
     if (L.hidden) continue;
     if (n.doMo != null){ giu(L, "opacity"); L.opacity = doDuc(n); }
     if (n.loai === "nhom") continue;
     const laLogo = n.vai === "logo" && info.logo;
     if (!(canVeChu(n) || laLogo || n.nguon || n.cvSua || coBienDoi(n))) continue;
     const p = chuanBi(n, R); if (!p) continue;
-    for (const k of ["canvas","left","top","right","bottom","text","imageData","placedLayer","vectorMask","mask","effects"]) giu(L, k);
+    for (const k of ["canvas","left","top","right","bottom","text","imageData","placedLayer","vectorMask","vectorFill","vectorStroke","vectorOrigination","mask","effects"]) giu(L, k);
     let cv = p.cv;
     if (cv.width !== Math.round(p.w) || cv.height !== Math.round(p.h)){ cv = taoCv(p.w, p.h); cv.getContext("2d").drawImage(p.cv, 0, 0, cv.width, cv.height); }
     L.canvas = cv; L.left = Math.round(p.x); L.top = Math.round(p.y); L.right = L.left + cv.width; L.bottom = L.top + cv.height;
-    delete L.imageData; delete L.placedLayer; delete L.vectorMask;
+    // lớp đã đổi hình thì thành lớp ảnh thường: bỏ hết dữ liệu shape / smart object, nếu không Photoshop báo lỗi đọc lớp
+    delete L.imageData; delete L.placedLayer; delete L.vectorMask; delete L.vectorFill; delete L.vectorStroke; delete L.vectorOrigination;
     if (coMask(L) && p.tf){
       const m = L.mask, t = p.tf, mc = taoCv((m.right - m.left)*t.k, (m.bottom - m.top)*t.k);
       mc.getContext("2d").drawImage(m.canvas, 0, 0, mc.width, mc.height);
@@ -2570,6 +2645,7 @@ async function taoViDu(){
 /* ================= Khởi động ================= */
 (async () => {
   danhSo(); veBangKhung(); veCaiDatAi();
+  napFontMay(false).then(kq => { if (kq === "ok") sauKhiNapFontMay(kq, false); });
   if (!window.agPsd){ $("#mau-canh").innerHTML = `<li class="loi">Chưa nạp được thư viện đọc PSD (thu-vien/ag-psd.js). Hãy để file maket-lich.html cùng thư mục thu-vien.</li>`; return; }
   try { await taoViDu(); } catch (e){ console.error(e); }
 })();
