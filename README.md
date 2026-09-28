@@ -58,7 +58,25 @@ Kết quả Excel có mỗi kênh một sheet, tô màu: đỏ = lỗ, vàng = l
 
 Bản chạy trên trình duyệt của cả hai công cụ trên (cùng cách tính): kéo thả file Excel/CSV là ra kết quả, tải về Excel được. Biểu phí sàn lưu chung cho mọi người dùng, chỉ người có quyền Chỉnh sửa mới đổi được.
 
-## 4. Bộ dựng báo cáo thị trường TikTok — `tools/bao_cao_tiktok/`
+## 4. Xưởng ảnh AI — `app/xuong-anh-ai.html`
+
+Nâng cấp từ "Bảng mẫu brief ảnh AI": 20 mẫu ấn phẩm (post, story, banner, packshot, poster, KOC…) kèm checklist và prompt tiếng Việt tự điền theo brief, nay bấm **Tạo ảnh** là ra ảnh ngay trong trang.
+
+| Công cụ tạo ảnh | Chạy ở đâu | Cần gì |
+|---|---|---|
+| Canva AI | Trang mở trong Claude (claude.ai) | Đã kết nối Canva trong Settings → Connectors |
+| Gemini (Nano Banana) | Mở file trên máy bằng trình duyệt | API key Google AI Studio |
+| OpenAI (GPT Image) | Mở file trên máy bằng trình duyệt | API key OpenAI |
+
+- Chọn tỉ lệ (1:1, 4:5, 9:16, 16:9, 2:3, 4:3, 21:9) và số ảnh (1–4) mỗi lượt.
+- Đính kèm ảnh sản phẩm thật và ảnh tham chiếu (Gemini/OpenAI) để giữ đúng nhãn và phong cách.
+- **Sửa tiếp** một ảnh đã tạo: chỉ cần ghi điều muốn đổi.
+- Ảnh đã tạo lưu trong trình duyệt (tối đa 60 ảnh), tải về, dùng lại prompt.
+- Trong Claude: nút "Phân tích và viết prompt" cho Claude đọc ảnh tham chiếu và viết prompt theo brief.
+
+API key chỉ lưu trong trình duyệt và gửi thẳng tới Google/OpenAI. Trong Claude, trang không gọi được API bên ngoài nên chỉ dùng Canva.
+
+## 5. Bộ dựng báo cáo thị trường TikTok — `tools/bao_cao_tiktok/`
 
 Dựng trang "Thị trường [ngành] TikTok" từ dữ liệu quét FastMoss + video TikTok trong chưa tới 1 giây: 5 nhóm, ma trận cơ hội, top SP kèm video/KOC, shop, thương hiệu nhà, so sánh với lần quét trước. Claude chỉ cần đọc bản tóm tắt ~20 KB để viết nhận định. Xem [HUONG_DAN.md](tools/bao_cao_tiktok/HUONG_DAN.md).
 

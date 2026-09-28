@@ -1,0 +1,1203 @@
+<meta charset="utf-8">
+<title>Xưởng ảnh AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Be+Vietnam+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#ECEEF1; --sheet:#FFFFFF; --ink:#18202E; --muted:#5A6475; --line:#D3D8E0;
+  --mag:#C8175F; --cyan:#0A8FA0; --cyan-soft:#D8F0F2; --mag-soft:#FBE3ED; --wire:#E4E8EE; --wire-2:#C7CED8;
+  --ok:#1E7A4C; --ok-soft:#DDF1E6; --warn:#8A5A00; --warn-soft:#F7ECD2;
+  --scrim:rgba(24,32,46,.62);
+  --ff-d:"Bricolage Grotesque", "Be Vietnam Pro", system-ui, sans-serif;
+  --ff:"Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ color-scheme:dark;
+  --paper:#12161E; --sheet:#1B212C; --ink:#E8ECF2; --muted:#9AA4B4; --line:#2E3645;
+  --mag:#F0588F; --cyan:#3CC4D3; --cyan-soft:#163A40; --mag-soft:#3D1B2A; --wire:#252D3A; --wire-2:#3A4454;
+  --ok:#62CF95; --ok-soft:#153325; --warn:#E6B35A; --warn-soft:#3A2D12; --scrim:rgba(0,0,0,.72); } }
+:root[data-theme="dark"]{ color-scheme:dark;
+  --paper:#12161E; --sheet:#1B212C; --ink:#E8ECF2; --muted:#9AA4B4; --line:#2E3645;
+  --mag:#F0588F; --cyan:#3CC4D3; --cyan-soft:#163A40; --mag-soft:#3D1B2A; --wire:#252D3A; --wire-2:#3A4454;
+  --ok:#62CF95; --ok-soft:#153325; --warn:#E6B35A; --warn-soft:#3A2D12; --scrim:rgba(0,0,0,.72); }
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.55 var(--ff);-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit;color:inherit}
+button:disabled{opacity:.5;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.wrap{max-width:1360px;margin:0 auto;padding:28px 20px 60px}
+
+header.top{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;margin-bottom:28px}
+h1{font-family:var(--ff-d);font-weight:800;font-size:clamp(2rem,4.6vw,3.6rem);line-height:1;letter-spacing:-.02em;margin:0;max-width:14ch;text-wrap:balance}
+.lede{color:var(--muted);max-width:60ch;margin:12px 0 0}
+.formula{background:var(--sheet);border:1px solid var(--line);border-radius:6px;padding:14px 16px;max-width:420px;font-size:13.5px}
+.formula b{font-family:var(--ff-d);font-weight:700;font-size:15px;display:block;margin-bottom:6px}
+.formula ol{margin:0;padding-left:18px;color:var(--muted)}
+.formula li::marker{color:var(--mag);font-weight:600}
+
+.layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:28px;align-items:start}
+aside.panel{position:sticky;top:calc(16px + env(safe-area-inset-top,0px));background:var(--sheet);border:1px solid var(--line);border-radius:6px;padding:18px}
+aside h2{font-family:var(--ff-d);font-size:18px;margin:0 0 4px}
+aside p.hint{color:var(--muted);font-size:13px;margin:0 0 14px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:4px}
+.field select,.field input,.field textarea{width:100%;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:8px 10px;font-size:14px}
+.field textarea{resize:vertical;min-height:58px}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--cyan);outline:none}
+.panel .row{display:flex;gap:8px;margin-top:6px}
+.btn{border:1px solid var(--line);background:var(--sheet);border-radius:4px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink)}
+.btn:hover:not(:disabled){border-color:var(--ink)}
+.btn.primary{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+.btn.primary:hover:not(:disabled){opacity:.9}
+.btn.go{background:var(--mag);border-color:var(--mag);color:#fff}
+.btn.go:hover:not(:disabled){opacity:.92;border-color:var(--mag)}
+.btn.done{background:var(--cyan);border-color:var(--cyan);color:#fff}
+.btn.warn{border-color:var(--mag);color:var(--mag)}
+.tips{margin-top:16px;padding-top:14px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--muted)}
+.tips b{color:var(--ink)}
+.tips ul{margin:6px 0 0;padding-left:16px}
+
+/* ---------- Studio ---------- */
+.studio{background:var(--sheet);border:1px solid var(--line);border-radius:6px;margin-bottom:22px}
+.studio-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:16px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.studio-head h2{font-family:var(--ff-d);font-size:22px;margin:0;letter-spacing:-.01em}
+.studio-head p{margin:2px 0 0;color:var(--muted);font-size:13px;max-width:56ch}
+.engines{display:flex;gap:6px;flex-wrap:wrap}
+.eng{border:1px solid var(--line);background:var(--paper);border-radius:6px;padding:7px 12px;text-align:left;cursor:pointer;min-width:150px;display:flex;flex-direction:column;gap:1px}
+.eng b{font-size:13px;font-weight:600}
+.eng span{font-size:11.5px;color:var(--muted)}
+.eng[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--sheet)}
+.eng[aria-pressed="true"] span{color:inherit;opacity:.75}
+.eng .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:1px;background:var(--wire-2)}
+.eng .dot.ok{background:var(--ok)}
+.eng .dot.no{background:var(--mag)}
+.eng .dot.wait{background:var(--warn)}
+.eng-cfg{padding:12px 18px;border-bottom:1px solid var(--line);background:var(--paper);display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.3fr) auto;gap:10px 14px;align-items:end}
+.eng-cfg .field{margin:0}
+.eng-cfg .field input{background:var(--sheet)}
+.eng-cfg .note{grid-column:1/-1;margin:0;font-size:12.5px;color:var(--muted)}
+.eng-cfg .note a{color:var(--cyan)}
+.eng-msg{margin:0;padding:10px 18px;font-size:13px;border-bottom:1px solid var(--line)}
+.eng-msg.no{background:var(--mag-soft);color:var(--mag)}
+.eng-msg.warn{background:var(--warn-soft);color:var(--warn)}
+
+.studio-body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:12px}
+.s-src{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.s-src b{font-family:var(--ff-d);font-size:16px;color:var(--ink)}
+#s-prompt{width:100%;min-height:118px;resize:vertical;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:10px 12px;font-size:14px;line-height:1.6}
+#s-prompt:focus{border-color:var(--cyan);outline:none}
+.s-auto{font-size:12.5px;color:var(--muted);margin:-4px 0 0}
+.s-auto mark{background:none;color:var(--cyan);font-weight:600}
+.s-row{display:flex;gap:14px 20px;flex-wrap:wrap;align-items:center}
+.s-label{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin-right:6px}
+.ratios{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.rchip{border:1px solid var(--line);background:var(--sheet);border-radius:999px;padding:4px 10px;font-size:12.5px;font-weight:600;cursor:pointer;font-variant-numeric:tabular-nums}
+.rchip[aria-pressed="true"]{background:var(--cyan);border-color:var(--cyan);color:#fff}
+.count{display:flex;align-items:center;gap:6px}
+.count select{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:4px 8px;font-size:13px}
+.attach{display:flex;gap:10px;flex-wrap:wrap}
+.slot{display:flex;align-items:center;gap:10px;border:1px dashed var(--wire-2);border-radius:6px;padding:6px 10px 6px 6px;background:var(--paper);font-size:12.5px;min-height:52px;max-width:100%}
+.slot.drag{border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-soft)}
+.slot.on{border-style:solid;border-color:var(--line);background:var(--sheet)}
+.slot .th{width:40px;height:40px;border-radius:4px;background:var(--wire);flex:none;overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:18px}
+.slot .th img{width:100%;height:100%;object-fit:cover}
+.slot .tx{display:flex;flex-direction:column;min-width:0}
+.slot .tx b{font-size:12.5px}
+.slot .tx span{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.slot .x{border:0;background:none;cursor:pointer;color:var(--muted);font-size:18px;line-height:1;padding:4px}
+.slot .x:hover{color:var(--mag)}
+.slot.edit{border-color:var(--mag);border-style:solid;background:var(--mag-soft)}
+.s-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.s-actions .btn.go{padding:10px 18px;font-size:14px}
+.s-msg{font-size:13px;color:var(--muted);margin:0}
+.s-msg.err{color:var(--mag)}
+.s-msg.ok{color:var(--ok)}
+
+.results-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;padding:14px 18px 0;border-top:1px solid var(--line)}
+.results-head h3{font-family:var(--ff-d);font-size:18px;margin:0}
+.results-head h3 span{font-family:var(--ff);font-size:13px;font-weight:500;color:var(--muted);margin-left:6px}
+.results{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;padding:14px 18px 18px;align-items:start}
+.shot{margin:0;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--sheet);display:flex;flex-direction:column}
+.shot-img{position:relative;background:var(--paper);display:flex;align-items:center;justify-content:center;cursor:zoom-in;border:0;padding:0;width:100%}
+.shot-img img{display:block;width:100%;height:auto}
+.shot figcaption{padding:8px 10px 10px;display:flex;flex-direction:column;gap:6px}
+.shot-meta{font-size:12px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.shot-meta b{color:var(--ink);font-weight:600}
+.shot-act{display:flex;gap:4px;flex-wrap:wrap}
+.shot-act .btn{font-size:12px;padding:4px 8px}
+.shot.new{box-shadow:0 0 0 2px var(--cyan)}
+.ph{position:relative;width:100%;background:
+  linear-gradient(var(--line) 1px,transparent 1px) 0 0/16px 16px,
+  linear-gradient(90deg,var(--line) 1px,transparent 1px) 0 0/16px 16px, var(--paper);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:var(--muted);font-size:12.5px;text-align:center;padding:12px}
+.ph .ratio-tag{top:6px;left:8px}
+.ph b{font-family:var(--ff-d);font-size:15px;color:var(--ink)}
+.pending .ph::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,var(--cyan-soft) 50%,transparent 70%) 0 0/250% 100%;animation:sweep 1.6s linear infinite;opacity:.8}
+.pending .ph > *{position:relative;z-index:1}
+@keyframes sweep{from{background-position:120% 0}to{background-position:-120% 0}}
+.empty-shots{grid-column:1/-1;display:flex;align-items:center;gap:18px;border:1px dashed var(--wire-2);border-radius:6px;padding:16px 18px;background:var(--paper)}
+.empty-shots .mini{display:flex;align-items:flex-end;gap:8px;flex:none}
+.empty-shots .mini i{display:block;height:56px;background:var(--sheet);box-shadow:0 0 0 1px var(--wire-2);position:relative}
+.empty-shots .mini i::after{content:attr(data-r);position:absolute;top:3px;left:4px;font-size:9.5px;font-weight:600;font-style:normal;color:var(--mag)}
+.empty-shots b{font-family:var(--ff-d);font-size:16px;display:block}
+.empty-shots span{color:var(--muted);font-size:13px}
+
+dialog.lb{border:0;padding:0;background:var(--sheet);color:var(--ink);border-radius:8px;max-width:min(1100px,calc(100vw - 32px));width:100%;max-height:calc(100vh - 32px)}
+dialog.lb::backdrop{background:var(--scrim)}
+.lb-in{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);max-height:calc(100vh - 32px)}
+.lb-img{background:var(--paper);display:flex;align-items:center;justify-content:center;min-height:240px;overflow:auto}
+.lb-img img{max-width:100%;max-height:calc(100vh - 40px);display:block}
+.lb-side{padding:18px;display:flex;flex-direction:column;gap:12px;overflow:auto}
+.lb-side h3{font-family:var(--ff-d);font-size:20px;margin:0;padding-right:36px}
+.lb-side pre{white-space:pre-wrap;font:13.5px/1.6 var(--ff);background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:10px 12px;margin:0}
+.lb-close{position:absolute;top:10px;right:10px;border:1px solid var(--line);background:var(--sheet);border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:18px;line-height:1}
+
+/* ---------- Templates ---------- */
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:18px}
+.chip{border:1px solid var(--line);background:var(--sheet);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:500;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+.toolbar input{margin-left:auto;min-width:200px;background:var(--sheet);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:13px}
+.lib-title{font-family:var(--ff-d);font-size:26px;letter-spacing:-.01em;margin:30px 0 4px}
+.lib-sub{color:var(--muted);margin:0 0 14px;font-size:13.5px}
+
+section.group{margin-bottom:40px}
+section.group > h3{font-family:var(--ff-d);font-weight:700;font-size:24px;letter-spacing:-.01em;margin:0 0 14px;display:flex;align-items:baseline;gap:10px}
+section.group > h3 span{font-family:var(--ff);font-size:13px;font-weight:500;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+
+.card{background:var(--sheet);border:1px solid var(--line);border-radius:6px;display:flex;flex-direction:column;overflow:hidden}
+.stage{position:relative;height:230px;background:
+  linear-gradient(var(--line) 1px,transparent 1px) 0 0/20px 20px,
+  linear-gradient(90deg,var(--line) 1px,transparent 1px) 0 0/20px 20px, var(--paper);
+  display:flex;align-items:center;justify-content:center;padding:26px;border-bottom:1px solid var(--line)}
+.frame{position:relative;background:var(--sheet);box-shadow:0 0 0 1px var(--wire-2);overflow:visible;max-width:100%;max-height:100%}
+.marks{position:absolute;pointer-events:none;inset:-10px}
+.marks i{position:absolute;width:10px;height:10px;border-color:var(--mag);border-style:solid;border-width:0}
+.marks i:nth-child(1){top:0;left:0;border-top-width:1.5px;border-left-width:1.5px}
+.marks i:nth-child(2){top:0;right:0;border-top-width:1.5px;border-right-width:1.5px}
+.marks i:nth-child(3){bottom:0;left:0;border-bottom-width:1.5px;border-left-width:1.5px}
+.marks i:nth-child(4){bottom:0;right:0;border-bottom-width:1.5px;border-right-width:1.5px}
+.ratio-tag{position:absolute;top:8px;left:10px;font-size:11px;font-weight:600;color:var(--mag);letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.b{position:absolute}
+.b.product{display:flex;flex-direction:column;align-items:center}
+.b.product::before{content:"";width:34%;height:9%;min-height:3px;background:var(--cyan);border-radius:2px 2px 0 0}
+.b.product::after{content:"";flex:1;width:100%;border-radius:22% 22% 10% 10%/12% 12% 6% 6%;background:var(--cyan-soft);box-shadow:inset 0 0 0 1.5px var(--cyan)}
+.b.text{background:repeating-linear-gradient(to bottom,var(--ink) 0 22%,transparent 22% 40%);opacity:.82;border-radius:2px}
+.b.text.light{opacity:.35}
+.b.cta{background:var(--mag);border-radius:999px}
+.b.shape{background:var(--wire);border-radius:4px}
+.b.shape.round{border-radius:50%}
+.b.shape.ring{background:none;border:1.5px dashed var(--wire-2);border-radius:50%}
+.b.badge{background:var(--mag-soft);box-shadow:inset 0 0 0 1.5px var(--mag);border-radius:3px}
+.b.qr{background:conic-gradient(var(--ink) 25%,transparent 0 50%,var(--ink) 0 75%,transparent 0) 0 0/33.4% 33.4%;opacity:.7}
+.b.safe{background:repeating-linear-gradient(45deg,var(--mag-soft) 0 5px,transparent 5px 10px)}
+.b.grid{background:radial-gradient(circle,var(--wire-2) 28%,transparent 30%) 0 0/33% 16%}
+.b.frameline{box-shadow:inset 0 0 0 3px var(--cyan);border-radius:4px}
+.b.rack{background:repeating-linear-gradient(to bottom,var(--wire) 0 18%,var(--wire-2) 18% 22%);box-shadow:inset 0 0 0 1.5px var(--wire-2)}
+.b.arrow{border:2px solid var(--ink);border-left:0;border-bottom:0;transform:rotate(45deg);opacity:.6}
+.b.person svg{width:100%;height:100%;display:block}
+
+.body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:10px;flex:1}
+.body h4{font-family:var(--ff-d);font-weight:700;font-size:18px;margin:0;line-height:1.2}
+.meta{font-size:12.5px;color:var(--muted);margin-top:2px}
+.use{font-size:13.5px;margin:0}
+.check{list-style:none;margin:0;padding:0;font-size:13.5px}
+.check li{display:flex;gap:8px;align-items:flex-start;padding:3px 0}
+.check input{margin-top:3px;accent-color:var(--cyan)}
+.check label{cursor:pointer}
+.check input:checked + label{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--wire-2)}
+details.prompt{border:1px solid var(--line);border-radius:4px;background:var(--paper)}
+details.prompt summary{cursor:pointer;padding:8px 10px;font-size:13px;font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.prompt summary::-webkit-details-marker{display:none}
+details.prompt summary::after{content:"+";font-size:16px;color:var(--muted)}
+details.prompt[open] summary::after{content:"–"}
+.ptext{padding:0 10px 10px;font-size:13.5px;line-height:1.6}
+.ptext mark{background:var(--cyan-soft);color:inherit;border-radius:2px;padding:0 2px}
+.ptext mark.tool{background:none;color:var(--cyan);font-weight:600}
+.ptext mark.empty{background:var(--mag-soft);color:var(--mag);font-weight:600}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.actions .btn{font-size:12.5px;padding:6px 10px}
+.hidden{display:none!important}
+.empty-state{padding:40px;text-align:center;color:var(--muted);background:var(--sheet);border:1px dashed var(--line);border-radius:6px}
+footer{color:var(--muted);font-size:12.5px;margin-top:20px;max-width:80ch}
+.ref{background:var(--sheet);border:1px solid var(--line);border-radius:6px;margin-bottom:22px}
+.ref.drag{border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-soft)}
+.ref-empty{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:16px 18px;flex-wrap:wrap}
+.ref-empty h2,.ref-head h2{font-family:var(--ff-d);font-size:18px;margin:0}
+.ref-empty p{margin:2px 0 0;color:var(--muted);font-size:13.5px;max-width:60ch}
+.ref-loaded{display:grid;grid-template-columns:minmax(160px,280px) minmax(0,1fr);gap:20px;padding:18px}
+.ref-img{background:var(--paper);border-radius:4px;display:flex;align-items:center;justify-content:center;min-height:160px;overflow:hidden;position:relative}
+.ref-img img{max-width:100%;max-height:340px;display:block}
+.ref-img .ratio-tag{top:6px;left:8px;background:var(--sheet);padding:1px 6px;border-radius:3px}
+.ref-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.ref-head p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.ref-btns{display:flex;gap:8px;flex-wrap:wrap}
+.ref-out{margin-top:14px;font-size:14px}
+.ref-out .status{color:var(--muted);font-size:13.5px}
+.ref-out .status.err{color:var(--mag)}
+.match{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.match b{font-family:var(--ff-d);font-size:16px}
+.match span{color:var(--muted);font-size:13px}
+dl.ana{display:grid;grid-template-columns:120px 1fr;gap:4px 14px;margin:0 0 12px;font-size:13.5px}
+dl.ana dt{font-weight:600}
+dl.ana dd{margin:0;color:var(--muted)}
+.ref-prompt{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:10px 12px;line-height:1.6;margin-bottom:10px;white-space:pre-wrap}
+.card.suggested{box-shadow:0 0 0 2px var(--cyan)}
+.card .flag{display:none;font-size:12px;font-weight:600;color:var(--cyan)}
+.card.suggested .flag{display:block}
+@media (max-width:700px){.ref-loaded{grid-template-columns:1fr} dl.ana{grid-template-columns:1fr} .lb-in{grid-template-columns:1fr} .empty-shots .mini{display:none}}
+@media (max-width:900px){
+  .layout{grid-template-columns:minmax(0,1fr)}
+  aside.panel{position:static}
+  header.top{grid-template-columns:1fr}
+  .toolbar input{margin-left:0;flex:1;min-width:0}
+  .eng-cfg{grid-template-columns:1fr}
+  .engines{width:100%}
+  .eng{min-width:0;flex:1 1 150px}
+}
+@media (max-width:520px){ .wrap{padding:20px 16px 48px} .grid{grid-template-columns:minmax(0,1fr)} .results{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))} }
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Brief xong là ra ảnh</h1>
+      <p class="lede">20 loại hình thiết kế, mỗi loại có khung bố cục đúng tỉ lệ, checklist và prompt mẫu tiếng Việt. Điền thông tin brand một lần, chọn mẫu, bấm <b>Tạo ảnh</b> là ra ảnh ngay trong trang. Vẫn copy prompt sang Nano Banana, ChatGPT, Midjourney được như trước.</p>
+    </div>
+    <div class="formula">
+      <b>Công thức một prompt tốt</b>
+      <ol>
+        <li>Loại ấn phẩm và tỉ lệ khung</li>
+        <li>Chủ thể chính và vị trí</li>
+        <li>Bối cảnh, đạo cụ</li>
+        <li>Màu thương hiệu và phong cách</li>
+        <li>Ánh sáng, góc máy</li>
+        <li>Chữ trên ảnh, ghi chính xác trong ngoặc kép</li>
+      </ol>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="panel" aria-label="Thông tin brief">
+      <h2>Thông tin brief</h2>
+      <p class="hint">Để trống ô nào, prompt sẽ giữ chỗ trống màu hồng để bạn tự thay.</p>
+      <div class="field"><label for="f-thuong_hieu">Thương hiệu</label><input id="f-thuong_hieu" data-key="thuong_hieu" placeholder="VD: AURA"></div>
+      <div class="field"><label for="f-san_pham">Sản phẩm (mô tả ngoại hình)</label><textarea id="f-san_pham" data-key="san_pham" placeholder="VD: chai nước 500ml thân trong suốt, nắp xanh ngọc, nhãn tối giản"></textarea></div>
+      <div class="field"><label for="f-mau_chu_dao">Màu chủ đạo</label><input id="f-mau_chu_dao" data-key="mau_chu_dao" placeholder="VD: xanh ngọc #1FB5A8 và cam san hô"></div>
+      <div class="field"><label for="f-phong_cach">Phong cách</label><input id="f-phong_cach" data-key="phong_cach" placeholder="VD: hiện đại, tươi sáng"></div>
+      <div class="field"><label for="f-thong_diep">Thông điệp / tiêu đề</label><input id="f-thong_diep" data-key="thong_diep" placeholder="VD: Nạp năng lượng mỗi ngày"></div>
+      <div class="field"><label for="f-them">Yêu cầu thêm (gắn vào cuối mọi prompt)</label><textarea id="f-them" data-key="them" placeholder="VD: Giữ nguyên nhãn và hình dáng sản phẩm theo ảnh đính kèm."></textarea></div>
+      <div class="row">
+        <button class="btn" id="fill-demo" type="button">Điền ví dụ</button>
+        <button class="btn" id="clear" type="button">Xoá hết</button>
+      </div>
+      <div class="field" style="margin-top:16px"><label for="f-tool">Khi copy prompt, viết cho</label><select id="f-tool"><option value="gemini">Nano Banana / Gemini</option><option value="gpt">ChatGPT (GPT Image)</option><option value="mj">Midjourney</option><option value="other">Model khác (Seedream, Flux, Ideogram…)</option></select></div>
+      <div class="tips" id="tips"></div>
+    </aside>
+
+    <main>
+      <!-- Studio -->
+      <section class="studio" id="studio" aria-label="Xưởng tạo ảnh">
+        <div class="studio-head">
+          <div>
+            <h2>Xưởng tạo ảnh</h2>
+            <p>Chọn một mẫu bên dưới rồi bấm <b>Tạo ảnh</b>, hoặc tự viết prompt ở đây. Ảnh tạo ra được lưu trong trình duyệt này.</p>
+          </div>
+          <div class="engines" role="group" aria-label="Công cụ tạo ảnh" id="engines"></div>
+        </div>
+        <div class="eng-msg hidden" id="eng-msg"></div>
+        <div class="eng-cfg hidden" id="eng-cfg">
+          <div class="field"><label for="k-key" id="k-key-label">API key</label><input id="k-key" type="password" autocomplete="off" spellcheck="false" placeholder="Dán API key vào đây"></div>
+          <div class="field"><label for="k-model">Model</label><input id="k-model" list="k-models" spellcheck="false"><datalist id="k-models"></datalist></div>
+          <button class="btn" type="button" id="k-forget">Xoá key</button>
+          <p class="note" id="k-note"></p>
+        </div>
+        <div class="studio-body">
+          <div class="s-src" id="s-src"><b>Prompt tự viết</b></div>
+          <textarea id="s-prompt" aria-label="Prompt tạo ảnh" placeholder="Mô tả ảnh cần tạo: loại ấn phẩm, chủ thể, bối cảnh, màu, ánh sáng, chữ trên ảnh trong ngoặc kép…"></textarea>
+          <p class="s-auto hidden" id="s-auto"></p>
+          <div class="s-row">
+            <div class="ratios" role="group" aria-label="Tỉ lệ khung"><span class="s-label">Tỉ lệ</span><span id="ratios" style="display:contents"></span></div>
+            <label class="count"><span class="s-label">Số ảnh</span><select id="s-count"><option>1</option><option>2</option><option>3</option><option>4</option></select></label>
+          </div>
+          <div class="attach" id="attach">
+            <div class="slot hidden edit" id="slot-base">
+              <div class="th"><img id="base-th" alt=""></div>
+              <div class="tx"><b>Đang sửa tiếp ảnh này</b><span>Prompt chỉ cần ghi điều muốn đổi</span></div>
+              <button class="x" type="button" id="base-x" aria-label="Thôi sửa, tạo ảnh mới">×</button>
+            </div>
+            <div class="slot" id="slot-prod">
+              <div class="th" id="prod-th">+</div>
+              <div class="tx"><b>Ảnh sản phẩm thật</b><span id="prod-tx">Giữ đúng nhãn và hình dáng · <button class="btn" type="button" id="prod-pick" style="padding:0 6px;font-size:12px">Chọn ảnh</button></span></div>
+              <button class="x hidden" type="button" id="prod-x" aria-label="Bỏ ảnh sản phẩm">×</button>
+              <input type="file" id="prod-file" accept="image/jpeg,image/png,image/webp" hidden>
+            </div>
+            <div class="slot" id="slot-ref">
+              <div class="th" id="refs-th">+</div>
+              <div class="tx"><b>Ảnh tham chiếu</b><span id="refs-tx">Chưa có · import ở khung bên dưới</span></div>
+            </div>
+          </div>
+          <div class="s-actions">
+            <button class="btn go" type="button" id="s-go">Tạo ảnh</button>
+            <button class="btn hidden" type="button" id="s-stop">Dừng</button>
+            <button class="btn" type="button" id="s-copy">Copy prompt</button>
+            <p class="s-msg" id="s-msg" role="status" aria-live="polite">Ctrl + Enter để tạo nhanh.</p>
+          </div>
+        </div>
+        <div class="results-head">
+          <h3>Ảnh đã tạo<span id="r-count"></span></h3>
+          <button class="btn hidden" type="button" id="r-clear">Xoá tất cả</button>
+        </div>
+        <div class="results" id="results"></div>
+      </section>
+
+      <section class="ref" id="ref" aria-label="Ảnh tham chiếu">
+        <div class="ref-empty" id="ref-empty">
+          <div>
+            <h2>Có ảnh mẫu muốn làm giống?</h2>
+            <p>Import ảnh tham chiếu (hoặc dán bằng Ctrl + V). Ảnh được gửi kèm khi tạo ảnh bằng Gemini hoặc OpenAI, và mọi prompt copy ra sẽ dặn AI bám theo bố cục, phong cách của ảnh này.</p>
+          </div>
+          <button class="btn primary" type="button" id="ref-pick">Import ảnh tham chiếu</button>
+        </div>
+        <div class="ref-loaded hidden" id="ref-loaded">
+          <div class="ref-img"><span class="ratio-tag" id="ref-ratio"></span><img id="ref-preview" alt="Ảnh tham chiếu"></div>
+          <div>
+            <div class="ref-head">
+              <div><h2>Ảnh tham chiếu</h2><p id="ref-name"></p></div>
+              <div class="ref-btns">
+                <button class="btn primary hidden" type="button" id="ref-analyze">Phân tích và viết prompt</button>
+                <button class="btn hidden" type="button" id="ref-stop">Dừng</button>
+                <button class="btn" type="button" id="ref-change">Đổi ảnh</button>
+                <button class="btn" type="button" id="ref-remove">Bỏ ảnh</button>
+              </div>
+            </div>
+            <div class="ref-out" id="ref-out"><p class="status" id="ref-status">Khi dán prompt vào công cụ AI khác, nhớ đính kèm cả ảnh này.</p></div>
+          </div>
+        </div>
+        <input type="file" id="ref-file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+      </section>
+
+      <h2 class="lib-title">Thư viện mẫu</h2>
+      <p class="lib-sub">Bấm <b>Tạo ảnh</b> trên thẻ để đưa prompt và tỉ lệ lên xưởng rồi tạo luôn.</p>
+      <div class="toolbar" role="toolbar" aria-label="Lọc loại hình">
+        <div id="chips" style="display:contents"></div>
+        <input id="q" type="search" placeholder="Tìm loại hình…" aria-label="Tìm loại hình">
+      </div>
+      <div id="groups"></div>
+      <div id="none" class="empty-state hidden">Không có loại hình nào khớp. Thử từ khoá khác hoặc chọn "Tất cả".</div>
+      <footer>Thông tin brief, API key và ảnh đã tạo chỉ lưu trong trình duyệt này. Prompt và ảnh đính kèm chỉ được gửi đi khi bạn bấm Tạo ảnh (tới Canva, Google hoặc OpenAI tuỳ công cụ đang chọn) hoặc Phân tích và viết prompt (tới Claude).</footer>
+    </main>
+  </div>
+</div>
+
+<dialog class="lb" id="lb" aria-label="Xem ảnh">
+  <div class="lb-in">
+    <div class="lb-img"><img id="lb-img" alt=""></div>
+    <div class="lb-side">
+      <h3 id="lb-title"></h3>
+      <div class="shot-meta" id="lb-meta"></div>
+      <pre id="lb-prompt"></pre>
+      <div class="shot-act" id="lb-act"></div>
+    </div>
+  </div>
+  <button class="lb-close" type="button" id="lb-close" aria-label="Đóng">×</button>
+</dialog>
+
+<script>
+function $(id){return document.getElementById(id)}
+const use=n=>(window.claude&&typeof window.claude.use==="function")?window.claude.use(n).catch(()=>null):Promise.resolve(null);
+const IN_CLAUDE=!!(window.claude&&typeof window.claude.use==="function");
+
+const TYPES = [{"id": "post", "g": "Social & Ads", "name": "Post feed vuông", "ratio": "1:1", "use": "Bài đăng Facebook/Instagram thông thường, cần nổi bật trên bảng tin.", "check": ["Mục tiêu bài: nhận diện, tương tác hay bán hàng", "Chủ thể chính và vị trí trong khung", "Màu thương hiệu (ghi rõ tên màu hoặc mã HEX)", "Khoảng trống cho chữ/logo", "Chữ trên ảnh: ghi chính xác từng chữ trong ngoặc kép"], "p": "Ảnh quảng cáo mạng xã hội tỉ lệ 1:1 cho thương hiệu {thuong_hieu}. Chủ thể: {san_pham} đặt chính giữa trên một bục tròn, nền trơn phối màu {mau_chu_dao}, vài hình khối trang trí đơn giản xung quanh. Phong cách {phong_cach}, ánh sáng studio mềm, bóng đổ nhẹ. Chừa khoảng trống phía trên cho tiêu đề \"{thong_diep}\" bằng font không chân, đậm, dễ đọc."}, {"id": "carousel", "g": "Social & Ads", "name": "Carousel nhiều trang", "ratio": "4:5", "use": "Kể chuyện nhiều bước, so sánh, hướng dẫn, giới thiệu bộ sản phẩm.", "check": ["Số trang và nội dung từng trang", "Slide 1 phải là câu hook", "Lưới, màu, font thống nhất giữa các trang", "Chi tiết nối trang để gợi ý vuốt", "CTA đặt ở slide cuối"], "p": "Slide mở đầu của bộ carousel mạng xã hội tỉ lệ 4:5 cho {thuong_hieu}. Tiêu đề lớn \"{thong_diep}\" ở nửa trên, {san_pham} ở góc dưới bên phải, cắt nhẹ ra ngoài mép khung để gợi ý vuốt sang trang sau. Nền phẳng màu {mau_chu_dao}, phong cách {phong_cach}, đồ hoạ phẳng kết hợp ảnh thật, có mũi tên nhỏ ở cạnh phải."}, {"id": "story", "g": "Social & Ads", "name": "Story / Ảnh bìa Reels", "ratio": "9:16", "use": "Story, ảnh bìa Reels/TikTok, quảng cáo dọc toàn màn hình.", "check": ["Chừa vùng an toàn trên và dưới cho giao diện ứng dụng", "Chữ đủ lớn để đọc trên điện thoại", "Chủ thể nằm ở giữa khung", "Sticker hoặc nút CTA (nếu có)"], "p": "Ảnh dọc tỉ lệ 9:16 làm story và ảnh bìa Reels cho {thuong_hieu}. {san_pham} chiếm 1/3 giữa khung hình, góc máy hơi thấp cho cảm giác nổi bật, nền chuyển màu {mau_chu_dao}. Tiêu đề \"{thong_diep}\" ở 1/3 trên, để trống phần trên cùng và dưới cùng cho giao diện ứng dụng. Phong cách {phong_cach}, năng động, màu tươi."}, {"id": "banner", "g": "Social & Ads", "name": "Banner quảng cáo ngang", "ratio": "16:9", "use": "Banner website, ảnh bìa, quảng cáo hiển thị, quảng cáo link Facebook.", "check": ["Kích thước theo nền tảng (web, Facebook 1.91:1, Google Display)", "Tiêu đề ngắn, tối đa khoảng 7 chữ", "Nút CTA rõ ràng", "Vị trí logo", "Chữ không chiếm quá 20% diện tích"], "p": "Banner quảng cáo ngang tỉ lệ 16:9 cho {thuong_hieu}. Bố cục chia đôi: bên trái là tiêu đề \"{thong_diep}\" và nút \"Mua ngay\", bên phải là {san_pham} với hiệu ứng nước bắn nhẹ. Nền màu {mau_chu_dao}, phong cách {phong_cach}, sạch sẽ, nhiều khoảng thở, ánh sáng rõ."}, {"id": "sale", "g": "Social & Ads", "name": "Khuyến mãi / Flash sale", "ratio": "4:5", "use": "Ưu đãi có thời hạn, ngày đôi, sự kiện sale trên sàn.", "check": ["Mức ưu đãi chính xác", "Thời hạn và điều kiện áp dụng", "Yếu tố khẩn cấp (đếm ngược, số lượng có hạn)", "Màu tương phản cao", "Không nhồi quá nhiều chữ"], "p": "Ảnh khuyến mãi tỉ lệ 4:5 cho {thuong_hieu}. Chữ lớn \"GIẢM 30%\" nổi bật ở trung tâm, {san_pham} đặt phía trước, xung quanh có hình khối 3D, ruy băng và pháo giấy màu {mau_chu_dao}. Không khí sôi động, phong cách {phong_cach}, tương phản cao, bắt mắt khi lướt nhanh."}, {"id": "packshot", "g": "Sản phẩm & E-commerce", "name": "Packshot nền trắng", "ratio": "1:1", "use": "Ảnh sản phẩm chuẩn cho website, sàn TMĐT, catalogue.", "check": ["Góc chụp: chính diện, 3/4 hay từ trên xuống", "Nền trắng thuần", "Đúng màu và nhãn thật (nên đính kèm ảnh sản phẩm gốc)", "Độ sắc nét", "Kiểu bóng đổ hoặc phản chiếu"], "p": "Ảnh chụp sản phẩm chuyên nghiệp tỉ lệ 1:1: {san_pham} của {thuong_hieu} đứng thẳng chính diện trên nền trắng tinh, ánh sáng studio ba điểm, viền sáng hai bên thân, bóng phản chiếu mờ dưới đáy. Sắc nét, đúng màu, không có chữ hay vật thể khác, chất lượng ảnh thương mại điện tử."}, {"id": "kv", "g": "Sản phẩm & E-commerce", "name": "Key Visual chiến dịch", "ratio": "16:9", "use": "Hình ảnh chủ đạo của chiến dịch, làm gốc để triển khai mọi ấn phẩm khác.", "check": ["Ý tưởng chủ đạo (big idea)", "Yếu tố nhận diện sẽ lặp lại ở mọi ấn phẩm", "Mở rộng được sang nhiều tỉ lệ", "Vùng dành cho logo và tagline", "Hình ảnh hero"], "p": "Key visual chiến dịch tỉ lệ 16:9 cho {thuong_hieu}. {san_pham} ở trung tâm, kích thước lớn, bao quanh bởi dòng nước xoáy và giọt nước lơ lửng, ánh sáng điện ảnh chiếu từ phía sau tạo quầng sáng. Tông màu {mau_chu_dao}, phong cách {phong_cach}, cao cấp, có chiều sâu. Tiêu đề chiến dịch \"{thong_diep}\" ở phía trên."}, {"id": "thumbnail", "g": "Sản phẩm & E-commerce", "name": "Ảnh bìa sản phẩm trên sàn", "ratio": "1:1", "use": "Ảnh đại diện trên Shopee, TikTok Shop, Lazada.", "check": ["Quy định của sàn (nền, khung, tỉ lệ chữ)", "Sản phẩm chiếm 60–80% khung", "Huy hiệu ưu đãi (freeship, chính hãng)", "Vẫn đọc rõ khi thu nhỏ", "Kế hoạch cho ảnh phụ (công dụng, thông số)"], "p": "Ảnh đại diện sản phẩm cho sàn thương mại điện tử tỉ lệ 1:1. {san_pham} của {thuong_hieu} chiếm 70% khung hình, nền trắng pha màu {mau_chu_dao} nhạt, khung viền màu thương hiệu, góc trên có huy hiệu \"Chính hãng\", góc dưới có dải băng \"Freeship\". Rõ ràng, sạch, dễ nhìn ở kích thước nhỏ."}, {"id": "incontext", "g": "Sản phẩm & E-commerce", "name": "Sản phẩm trong bối cảnh", "ratio": "4:5", "use": "Cho khách hình dung sản phẩm trong đời sống thật, không cần người mẫu.", "check": ["Bối cảnh sử dụng thật", "Đạo cụ hợp với đối tượng khách", "Sản phẩm vẫn là tâm điểm", "Ánh sáng và thời điểm trong ngày"], "p": "Ảnh sản phẩm trong bối cảnh tỉ lệ 4:5: {san_pham} của {thuong_hieu} đặt trên bàn gỗ sáng màu cạnh cửa sổ, nắng sáng chiếu xiên, bên cạnh có tai nghe, sổ tay và chậu cây nhỏ. Hậu cảnh mờ nhẹ, điểm nhấn màu {mau_chu_dao}, phong cách {phong_cach}, tự nhiên, ấm áp."}, {"id": "infographic", "g": "Sản phẩm & E-commerce", "name": "Infographic lợi ích", "ratio": "1:1", "use": "Ảnh phụ trên sàn, bài giải thích công dụng, so sánh.", "check": ["Chỉ 3–5 lợi ích", "Chữ ngắn, ghi chính xác (AI hay sai dấu tiếng Việt, cần soát lại)", "Biểu tượng cùng một phong cách", "Thứ bậc thông tin rõ ràng"], "p": "Infographic tỉ lệ 1:1 giới thiệu {san_pham} của {thuong_hieu}. Sản phẩm ở giữa, bốn biểu tượng lợi ích bố trí xung quanh, nối bằng đường mảnh, mỗi biểu tượng kèm nhãn ngắn: \"Bù khoáng\", \"Không đường\", \"Dễ mang theo\", \"Giải khát nhanh\". Nền màu {mau_chu_dao} nhạt, biểu tượng phẳng đơn sắc, phong cách {phong_cach}, gọn gàng."}, {"id": "poster", "g": "Sự kiện & In ấn", "name": "Poster sự kiện", "ratio": "2:3", "use": "Poster in A3/A2, ảnh truyền thông sự kiện trên mạng xã hội.", "check": ["Tên sự kiện, ngày giờ, địa điểm chính xác", "Kích thước in và độ phân giải (300 DPI)", "Chừa lề tràn khi in", "Thứ tự đọc: tiêu đề, hình, thông tin", "Khu vực logo nhà tài trợ"], "p": "Poster sự kiện dọc tỉ lệ 2:3 cho {thuong_hieu}. Tiêu đề lớn \"{thong_diep}\" ở nửa trên, hình chính là một vận động viên đang chạy với chuyển động mạnh, {san_pham} ở góc dưới. Phía dưới có dải thông tin ngày giờ và địa điểm. Tông màu {mau_chu_dao}, phong cách {phong_cach}, bố cục poster đồ hoạ hiện đại, tương phản cao."}, {"id": "standee", "g": "Sự kiện & In ấn", "name": "Standee", "ratio": "9:16", "use": "Standee đặt ở sảnh, cửa hàng, khu check-in sự kiện.", "check": ["Kích thước thật (60×160, 80×180 cm)", "Thông tin chính ở tầm mắt 1,2–1,6 m", "Phần dưới cùng không đặt nội dung quan trọng", "Mã QR đủ lớn để quét", "Chất liệu in"], "p": "Mockup standee dọc đứng trong sảnh sự kiện cho {thuong_hieu}. Trên standee: logo ở trên cùng, tiêu đề \"{thong_diep}\" ngang tầm mắt, {san_pham} kích thước lớn ở giữa, mã QR và thông tin ở phần dưới. Nền màu {mau_chu_dao}, phong cách {phong_cach}, trông như ảnh chụp thật."}, {"id": "backdrop", "g": "Sự kiện & In ấn", "name": "Backdrop sân khấu / Photobooth", "ratio": "21:9", "use": "Phông sân khấu, khu chụp ảnh check-in, họp báo.", "check": ["Kích thước thật (ví dụ 6×3 m)", "Đọc được từ xa", "Chữ không bị người đứng che khi chụp", "Logo lặp theo lưới cho photobooth", "Ánh sáng sân khấu"], "p": "Mockup backdrop sân khấu sự kiện tỉ lệ 21:9 cho {thuong_hieu}. Phông nền lớn màu {mau_chu_dao}, tên sự kiện \"{thong_diep}\" ở chính giữa, logo thương hiệu lặp lại theo lưới ở hai bên, {san_pham} phóng to ở góc phải. Sân khấu có đèn chiếu, phong cách {phong_cach}, trông như ảnh chụp sự kiện thật."}, {"id": "posm", "g": "Sự kiện & In ấn", "name": "POSM tại điểm bán", "ratio": "4:3", "use": "Kệ trưng bày, wobbler, shelf-talker ở siêu thị và cửa hàng tiện lợi.", "check": ["Loại POSM (kệ, wobbler, shelf-talker, hanger)", "Kích thước và vị trí đặt", "Nhìn rõ từ 2–3 m", "Đồng bộ với key visual", "Chất liệu in"], "p": "Mockup vật phẩm trưng bày tại điểm bán tỉ lệ 4:3: kệ bìa cứng màu {mau_chu_dao} xếp đầy {san_pham} của {thuong_hieu}, tấm header trên đỉnh ghi \"{thong_diep}\", wobbler nhỏ gắn cạnh kệ. Đặt trong lối đi siêu thị sáng sủa, phong cách {phong_cach}, chân thực như ảnh chụp tại cửa hàng."}, {"id": "booth", "g": "Sự kiện & In ấn", "name": "Gian hàng / Booth", "ratio": "16:9", "use": "Phối cảnh booth hội chợ, sự kiện, lễ hội để duyệt trước khi thi công.", "check": ["Diện tích gian hàng", "Khu chức năng: trải nghiệm, check-in, quầy", "Lối đi cho khách", "Vật liệu chính", "Góc nhìn phối cảnh"], "p": "Phối cảnh gian hàng sự kiện tỉ lệ 16:9 cho {thuong_hieu}: booth 3×3 m màu {mau_chu_dao}, tường sau có logo lớn và thông điệp \"{thong_diep}\", quầy trải nghiệm phía trước bày {san_pham}, có tủ mát trưng bày và vài khách tham quan. Góc nhìn 3/4 ngang tầm mắt, phong cách {phong_cach}, ánh sáng triển lãm."}, {"id": "koc", "g": "Con người & Lifestyle", "name": "KOC cầm sản phẩm review", "ratio": "9:16", "use": "Ảnh bìa video review, ảnh quảng cáo dạng người thật giới thiệu.", "check": ["Chân dung KOC: tuổi, giới tính, phong cách", "Hành động với sản phẩm", "Biểu cảm", "Bối cảnh quen thuộc", "Nhãn sản phẩm nhìn rõ, không quá bóng bẩy"], "p": "Ảnh dọc 9:16 phong cách review: một cô gái Việt Nam khoảng 25 tuổi, trang phục thường ngày, cầm {san_pham} của {thuong_hieu} đưa về phía ống kính và mỉm cười, tay còn lại chỉ vào nhãn. Bối cảnh phòng khách gọn gàng, ánh sáng tự nhiên từ cửa sổ, điểm màu {mau_chu_dao}, cảm giác chân thật như chụp bằng điện thoại."}, {"id": "ugc", "g": "Con người & Lifestyle", "name": "UGC tự nhiên", "ratio": "9:16", "use": "Quảng cáo trông như khách tự chụp, tăng độ tin cậy.", "check": ["Góc chụp điện thoại cầm tay", "Chút khuyết điểm có chủ đích (nghiêng khung, nhiễu nhẹ)", "Bối cảnh đời thường", "Không dùng ánh sáng studio", "Sản phẩm xuất hiện tự nhiên"], "p": "Ảnh UGC dọc 9:16 như người dùng tự chụp: góc selfie cầm tay, một chàng trai trẻ Việt Nam mặc áo thun thể thao, hơi đổ mồ hôi sau khi tập, đang uống {san_pham} của {thuong_hieu} ở công viên buổi sáng. Khung hơi nghiêng, chất ảnh điện thoại, ánh sáng tự nhiên, không chỉnh sửa quá tay."}, {"id": "editorial", "g": "Con người & Lifestyle", "name": "Chân dung người mẫu editorial", "ratio": "4:5", "use": "Ảnh chiến dịch cao cấp, gương mặt đại diện, ảnh bìa.", "check": ["Ngoại hình, trang phục, tóc", "Tư thế và ánh mắt", "Màu nền", "Hướng ánh sáng", "Da tự nhiên, không bóng nhựa"], "p": "Ảnh chân dung editorial tỉ lệ 4:5: người mẫu nữ châu Á tóc buộc gọn, trang phục thể thao tối giản, cầm {san_pham} của {thuong_hieu} ngang vai, nhìn thẳng ống kính tự tin. Nền studio trơn màu {mau_chu_dao}, ánh sáng chính mềm từ bên trái, phong cách {phong_cach}, chất lượng tạp chí thời trang, da tự nhiên."}, {"id": "outdoor", "g": "Con người & Lifestyle", "name": "Lifestyle hoạt động ngoài trời", "ratio": "16:9", "use": "Ảnh chiến dịch thể thao, du lịch, cảm hứng sống năng động.", "check": ["Hoạt động cụ thể", "Số người", "Thời điểm và hướng nắng", "Cảm giác chuyển động", "Sản phẩm xuất hiện hợp lý"], "p": "Ảnh lifestyle ngang 16:9: nhóm ba người trẻ chạy bộ trên con đường ven sông lúc bình minh, người đi đầu cầm {san_pham} của {thuong_hieu}. Góc máy thấp, ống kính tele, hậu cảnh xoá phông, nắng vàng ngược sáng, trang phục có điểm màu {mau_chu_dao}, phong cách {phong_cach}, tràn đầy năng lượng."}, {"id": "family", "g": "Con người & Lifestyle", "name": "Gia đình / Nhóm bạn", "ratio": "4:3", "use": "Thông điệp gắn kết, dùng chung, dịp lễ tết, dã ngoại.", "check": ["Thành phần nhóm (tuổi, số người)", "Tương tác giữa các nhân vật", "Khoảnh khắc chân thật, không tạo dáng", "Sản phẩm hiện diện không gượng ép"], "p": "Ảnh lifestyle tỉ lệ 4:3: một gia đình Việt Nam gồm bố mẹ và hai con nhỏ ngồi dã ngoại trên bãi cỏ, trên thảm có giỏ đồ ăn và vài chai {san_pham} của {thuong_hieu}. Mọi người cười nói tự nhiên, nắng chiều ấm, điểm màu {mau_chu_dao} trên thảm và trang phục, phong cách {phong_cach}."}];
+const DEMO = {thuong_hieu:"AURA",san_pham:"chai nước uống 500ml thân trong suốt, nắp màu xanh ngọc, nhãn tối giản",mau_chu_dao:"xanh ngọc và cam san hô",phong_cach:"hiện đại, tươi sáng",thong_diep:"Nạp năng lượng mỗi ngày",them:""};
+const LABELS = {thuong_hieu:"Thương hiệu",san_pham:"Sản phẩm",mau_chu_dao:"Màu chủ đạo",phong_cach:"Phong cách",thong_diep:"Thông điệp"};
+const TOOLS = {
+ gemini:{name:"Nano Banana / Gemini",tips:["Đính kèm ảnh sản phẩm thật để giữ đúng nhãn và hình dáng.","Chữ tiếng Việt trên ảnh hay sai dấu: giữ ngắn và luôn soát lại.","Sửa từng điểm một ở lượt sau (\"đổi nền sang…, giữ nguyên mọi thứ khác\").","Ấn phẩm in: tạo ảnh ý tưởng bằng AI, dựng file in ở phần mềm thiết kế."]},
+ gpt:{name:"ChatGPT (GPT Image)",tips:["GPT Image 2 xuất trực tiếp mọi tỉ lệ trong bảng (từ 3:1 đến 1:3). Chọn đúng tỉ lệ trong ChatGPT hoặc để nguyên câu tỉ lệ ở cuối prompt.","Viết chữ trên ảnh chính xác hơn phần lớn model khác, vẫn nên soát dấu tiếng Việt.","Đính kèm ảnh sản phẩm thật để giữ nhãn.","Sửa bằng cách nhắn tiếp trong cùng cuộc trò chuyện."]},
+ mj:{name:"Midjourney",tips:["Tham số --ar (tỉ lệ) đã được thêm vào cuối prompt.","Midjourney hiểu tiếng Anh tốt hơn: nếu ảnh lệch ý, nhờ ChatGPT hoặc Claude dịch prompt trước khi dán.","Chữ trên ảnh yếu: nên để trống vùng chữ và ghép chữ bằng Canva hoặc Photoshop.","Dùng ảnh tham chiếu (omni reference) để giữ sản phẩm thật."]},
+ other:{name:"Model khác",tips:["Chọn tỉ lệ trong cài đặt của công cụ, không chỉ ghi trong prompt.","Nhiều model hiểu tiếng Việt ở mức vừa: nếu ảnh lệch ý, thử bản dịch tiếng Anh.","Ideogram mạnh về chữ trên ảnh; Seedream và Flux mạnh về ảnh chân thực.","Luôn soát chữ và nhãn sản phẩm trước khi dùng."]}
+};
+let tool="gemini";
+function suffixFor(r){
+  if(tool==="gpt"||tool==="other") return `Tỉ lệ khung ${r}.`;
+  if(tool==="mj") return `--ar ${r}`;
+  return "";
+}
+let refBlob=null;
+function refClause(){
+  if(!refBlob) return "";
+  return tool==="mj" ? "--sref [link ảnh tham chiếu]" : "Tham khảo bố cục, màu sắc, ánh sáng và phong cách của ảnh mẫu đính kèm; thay sản phẩm, thương hiệu và chữ bằng thông tin trong prompt này.";
+}
+function tail(r){
+  const a=[]; const c=refClause(), s=suffixFor(r);
+  if(tool==="mj"){ if(s) a.push(s); if(c) a.push(c); } else { if(c) a.push(c); if(s) a.push(s); }
+  return a;
+}
+function renderTips(){
+  const extra = refBlob ? [tool==="mj" ? "Tải ảnh tham chiếu lên Midjourney rồi thay [link ảnh tham chiếu] bằng link ảnh." : "Đính kèm ảnh tham chiếu cùng prompt khi dán vào công cụ."] : [];
+  $("tips").innerHTML=`<b>Mẹo khi dùng ${TOOLS[tool].name}</b><ul>${[...extra,...TOOLS[tool].tips].map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`}
+const GROUPS = ["Social & Ads","Sản phẩm & E-commerce","Sự kiện & In ấn","Con người & Lifestyle"];
+
+// Wireframe blocks: [kind, x, y, w, h, extraClass]
+const WF = {
+ post:[["shape",28,64,44,16,"round"],["product",41,26,18,46],["text",14,8,72,10]],
+ carousel:[["text",8,9,68,22],["text light",8,34,46,6],["product",64,54,28,46],["arrow",86,44,5,4]],
+ story:[["safe",0,0,100,9],["safe",0,90,100,10],["text",10,13,80,10],["product",33,30,34,44],["cta",30,79,40,5]],
+ banner:[["text",6,26,40,20],["text light",6,50,30,7],["cta",6,64,17,11],["shape",56,10,36,80,"round"],["product",65,12,18,76]],
+ sale:[["text",12,10,76,24],["product",36,38,28,50],["badge",6,70,14,10],["badge",80,12,12,9],["shape",72,72,20,18,"round"]],
+ packshot:[["product",39,12,22,72],["shape",33,85,34,4,"round"]],
+ kv:[["text",27,6,46,11],["shape",22,26,56,70,"ring"],["shape",32,34,36,56,"ring"],["product",43,24,14,70]],
+ thumbnail:[["frameline",3,3,94,94],["product",34,12,32,76],["badge",8,8,26,10],["badge",0,82,42,10]],
+ incontext:[["shape",58,0,42,42],["shape",0,70,100,30],["product",40,30,18,46],["shape",10,62,18,10],["shape",74,58,14,14,"round"]],
+ infographic:[["product",42,26,16,48],["badge",9,12,18,18],["badge",73,12,18,18],["badge",9,70,18,18],["badge",73,70,18,18],["text light",9,32,18,5],["text light",73,32,18,5]],
+ poster:[["text",8,5,84,16],["person",22,24,56,52],["product",74,68,14,18],["shape",0,88,100,12]],
+ standee:[["badge",36,3,28,5],["text",10,13,80,9],["product",30,28,40,44],["qr",41,79,18,10]],
+ backdrop:[["grid",3,12,20,76],["grid",77,12,20,76],["text",30,34,40,20],["text light",36,58,28,6],["product",66,20,8,64]],
+ posm:[["text",30,5,40,12],["rack",28,20,44,74],["product",34,24,8,14],["product",46,24,8,14],["product",58,24,8,14],["badge",74,42,10,12]],
+ booth:[["shape",10,8,80,52],["text",33,18,34,12],["shape",24,60,52,26],["product",46,48,8,14],["person",80,38,12,50]],
+ koc:[["person",14,18,72,82],["product",58,40,14,22]],
+ ugc:[["person",8,12,84,88],["product",52,30,12,20],["shape",0,0,100,6]],
+ editorial:[["person",20,8,60,92],["product",58,36,13,22]],
+ outdoor:[["shape",0,62,100,38],["person",36,22,14,72],["person",52,28,12,66],["person",65,30,12,64],["product",46,40,4,12]],
+ family:[["shape",4,70,92,26],["person",12,22,18,54],["person",32,18,18,58],["person",53,38,13,38],["person",68,40,13,36],["product",46,66,5,14]]
+};
+const PERSON = '<svg viewBox="0 0 100 120" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><circle cx="50" cy="26" r="17" fill="var(--wire-2)"/><path d="M14 120 C14 72 30 52 50 52 C70 52 86 72 86 120Z" fill="var(--wire)" stroke="var(--wire-2)" stroke-width="2"/></svg>';
+
+const store = {
+  get(k){try{return localStorage.getItem(k)}catch(e){return null}},
+  set(k,v){try{localStorage.setItem(k,v)}catch(e){}},
+  del(k){try{localStorage.removeItem(k)}catch(e){}}
+};
+let vals = {};
+try{vals = JSON.parse(store.get("brief-vals")||"{}")||{}}catch(e){vals={}}
+
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function fillBody(t){
+  let s = t.p.replace(/\{(\w+)\}/g,(m,k)=>{const v=(vals[k]||"").trim();return v||`[${LABELS[k]||k}]`});
+  if((vals.them||"").trim()) s += " " + vals.them.trim();
+  return s;
+}
+function promptHTML(t){
+  let html = esc(t.p).replace(/\{(\w+)\}/g,(m,k)=>{
+    const v=(vals[k]||"").trim();
+    return v?`<mark>${esc(v)}</mark>`:`<mark class="empty">[${LABELS[k]||k}]</mark>`;
+  });
+  if((vals.them||"").trim()) html += " <mark>"+esc(vals.them.trim())+"</mark>";
+  tail(t.ratio).forEach(x=>{html += ' <mark class="tool">'+esc(x)+'</mark>'});
+  return html;
+}
+function promptText(t){
+  let s = fillBody(t);
+  tail(t.ratio).forEach(x=>{s += " " + x});
+  return s;
+}
+function ratioNum(r){const [a,b]=r.split(":").map(Number);return a/b}
+async function copyText(txt,btn,label){
+  try{await navigator.clipboard.writeText(txt)}catch(err){
+    const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand("copy")}catch(_){}ta.remove();
+  }
+  if(btn){btn.textContent="Đã copy";btn.classList.add("done");setTimeout(()=>{btn.textContent=label;btn.classList.remove("done")},1600)}
+}
+
+function buildFrame(t){
+  const f=document.createElement("div"); f.className="frame";
+  const r=ratioNum(t.ratio); f.style.aspectRatio=t.ratio.replace(":"," / ");
+  if(r>=1.6){f.style.width="100%"} else {f.style.height="100%"}
+  (WF[t.id]||[]).forEach(([k,x,y,w,h,extra])=>{
+    const b=document.createElement("div");
+    b.className="b "+k+(extra?" "+extra:"");
+    Object.assign(b.style,{left:x+"%",top:y+"%",width:w+"%",height:h+"%"});
+    if(k==="person") b.innerHTML=PERSON;
+    f.appendChild(b);
+  });
+  const m=document.createElement("div"); m.className="marks"; m.innerHTML="<i></i><i></i><i></i><i></i>";
+  f.appendChild(m);
+  return f;
+}
+
+function card(t){
+  const c=document.createElement("article"); c.className="card"; c.dataset.id=t.id; c.dataset.g=t.g;
+  c.dataset.search=(t.name+" "+t.use+" "+t.g).toLowerCase();
+  const stage=document.createElement("div"); stage.className="stage";
+  stage.innerHTML=`<span class="ratio-tag">${t.ratio}</span>`;
+  stage.appendChild(buildFrame(t));
+  const body=document.createElement("div"); body.className="body";
+  body.innerHTML=`
+    <div><span class="flag">Phù hợp với ảnh tham chiếu</span><h4>${esc(t.name)}</h4><div class="meta">Tỉ lệ ${t.ratio}</div></div>
+    <p class="use">${esc(t.use)}</p>
+    <ul class="check">${t.check.map((x,i)=>`<li><input type="checkbox" id="c-${t.id}-${i}"><label for="c-${t.id}-${i}">${esc(x)}</label></li>`).join("")}</ul>
+    <details class="prompt"><summary>Prompt mẫu</summary><div class="ptext"></div></details>
+    <div class="actions">
+      <button class="btn go" type="button" data-act="gen">Tạo ảnh</button>
+      <button class="btn" type="button" data-act="load">Sửa prompt trước</button>
+      <button class="btn" type="button" data-act="copy">Copy prompt</button>
+    </div>`;
+  c.append(stage,body);
+  const pt=body.querySelector(".ptext");
+  body.addEventListener("click",e=>{
+    const a=e.target.closest("[data-act]"); if(!a) return;
+    if(a.dataset.act==="copy") copyText(promptText(t),a,"Copy prompt");
+    if(a.dataset.act==="gen"){loadIntoStudio({src:t,text:fillBody(t),ratio:t.ratio}); generate()}
+    if(a.dataset.act==="load"){loadIntoStudio({src:t,text:fillBody(t),ratio:t.ratio}); $("s-prompt").focus()}
+  });
+  c._refresh=()=>{pt.innerHTML=promptHTML(t)};
+  c._refresh();
+  return c;
+}
+
+const groupsEl=$("groups");
+const cards=[];
+GROUPS.forEach(g=>{
+  const items=TYPES.filter(t=>t.g===g);
+  const s=document.createElement("section"); s.className="group"; s.dataset.g=g;
+  s.innerHTML=`<h3>${esc(g)} <span>${items.length} loại hình</span></h3>`;
+  const grid=document.createElement("div"); grid.className="grid";
+  items.forEach(t=>{const c=card(t);cards.push(c);grid.appendChild(c)});
+  s.appendChild(grid); groupsEl.appendChild(s);
+});
+
+// filters
+let active="Tất cả";
+const chipsEl=$("chips");
+["Tất cả",...GROUPS].forEach(g=>{
+  const b=document.createElement("button"); b.type="button"; b.className="chip"; b.textContent=g;
+  b.setAttribute("aria-pressed",g===active);
+  b.onclick=()=>{active=g;chipsEl.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x.textContent===g));applyFilter()};
+  chipsEl.appendChild(b);
+});
+const q=$("q");
+q.addEventListener("input",applyFilter);
+function applyFilter(){
+  const term=q.value.trim().toLowerCase(); let shown=0;
+  document.querySelectorAll("section.group").forEach(s=>{
+    let n=0;
+    s.querySelectorAll(".card").forEach(c=>{
+      const ok=(active==="Tất cả"||c.dataset.g===active)&&(!term||c.dataset.search.includes(term));
+      c.classList.toggle("hidden",!ok); if(ok) n++;
+    });
+    s.classList.toggle("hidden",n===0); shown+=n;
+  });
+  $("none").classList.toggle("hidden",shown>0);
+}
+
+/* =====================================================================
+   XƯỞNG TẠO ẢNH
+   ===================================================================== */
+const RATIOS=["1:1","4:5","9:16","16:9","2:3","4:3","21:9"];
+const CANVA_AR={"1:1":"SQUARE_1_1","4:5":"PORTRAIT_4_5","9:16":"PORTRAIT_9_16","16:9":"LANDSCAPE_16_9","2:3":"PORTRAIT_2_3","4:3":"LANDSCAPE_4_3","21:9":"LANDSCAPE_2_1"};
+const ENGINES={
+  canva:{name:"Canva AI",sub:"Qua kết nối Canva trong Claude",short:"Canva"},
+  gemini:{name:"Gemini · Nano Banana",sub:"API key Google AI Studio",short:"Gemini",models:["gemini-2.5-flash-image","gemini-3-pro-image-preview"],
+    keyLabel:"Gemini API key",keyUrl:"https://aistudio.google.com/apikey",host:"Google"},
+  openai:{name:"OpenAI · GPT Image",sub:"API key OpenAI",short:"OpenAI",models:["gpt-image-1","gpt-image-1-mini"],
+    keyLabel:"OpenAI API key",keyUrl:"https://platform.openai.com/api-keys",host:"OpenAI"}
+};
+const S={engine:null,ratio:"1:1",src:null,dirty:false,base:null,product:null,busy:false,ctl:null};
+const avail={canva:{st:"wait",msg:"Đang kiểm tra kết nối Canva…"},gemini:{st:"ok"},openai:{st:"ok"}};
+let mcp=null, dl=null;
+
+if(IN_CLAUDE){
+  const why="Claude chặn trang gọi thẳng tới "+"%s"+" nên cách này chỉ chạy khi bạn tải file app về máy và mở bằng trình duyệt.";
+  avail.gemini={st:"no",msg:why.replace("%s","Google")};
+  avail.openai={st:"no",msg:why.replace("%s","OpenAI")};
+}else{
+  avail.canva={st:"no",msg:"Canva AI chỉ chạy khi mở trang này trong Claude (claude.ai) và đã kết nối Canva. Ở đây hãy dùng Gemini hoặc OpenAI với API key của bạn."};
+}
+
+function renderEngines(){
+  const box=$("engines"); box.innerHTML="";
+  Object.entries(ENGINES).forEach(([k,e])=>{
+    const a=avail[k];
+    const b=document.createElement("button"); b.type="button"; b.className="eng"; b.dataset.eng=k;
+    b.setAttribute("aria-pressed",S.engine===k);
+    const dot=a.st==="ok"?(k!=="canva"&&!keyOf(k)?"wait":"ok"):a.st;
+    b.innerHTML=`<b><span class="dot ${dot}"></span>${esc(e.name)}</b><span>${esc(e.sub)}</span>`;
+    b.onclick=()=>setEngine(k);
+    box.appendChild(b);
+  });
+  const a=avail[S.engine], e=ENGINES[S.engine], msg=$("eng-msg");
+  msg.className="eng-msg"+(a.st==="ok"?" hidden":a.st==="wait"?" warn":" no");
+  msg.textContent=a.msg||"";
+  const cfg=$("eng-cfg");
+  cfg.classList.toggle("hidden",S.engine==="canva"||a.st==="no");
+  if(e.models){
+    $("k-key-label").textContent=e.keyLabel;
+    $("k-key").value=keyOf(S.engine);
+    $("k-model").value=store.get("xa-model-"+S.engine)||e.models[0];
+    $("k-models").innerHTML=e.models.map(m=>`<option value="${m}">`).join("");
+    $("k-note").innerHTML=`Chưa có key? Lấy tại <a href="${e.keyUrl}" target="_blank" rel="noopener">${e.keyUrl.replace("https://","")}</a>. Key chỉ lưu trong trình duyệt này và gửi thẳng tới ${e.host}, chi phí tính vào tài khoản của bạn.`;
+  }
+  $("s-go").disabled=S.busy||a.st==="no";
+  renderAuto();
+}
+function keyOf(k){return store.get("xa-key-"+k)||""}
+function setEngine(k){S.engine=k;store.set("xa-engine",k);renderEngines()}
+$("k-key").addEventListener("input",e=>{const v=e.target.value.trim(); v?store.set("xa-key-"+S.engine,v):store.del("xa-key-"+S.engine); renderEngines(); $("k-key").focus()});
+$("k-model").addEventListener("change",e=>{const v=e.target.value.trim(); v?store.set("xa-model-"+S.engine,v):store.del("xa-model-"+S.engine)});
+$("k-forget").onclick=()=>{store.del("xa-key-"+S.engine);renderEngines();sMsg("Đã xoá key khỏi trình duyệt này.")};
+
+// ratio chips
+RATIOS.forEach(r=>{const b=document.createElement("button");b.type="button";b.className="rchip";b.textContent=r;b.dataset.r=r;
+  b.onclick=()=>{S.ratio=r;renderRatio();renderAuto()};$("ratios").appendChild(b)});
+function renderRatio(){document.querySelectorAll(".rchip").forEach(b=>b.setAttribute("aria-pressed",b.dataset.r===S.ratio))}
+
+function loadIntoStudio({src=null,text="",ratio=null,label=null}){
+  if(S.base) clearBase(true);
+  S.src=src; S.srcLabel=label; S.dirty=false;
+  $("s-prompt").value=text;
+  if(ratio&&RATIOS.includes(ratio)) S.ratio=ratio;
+  renderRatio(); renderSrc(); renderAuto();
+  $("studio").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
+}
+function renderSrc(){
+  const el=$("s-src");
+  if(S.base){el.innerHTML=`<b>Sửa tiếp ảnh</b><span>Ghi điều muốn đổi, VD: đổi nền sang màu cam, giữ nguyên mọi thứ khác.</span>`;return}
+  if(S.src) el.innerHTML=`<b>${esc(S.src.name)}</b><span>Mẫu từ thư viện · tỉ lệ gợi ý ${S.src.ratio}${S.dirty?" · đã sửa tay":""}</span>`;
+  else if(S.srcLabel) el.innerHTML=`<b>${esc(S.srcLabel)}</b>`;
+  else el.innerHTML=`<b>Prompt tự viết</b>`;
+}
+$("s-prompt").addEventListener("input",()=>{if(!S.dirty){S.dirty=true;renderSrc()}});
+$("s-prompt").addEventListener("keydown",e=>{if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)){e.preventDefault();generate()}});
+
+// Lines the page appends automatically before sending
+function autoLines(){
+  const L=[], E=S.engine, imgs=E!=="canva";
+  let n=0;
+  if(S.base){ if(imgs){n++; L.push(`Chỉnh sửa ảnh đính kèm số ${n} theo yêu cầu trên, giữ nguyên bố cục, sản phẩm, chữ và mọi chi tiết không được nhắc tới.`)} else L.push("Chỉnh sửa ảnh gốc theo yêu cầu trên, giữ nguyên mọi chi tiết không được nhắc tới."); }
+  if(imgs&&S.product){n++; L.push(`Ảnh đính kèm số ${n} là sản phẩm thật: giữ đúng hình dáng, màu, nhãn và logo của sản phẩm.`)}
+  if(imgs&&refBlob&&!S.base){n++; L.push(`Ảnh đính kèm số ${n} là ảnh tham chiếu: bám theo bố cục, màu sắc, ánh sáng và phong cách; không sao chép chữ, logo hay thương hiệu trong ảnh đó.`)}
+  if(E==="openai") L.push(`Tỉ lệ khung ${S.ratio}.`);
+  return L;
+}
+function renderAuto(){
+  const L=autoLines(), el=$("s-auto");
+  el.classList.toggle("hidden",!L.length);
+  el.innerHTML=L.length?"Trang tự thêm khi gửi: "+L.map(x=>`<mark>${esc(x)}</mark>`).join(" "):"";
+  // attachment hints per engine
+  const canva=S.engine==="canva";
+  $("slot-prod").title=canva?"Canva trong trang này chỉ nhận prompt chữ, ảnh sản phẩm sẽ không được gửi kèm.":"";
+  $("refs-tx").textContent=refBlob?(canva?"Có · Canva không nhận ảnh đính kèm, chỉ dùng để phân tích":(S.base?"Có · tạm bỏ qua khi sửa tiếp":"Có · sẽ gửi kèm khi tạo")):"Chưa có · import ở khung bên dưới";
+}
+function fullPrompt(){return [$("s-prompt").value.trim(),...autoLines()].filter(Boolean).join(" ")}
+$("s-copy").onclick=e=>copyText(fullPrompt(),e.currentTarget,"Copy prompt");
+
+function sMsg(t,kind){const m=$("s-msg");m.className="s-msg"+(kind?" "+kind:"");m.textContent=t}
+
+// product image slot
+const prod={file:$("prod-file")};
+$("prod-pick").onclick=()=>prod.file.click();
+prod.file.addEventListener("change",()=>{setProduct(prod.file.files[0]);prod.file.value=""});
+function setProduct(f){
+  if(!f||!/^image\/(jpeg|png|webp)$/.test(f.type)){sMsg("Ảnh sản phẩm cần là JPG, PNG hoặc WebP.","err");return}
+  if(S.product) URL.revokeObjectURL(S.product.url);
+  S.product={blob:f,url:URL.createObjectURL(f),name:f.name||"ảnh sản phẩm"};
+  $("prod-th").innerHTML=`<img src="${S.product.url}" alt="">`;
+  $("prod-tx").textContent=S.product.name;
+  $("slot-prod").classList.add("on"); $("prod-x").classList.remove("hidden");
+  renderAuto();
+}
+$("prod-x").onclick=()=>{
+  if(S.product) URL.revokeObjectURL(S.product.url); S.product=null;
+  $("prod-th").textContent="+";
+  $("prod-tx").innerHTML=`Giữ đúng nhãn và hình dáng · <button class="btn" type="button" id="prod-pick" style="padding:0 6px;font-size:12px">Chọn ảnh</button>`;
+  $("prod-pick").onclick=()=>prod.file.click();
+  $("slot-prod").classList.remove("on"); $("prod-x").classList.add("hidden"); renderAuto();
+};
+["dragenter","dragover"].forEach(ev=>$("slot-prod").addEventListener(ev,e=>{e.preventDefault();e.stopPropagation();$("slot-prod").classList.add("drag")}));
+["dragleave","drop"].forEach(ev=>$("slot-prod").addEventListener(ev,e=>{e.preventDefault();e.stopPropagation();$("slot-prod").classList.remove("drag")}));
+$("slot-prod").addEventListener("drop",e=>{const f=e.dataTransfer.files[0]; if(f) setProduct(f)});
+
+// edit base
+function setBase(rec){
+  if(S.engine==="canva"&&!rec.mediaId){sMsg("Ảnh này không sửa tiếp bằng Canva được. Chọn Gemini hoặc OpenAI để sửa.","err");return}
+  if(S.engine!=="canva"&&!rec.blob){sMsg("Ảnh này chỉ nằm trong Canva, chọn Canva AI để sửa tiếp.","err");return}
+  S.base=rec; S.src=null; S.srcLabel=null; S.dirty=true;
+  $("base-th").src=rec.blob?urlOf(rec):""; $("slot-base").classList.remove("hidden");
+  $("s-prompt").value=""; $("s-prompt").placeholder="Điều muốn đổi, VD: đổi nền sang màu cam san hô, thêm bóng đổ dưới chai, giữ nguyên mọi thứ khác.";
+  if(rec.ratio&&RATIOS.includes(rec.ratio)) S.ratio=rec.ratio;
+  renderRatio(); renderSrc(); renderAuto();
+  $("studio").scrollIntoView({behavior:"smooth",block:"start"}); $("s-prompt").focus({preventScroll:true});
+}
+function clearBase(silent){
+  S.base=null; $("slot-base").classList.add("hidden");
+  $("s-prompt").placeholder="Mô tả ảnh cần tạo: loại ấn phẩm, chủ thể, bối cảnh, màu, ánh sáng, chữ trên ảnh trong ngoặc kép…";
+  if(!silent){renderSrc();renderAuto()}
+}
+$("base-x").onclick=()=>clearBase(false);
+
+/* ---------- helpers ---------- */
+function blobToB64(b){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(",")[1]);fr.onerror=()=>rej(fr.error);fr.readAsDataURL(b)})}
+function b64ToBlob(d,m){d=String(d).replace(/^data:[^,]*,/,"");const bin=atob(d);const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return new Blob([u],{type:m||"image/png"})}
+function sleep(ms,signal){return new Promise((res,rej)=>{const t=setTimeout(res,ms);if(signal){if(signal.aborted){clearTimeout(t);rej({code:"cancelled"});return}signal.addEventListener("abort",()=>{clearTimeout(t);rej({code:"cancelled"})},{once:true})}})}
+function slug(s){return String(s||"anh").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,48)||"anh"}
+class GenError extends Error{constructor(msg,code){super(msg);this.code=code}}
+async function settleAll(n,fn){
+  const rs=await Promise.allSettled(Array.from({length:n},(_,i)=>fn(i)));
+  const ok=rs.filter(r=>r.status==="fulfilled").flatMap(r=>r.value);
+  const bad=rs.filter(r=>r.status==="rejected").map(r=>r.reason);
+  if(!ok.length&&bad.length) throw bad[0];
+  return {items:ok,failed:bad.length,firstErr:bad[0]};
+}
+
+/* ---------- Gemini ---------- */
+async function runGemini(prompt,imgs,ratio,n,signal){
+  const key=keyOf("gemini"); if(!key) throw new GenError("Dán Gemini API key vào ô phía trên trước đã.","nokey");
+  const model=(store.get("xa-model-gemini")||ENGINES.gemini.models[0]).trim();
+  const parts=[{text:prompt}];
+  for(const b of imgs) parts.push({inline_data:{mime_type:b.type||"image/png",data:await blobToB64(b)}});
+  const body=JSON.stringify({contents:[{role:"user",parts}],generationConfig:{responseModalities:["TEXT","IMAGE"],imageConfig:{aspectRatio:ratio}}});
+  return settleAll(n,async()=>{
+    let r;
+    try{r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body,signal})}
+    catch(e){if(signal.aborted) throw {code:"cancelled"}; throw new GenError("Không kết nối được tới Google. Kiểm tra mạng, hoặc trình duyệt đang chặn kết nối.","net")}
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok){
+      const m=j.error&&j.error.message||("HTTP "+r.status);
+      if(r.status===400&&/API key/i.test(m)) throw new GenError("Gemini API key không hợp lệ. Kiểm tra lại key.","key");
+      if(r.status===403) throw new GenError("Key này chưa được phép dùng Gemini API: "+m,"key");
+      if(r.status===404) throw new GenError(`Không có model "${model}". Chọn model khác trong ô Model.`,"model");
+      if(r.status===429) throw new GenError("Gemini báo hết hạn mức hoặc gửi quá nhanh. Đợi một lúc hoặc kiểm tra gói trả phí của key.","quota");
+      throw new GenError("Gemini báo lỗi: "+m,"api");
+    }
+    const cand=(j.candidates||[])[0]; const ps=(cand&&cand.content&&cand.content.parts)||[];
+    const out=ps.map(p=>p.inlineData||p.inline_data).filter(Boolean).map(d=>({blob:b64ToBlob(d.data,d.mimeType||d.mime_type)}));
+    if(!out.length){
+      const why=(j.promptFeedback&&j.promptFeedback.blockReason)||(cand&&cand.finishReason)||"";
+      const txt=ps.map(p=>p.text).filter(Boolean).join(" ").trim();
+      if(/SAFETY|PROHIBITED|BLOCK|IMAGE_SAFETY/i.test(why)) throw new GenError("Gemini từ chối tạo ảnh này vì bộ lọc an toàn. Thử diễn đạt prompt khác.","refused");
+      throw new GenError(txt?"Gemini chỉ trả lời bằng chữ: "+txt.slice(0,220):"Gemini không trả về ảnh"+(why?" ("+why+")":"")+". Bấm tạo lại.","noimg");
+    }
+    return out;
+  });
+}
+
+/* ---------- OpenAI ---------- */
+function openaiSize(r){const x=ratioNum(r);return x>1.2?"1536x1024":x<0.84?"1024x1536":"1024x1024"}
+async function runOpenAI(prompt,imgs,ratio,n,signal){
+  const key=keyOf("openai"); if(!key) throw new GenError("Dán OpenAI API key vào ô phía trên trước đã.","nokey");
+  const model=(store.get("xa-model-openai")||ENGINES.openai.models[0]).trim();
+  let r;
+  try{
+    if(imgs.length){
+      const fd=new FormData(); fd.append("model",model); fd.append("prompt",prompt); fd.append("n",String(n)); fd.append("size",openaiSize(ratio));
+      imgs.forEach((b,i)=>fd.append("image[]",b,`anh-${i+1}.${(b.type.split("/")[1]||"png").replace("jpeg","jpg")}`));
+      r=await fetch("https://api.openai.com/v1/images/edits",{method:"POST",headers:{Authorization:"Bearer "+key},body:fd,signal});
+    }else{
+      r=await fetch("https://api.openai.com/v1/images/generations",{method:"POST",headers:{Authorization:"Bearer "+key,"Content-Type":"application/json"},body:JSON.stringify({model,prompt,n,size:openaiSize(ratio)}),signal});
+    }
+  }catch(e){if(signal.aborted) throw {code:"cancelled"}; throw new GenError("Không kết nối được tới OpenAI. Kiểm tra mạng, hoặc trình duyệt đang chặn kết nối.","net")}
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok){
+    const m=j.error&&j.error.message||("HTTP "+r.status);
+    if(r.status===401) throw new GenError("OpenAI API key không hợp lệ. Kiểm tra lại key.","key");
+    if(r.status===403&&/verif/i.test(m)) throw new GenError("Tổ chức OpenAI của bạn cần xác minh trước khi dùng model ảnh này: "+m,"key");
+    if(r.status===429) throw new GenError("OpenAI báo hết hạn mức hoặc gửi quá nhanh: "+m,"quota");
+    if(j.error&&/safety|moderation/i.test(j.error.code||m)) throw new GenError("OpenAI từ chối prompt này vì bộ lọc an toàn. Thử diễn đạt khác.","refused");
+    throw new GenError("OpenAI báo lỗi: "+m,"api");
+  }
+  const items=[];
+  for(const d of (j.data||[])){
+    if(d.b64_json) items.push({blob:b64ToBlob(d.b64_json,"image/png"),revised:d.revised_prompt});
+    else if(d.url){try{items.push({blob:await (await fetch(d.url)).blob()})}catch(_){items.push({link:d.url})}}
+  }
+  if(!items.length) throw new GenError("OpenAI không trả về ảnh. Bấm tạo lại.","noimg");
+  return {items,failed:0};
+}
+
+/* ---------- Canva (qua connector trong Claude) ---------- */
+const CANVA_INTENT="Tạo ảnh marketing theo brief trong trang Xưởng ảnh AI";
+function readCanva(res){
+  const out={images:[],jobId:null,status:null,mediaIds:[],links:[],failure:null,text:""};
+  const seen=new Set();
+  const addLink=u=>{u=u.replace(/[).,\]]+$/,"");if(!seen.has(u)){seen.add(u);out.links.push(u)}};
+  const scanText=t=>{
+    if(typeof t!=="string") return;
+    out.text+=t+"\n";
+    (t.match(/https?:\/\/[^\s"'<>)\]]+/g)||[]).forEach(addLink);
+    const jm=t.match(/job[_ ]?id["'`*\s:=]+([A-Za-z0-9_-]{6,})/i); if(jm&&!out.jobId) out.jobId=jm[1];
+    const sm=t.match(/\b(SUCCESS|FAILURE|FAILED|PENDING|IN_PROGRESS)\b/); if(sm&&!out.status) out.status=sm[1];
+    const mm=t.match(/media[_ ]?id["'`*\s:=]+([A-Za-z0-9_-]{6,})/i); if(mm) out.mediaIds.push(mm[1]);
+  };
+  const walk=(o,d=0)=>{
+    if(o==null||d>8) return;
+    if(typeof o==="string"){scanText(o);return}
+    if(Array.isArray(o)){o.forEach(x=>walk(x,d+1));return}
+    if(typeof o!=="object") return;
+    for(const [k,v] of Object.entries(o)){
+      if(typeof v==="string"){
+        if(/^job_?id$/i.test(k)) out.jobId=out.jobId||v;
+        else if(/^(status|state)$/i.test(k)) out.status=out.status||v;
+        else if(/^media_?id$/i.test(k)) out.mediaIds.push(v);
+        else if(/failure_?(message|type)|error_?message/i.test(k)) out.failure=out.failure||v;
+        else if(/^https?:\/\//.test(v)) addLink(v);
+        else if(/(base64|b64|image_?data)/i.test(k)&&v.length>200) out.images.push({blob:b64ToBlob(v,"image/png")});
+        else if(v.length<4000) scanText(v);
+      }else walk(v,d+1);
+    }
+  };
+  for(const b of (res&&res.content)||[]){
+    if(b.type==="image"&&b.data) out.images.push({blob:b64ToBlob(b.data,b.mimeType||"image/png")});
+    else if(b.type==="resource"&&b.resource){
+      const R=b.resource;
+      if(R.blob&&/^image\//.test(R.mimeType||"")) out.images.push({blob:b64ToBlob(R.blob,R.mimeType)});
+      else if(R.text){try{walk(JSON.parse(R.text))}catch(_){scanText(R.text)}}
+      if(R.uri&&/^https?:/.test(R.uri)) addLink(R.uri);
+    }
+    else if(b.type==="resource_link"&&b.uri) addLink(b.uri);
+    else if(b.type==="text"&&b.text){try{walk(JSON.parse(b.text))}catch(_){scanText(b.text)}}
+  }
+  if(res&&res.structuredContent) walk(res.structuredContent);
+  if(res&&res.payload&&typeof res.payload==="object") walk(res.payload);
+  out.status=out.status?String(out.status).toUpperCase():null;
+  out.mediaIds=[...new Set(out.mediaIds)];
+  return out;
+}
+function canvaLink(g){return g.links.find(u=>/canva\.(com|link)/i.test(u))||null}
+function canvaItems(g){
+  const link=canvaLink(g);
+  if(g.images.length) return g.images.map((im,i)=>({blob:im.blob,mediaId:g.mediaIds[i]||(g.images.length===1?g.mediaIds[0]:null)||null,link}));
+  return [{blob:null,mediaId:g.mediaIds[0]||null,link}];
+}
+async function runCanva(prompt,ratio,n,signal){
+  if(!mcp) throw new GenError(avail.canva.msg||"Canva chưa sẵn sàng.","nocanva");
+  const input={prompt,aspectRatio:CANVA_AR[ratio],user_intent:CANVA_INTENT};
+  if(S.base&&S.base.mediaId) input.imageReferences=[{type:"MEDIA",id:S.base.mediaId}];
+  return settleAll(n,async()=>{
+    const first=readCanva(await mcp.callTool("Canva","generate-image",input,{cache:false}));
+    if(first.images.length) return canvaItems(first);
+    if(first.status&&/FAIL/.test(first.status)) throw new GenError("Canva không tạo được ảnh: "+(first.failure||first.text.slice(0,200)),"tool_error");
+    if(!first.jobId) throw new GenError("Canva không trả về mã công việc để chờ ảnh."+(first.text?" Canva nói: "+first.text.slice(0,200):""),"shape");
+    let doneNoImg=0;
+    for(let i=0;i<70;i++){
+      await sleep(i<2?3000:4000,signal);
+      const g=readCanva(await mcp.callTool("Canva","get-generate-image-job",{jobId:first.jobId,user_intent:CANVA_INTENT},{cache:false}));
+      if(g.status&&/FAIL/.test(g.status)) throw new GenError("Canva không tạo được ảnh: "+(g.failure||g.text.slice(0,200)||"không rõ lý do"),"tool_error");
+      if(g.images.length) return canvaItems(g);
+      if(g.status==="SUCCESS"){ if(++doneNoImg>=3&&(canvaLink(g)||g.mediaIds.length)) return canvaItems(g); }
+    }
+    throw new GenError("Canva chờ quá lâu chưa xong. Ảnh có thể vẫn đang được tạo trong tài khoản Canva của bạn.","timeout");
+  });
+}
+const MCP_ERR={
+  needs_reauth:"Kết nối Canva đã hết hạn. Kết nối lại Canva trong claude.ai → Settings → Connectors rồi bấm Tạo ảnh.",
+  server_not_connected:"Bạn chưa kết nối Canva. Thêm Canva trong claude.ai → Settings → Connectors rồi tải lại trang.",
+  selection_required:"Bạn có nhiều kết nối Canva. Chọn một kết nối khi Claude hỏi, rồi bấm Tạo ảnh lại.",
+  server_not_found:"Không tìm thấy kết nối Canva nữa. Kiểm tra lại trong claude.ai → Settings → Connectors.",
+  server_unavailable:"Canva đang không phản hồi. Ảnh có thể vẫn đang được tạo trong Canva; đợi ít phút rồi thử lại.",
+  not_in_manifest:"Trang này chưa được phép dùng Canva. Cho phép Canva khi Claude hỏi, hoặc bật lại trong quyền của trang.",
+  blocked_by_policy:"Tổ chức của bạn đang chặn công cụ tạo ảnh của Canva.",
+  approval_required:"Tổ chức của bạn yêu cầu duyệt từng lần dùng công cụ Canva, trang này chưa hỗ trợ.",
+  not_granted:"Trang này chưa được cấp quyền dùng kết nối.",capability_disabled:"Kết nối không dùng được trong chế độ xem này.",capability_removed:"Kết nối không dùng được trong chế độ xem này.",
+  rate_limited:"Đang gửi quá nhiều yêu cầu. Đợi một lúc rồi thử lại."
+};
+function errText(e){
+  if(!e) return "Chưa tạo được ảnh. Bấm thử lại.";
+  if(e instanceof GenError) return e.message;
+  if(e.code==="tool_error") return "Canva báo lỗi: "+(e.message||"không rõ lý do");
+  return MCP_ERR[e.code]||("Chưa tạo được ảnh"+(e.message?": "+e.message:"")+". Bấm thử lại.");
+}
+
+/* ---------- history (IndexedDB) ---------- */
+const DB={p:null,
+  open(){ if(this.p) return this.p; this.p=new Promise(res=>{try{const r=indexedDB.open("xuong-anh-ai",1);r.onupgradeneeded=()=>r.result.createObjectStore("img",{keyPath:"id"});r.onsuccess=()=>res(r.result);r.onerror=()=>res(null);r.onblocked=()=>res(null)}catch(e){res(null)}}); return this.p},
+  async tx(mode,fn){const db=await this.open(); if(!db) return null; return new Promise(res=>{try{const t=db.transaction("img",mode);const st=t.objectStore("img");const r=fn(st);t.oncomplete=()=>res(r&&r.result);t.onerror=()=>res(null)}catch(e){res(null)}})},
+  all(){return this.tx("readonly",s=>s.getAll())}, put(v){return this.tx("readwrite",s=>s.put(v))}, del(id){return this.tx("readwrite",s=>s.delete(id))}, clear(){return this.tx("readwrite",s=>s.clear())}
+};
+const MAX_KEEP=60;
+let HIST=[]; const URLS=new Map(); const fresh=new Set();
+function urlOf(rec){if(!rec.blob) return ""; if(!URLS.has(rec.id)) URLS.set(rec.id,URL.createObjectURL(rec.blob)); return URLS.get(rec.id)}
+function dropUrl(id){if(URLS.has(id)){URL.revokeObjectURL(URLS.get(id));URLS.delete(id)}}
+async function loadHistory(){const all=await DB.all(); HIST=(all||[]).sort((a,b)=>b.created-a.created); renderResults()}
+async function addRecords(recs){
+  HIST=[...recs,...HIST];
+  for(const r of recs) await DB.put(r);
+  while(HIST.length>MAX_KEEP){const old=HIST.pop(); dropUrl(old.id); DB.del(old.id)}
+}
+
+const pending=[];
+function fmtTime(t){const d=new Date(t);return d.toLocaleString("vi-VN",{hour:"2-digit",minute:"2-digit",day:"2-digit",month:"2-digit"})}
+function phHTML(ratio,inner){return `<div class="ph" style="aspect-ratio:${ratio.replace(":"," / ")}"><span class="ratio-tag">${ratio}</span>${inner}</div>`}
+function shotActions(rec){
+  const a=[];
+  if(rec.blob) a.push(`<button class="btn" type="button" data-a="dl">Tải về</button>`);
+  if(rec.blob||rec.mediaId) a.push(`<button class="btn" type="button" data-a="edit">Sửa tiếp</button>`);
+  if(rec.link) a.push(`<a class="btn" href="${esc(rec.link)}" target="_blank" rel="noopener">Mở trong Canva</a>`);
+  a.push(`<button class="btn" type="button" data-a="reuse">Dùng lại prompt</button>`);
+  a.push(`<button class="btn" type="button" data-a="del">Xoá</button>`);
+  return a.join("");
+}
+function renderResults(){
+  const box=$("results"); box.innerHTML="";
+  pending.forEach(p=>{
+    const f=document.createElement("figure"); f.className="shot pending";
+    f.innerHTML=`${phHTML(p.ratio,`<b>Đang tạo…</b><span data-sec>${Math.round((Date.now()-p.t0)/1000)} giây · ${esc(ENGINES[p.engine].short)}</span>`)}<figcaption><div class="shot-meta"><b>${esc(p.label)}</b></div></figcaption>`;
+    p.el=f; box.appendChild(f);
+  });
+  HIST.forEach(rec=>{
+    const f=document.createElement("figure"); f.className="shot"+(fresh.has(rec.id)?" new":""); f.dataset.id=rec.id;
+    const img=rec.blob?`<button class="shot-img" type="button" data-a="view" aria-label="Xem lớn"><img src="${urlOf(rec)}" alt="${esc(rec.label)}" loading="lazy"></button>`
+      :phHTML(rec.ratio,`<b>Ảnh nằm trong Canva</b><span>Không xem trước được ở đây</span>`);
+    f.innerHTML=`${img}<figcaption><div class="shot-meta"><b>${esc(rec.label)}</b><span>${esc(ENGINES[rec.engine]?.short||rec.engine)} · ${rec.ratio} · ${fmtTime(rec.created)}</span></div><div class="shot-act">${shotActions(rec)}</div></figcaption>`;
+    box.appendChild(f);
+  });
+  if(!pending.length&&!HIST.length){
+    box.innerHTML=`<div class="empty-shots"><div class="mini" aria-hidden="true">${["1:1","4:5","9:16"].map(r=>`<i data-r="${r}" style="aspect-ratio:${r.replace(":"," / ")}"></i>`).join("")}</div><div><b>Chưa có ảnh nào</b><span>Bấm Tạo ảnh ở trên, hoặc chọn một mẫu trong thư viện bên dưới. Ảnh tạo xong hiện ở đây và được giữ lại trong trình duyệt này.</span></div></div>`;
+  }
+  $("r-count").textContent=HIST.length?`${HIST.length} ảnh`:"";
+  $("r-clear").classList.toggle("hidden",!HIST.length);
+}
+setInterval(()=>{pending.forEach(p=>{const s=p.el&&p.el.querySelector("[data-sec]");if(s)s.textContent=`${Math.round((Date.now()-p.t0)/1000)} giây · ${ENGINES[p.engine].short}`})},1000);
+
+async function recAction(rec,a,btn){
+  if(a==="view") openLb(rec);
+  if(a==="dl") download(rec);
+  if(a==="edit"){closeLb(); setBase(rec)}
+  if(a==="reuse"){closeLb(); loadIntoStudio({text:rec.userPrompt||rec.prompt,ratio:rec.ratio,label:"Prompt của "+rec.label}); S.dirty=true; renderSrc()}
+  if(a==="del"){
+    if(btn.dataset.sure!=="1"){btn.dataset.sure="1";btn.textContent="Xoá thật?";btn.classList.add("warn");setTimeout(()=>{if(btn.isConnected){btn.dataset.sure="";btn.textContent="Xoá";btn.classList.remove("warn")}},3000);return}
+    closeLb(); HIST=HIST.filter(x=>x.id!==rec.id); dropUrl(rec.id); await DB.del(rec.id); renderResults();
+  }
+}
+$("results").addEventListener("click",e=>{
+  const b=e.target.closest("[data-a]"); if(!b) return;
+  const f=b.closest(".shot"); const rec=HIST.find(x=>x.id===f?.dataset.id); if(!rec) return;
+  recAction(rec,b.dataset.a,b);
+});
+$("r-clear").onclick=async e=>{
+  const b=e.currentTarget;
+  if(b.dataset.sure!=="1"){b.dataset.sure="1";b.textContent=`Xoá cả ${HIST.length} ảnh?`;b.classList.add("warn");setTimeout(()=>{b.dataset.sure="";b.textContent="Xoá tất cả";b.classList.remove("warn")},3000);return}
+  b.dataset.sure="";b.textContent="Xoá tất cả";b.classList.remove("warn");
+  HIST.forEach(r=>dropUrl(r.id)); HIST=[]; await DB.clear(); renderResults();
+};
+
+// lightbox
+let lbRec=null;
+function openLb(rec){
+  lbRec=rec; $("lb-img").src=urlOf(rec); $("lb-img").alt=rec.label;
+  $("lb-title").textContent=rec.label;
+  $("lb-meta").innerHTML=`<span>${esc(ENGINES[rec.engine]?.name||rec.engine)}${rec.model?" · "+esc(rec.model):""} · ${rec.ratio} · ${fmtTime(rec.created)}</span>`;
+  $("lb-prompt").textContent=rec.prompt;
+  $("lb-act").innerHTML=shotActions(rec)+`<button class="btn" type="button" data-a="copyp">Copy prompt</button>`;
+  const d=$("lb"); try{d.showModal()}catch(_){d.setAttribute("open","")}
+}
+function closeLb(){const d=$("lb"); if(d.open){try{d.close()}catch(_){d.removeAttribute("open")}}}
+$("lb-close").onclick=closeLb;
+$("lb").addEventListener("click",e=>{if(e.target===$("lb")) closeLb()});
+$("lb-act").addEventListener("click",e=>{const b=e.target.closest("[data-a]"); if(!b||!lbRec) return; if(b.dataset.a==="copyp"){copyText(lbRec.prompt,b,"Copy prompt");return} recAction(lbRec,b.dataset.a,b)});
+
+async function download(rec){
+  const ext=(rec.blob.type.split("/")[1]||"png").replace("jpeg","jpg");
+  const name=`${slug(rec.label)}-${rec.ratio.replace(":","x")}-${new Date(rec.created).toISOString().slice(0,10)}-${rec.id.slice(-4)}.${ext}`;
+  if(dl){
+    try{await dl.save({filename:name,data:rec.blob}); sMsg("Đã lưu "+name,"ok")}
+    catch(e){ if(e&&e.code==="declined") return; if(e&&e.code==="rate_limited"){sMsg("Đang có một hộp thoại lưu mở, xử lý nó trước.","err");return} sMsg("Không lưu được ở đây. Mở ảnh lớn rồi nhấn giữ (hoặc chuột phải) để lưu.","err") }
+    return;
+  }
+  if(IN_CLAUDE){sMsg("Trang chưa được cấp quyền tải file. Mở ảnh lớn rồi nhấn giữ (hoặc chuột phải) để lưu.","err");return}
+  const a=document.createElement("a"); a.href=urlOf(rec); a.download=name; document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* ---------- generate ---------- */
+async function generate(){
+  if(S.busy) return;
+  const eng=S.engine, a=avail[eng];
+  const userPrompt=$("s-prompt").value.trim();
+  if(!userPrompt){sMsg(S.base?"Ghi điều muốn đổi trên ảnh trước đã.":"Viết prompt hoặc chọn một mẫu bên dưới trước đã.","err");$("s-prompt").focus();return}
+  if(a.st==="no"){sMsg(a.msg,"err");return}
+  if(S.base&&eng==="canva"&&!S.base.mediaId){sMsg("Ảnh đang sửa không nằm trong Canva. Chọn Gemini hoặc OpenAI để sửa tiếp.","err");return}
+  if(S.base&&eng!=="canva"&&!S.base.blob){sMsg("Ảnh đang sửa chỉ nằm trong Canva. Chọn Canva AI để sửa tiếp.","err");return}
+  if(eng!=="canva"&&!keyOf(eng)){sMsg(`Dán ${ENGINES[eng].keyLabel} vào ô phía trên trước đã.`,"err");$("k-key").focus();return}
+  if(/\[(Thương hiệu|Sản phẩm|Màu chủ đạo|Phong cách|Thông điệp)\]/.test(userPrompt)) sMsg("Prompt còn chỗ trống trong ngoặc vuông, AI sẽ tự đoán phần đó. Điền brief bên trái để chính xác hơn.");
+  const n=Number($("s-count").value)||1, ratio=S.ratio, prompt=fullPrompt();
+  const label=S.base?("Sửa từ "+S.base.label).slice(0,60):(S.src?S.src.name:(S.srcLabel||"Ảnh tự viết prompt"));
+  const imgs=[]; if(eng!=="canva"){ if(S.base&&S.base.blob) imgs.push(S.base.blob); if(S.product) imgs.push(S.product.blob); if(refBlob&&!S.base) imgs.push(refBlob); }
+  const baseRef=S.base;
+  S.busy=true; S.ctl=new AbortController(); $("s-go").disabled=true; $("s-stop").classList.remove("hidden");
+  const t0=Date.now(); const ps=Array.from({length:n},()=>({ratio,label,engine:eng,t0})); pending.unshift(...ps); renderResults();
+  sMsg(eng==="canva"?"Canva đang tạo ảnh, thường mất 20–60 giây…":"Đang tạo ảnh, thường mất 10–40 giây…");
+  try{
+    let res;
+    if(eng==="gemini") res=await runGemini(prompt,imgs,ratio,n,S.ctl.signal);
+    else if(eng==="openai") res=await runOpenAI(prompt,imgs,ratio,n,S.ctl.signal);
+    else res=await runCanva(prompt,ratio,n,S.ctl.signal);
+    const now=Date.now();
+    const recs=res.items.map((it,i)=>({id:now.toString(36)+"-"+i+"-"+Math.random().toString(36).slice(2,6),created:now-i,blob:it.blob||null,prompt,userPrompt,ratio,engine:eng,
+      model:eng==="canva"?"":(store.get("xa-model-"+eng)||ENGINES[eng].models[0]),label,mediaId:it.mediaId||null,link:it.link||null,parent:baseRef?baseRef.id:null}));
+    fresh.clear(); recs.forEach(r=>fresh.add(r.id));
+    pending.splice(0,pending.length,...pending.filter(p=>!ps.includes(p)));
+    await addRecords(recs);
+    const secs=Math.round((Date.now()-t0)/1000);
+    let m=`Xong ${recs.length} ảnh sau ${secs} giây.`;
+    if(res.failed) m+=` ${res.failed} ảnh lỗi: ${errText(res.firstErr)}`;
+    if(recs.some(r=>!r.blob)) m+=" Canva không gửi ảnh xem trước, bấm Mở trong Canva để xem.";
+    sMsg(m,res.failed?"err":"ok");
+  }catch(e){
+    pending.splice(0,pending.length,...pending.filter(p=>!ps.includes(p)));
+    if(e&&e.code==="cancelled") sMsg(eng==="canva"?"Đã dừng chờ. Ảnh có thể vẫn được tạo trong tài khoản Canva của bạn.":"Đã dừng.");
+    else sMsg(errText(e),"err");
+  }finally{
+    S.busy=false; S.ctl=null; $("s-stop").classList.add("hidden"); renderResults(); renderEngines();
+  }
+}
+$("s-go").onclick=generate;
+$("s-stop").onclick=()=>S.ctl&&S.ctl.abort();
+
+/* ---------- reference image ---------- */
+const refEls={empty:$("ref-empty"),loaded:$("ref-loaded"),file:$("ref-file"),img:$("ref-preview"),name:$("ref-name"),ratio:$("ref-ratio"),
+  analyze:$("ref-analyze"),stop:$("ref-stop"),out:$("ref-out"),box:$("ref")};
+let refURL=null, sampleFn=null, ctl=null;
+function nearestRatio(w,h){const r=w/h;let best=RATIOS[0],d=9;RATIOS.forEach(x=>{const dd=Math.abs(Math.log(ratioNum(x)/r));if(dd<d){d=dd;best=x}});return best}
+function setStatus(txt,err){refEls.out.innerHTML=`<p class="status${err?" err":""}">${esc(txt)}</p>`}
+function syncRefSlot(){
+  $("refs-th").innerHTML=refURL?`<img src="${refURL}" alt="">`:"+";
+  $("slot-ref").classList.toggle("on",!!refBlob);
+  renderAuto();
+}
+function loadRef(f){
+  if(!f||!/^image\/(jpeg|png|webp|gif)$/.test(f.type)){setStatus("Chọn ảnh JPG, PNG, WebP hoặc GIF.",true);refEls.empty.classList.add("hidden");refEls.loaded.classList.remove("hidden");return}
+  if(refURL) URL.revokeObjectURL(refURL);
+  refBlob=f; refURL=URL.createObjectURL(f);
+  refEls.img.onload=()=>{refEls.ratio.textContent="≈ "+nearestRatio(refEls.img.naturalWidth,refEls.img.naturalHeight)};
+  refEls.img.src=refURL; refEls.name.textContent=f.name||"Ảnh đã import";
+  refEls.empty.classList.add("hidden"); refEls.loaded.classList.remove("hidden");
+  setStatus("Ảnh này sẽ được gửi kèm khi tạo ảnh bằng Gemini hoặc OpenAI."+(sampleFn?" Bấm \"Phân tích và viết prompt\" để Claude đọc ảnh và viết prompt riêng cho brand của bạn.":""));
+  clearSuggest(); renderTips(); cards.forEach(c=>c._refresh()); syncRefSlot();
+}
+function clearRef(){
+  if(ctl) ctl.abort();
+  refBlob=null; if(refURL) URL.revokeObjectURL(refURL); refURL=null; refEls.img.removeAttribute("src");
+  refEls.loaded.classList.add("hidden"); refEls.empty.classList.remove("hidden");
+  clearSuggest(); renderTips(); cards.forEach(c=>c._refresh()); syncRefSlot();
+}
+function clearSuggest(){document.querySelectorAll(".card.suggested").forEach(c=>c.classList.remove("suggested"))}
+$("ref-pick").onclick=()=>refEls.file.click();
+$("ref-change").onclick=()=>refEls.file.click();
+$("ref-remove").onclick=clearRef;
+$("slot-ref").onclick=()=>refBlob?refEls.box.scrollIntoView({behavior:"smooth",block:"center"}):refEls.file.click();
+refEls.file.addEventListener("change",()=>{loadRef(refEls.file.files[0]);refEls.file.value=""});
+["dragenter","dragover"].forEach(ev=>refEls.box.addEventListener(ev,e=>{e.preventDefault();refEls.box.classList.add("drag")}));
+["dragleave","drop"].forEach(ev=>refEls.box.addEventListener(ev,e=>{e.preventDefault();refEls.box.classList.remove("drag")}));
+refEls.box.addEventListener("drop",e=>{const f=e.dataTransfer.files[0]; if(f) loadRef(f)});
+document.addEventListener("paste",e=>{const it=[...(e.clipboardData?.items||[])].find(x=>x.type.startsWith("image/")); if(it) loadRef(it.getAsFile())});
+
+// AI analysis (Claude)
+(async()=>{
+  try{
+    const s=await use("sample"); if(!s) return;
+    const lim=await s.limits().catch(()=>null); if(!lim||!lim.images) return;
+    sampleFn=s; refEls.analyze.classList.remove("hidden");
+    if(refBlob) setStatus("Ảnh này sẽ được gửi kèm khi tạo ảnh bằng Gemini hoặc OpenAI. Bấm \"Phân tích và viết prompt\" để Claude đọc ảnh và viết prompt riêng cho brand của bạn.");
+  }catch(e){}
+})();
+const ERR={rate_limited:"Đang vượt giới hạn sử dụng, thử lại sau ít phút.",image_rejected:"Ảnh không đọc được. Thử ảnh JPG hoặc PNG khác.",refused:"Không phân tích được ảnh này. Thử ảnh khác.",session_expired:"Phiên đăng nhập đã hết, hãy đăng nhập lại Claude.",invalid_json:"Kết quả chưa đúng định dạng. Bấm phân tích lại."};
+const HIDE=["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed","images_unavailable"];
+refEls.stop.onclick=()=>ctl&&ctl.abort();
+refEls.analyze.onclick=async()=>{
+  if(!sampleFn||!refBlob) return;
+  const v=k=>(vals[k]||"").trim();
+  const list=TYPES.map(t=>`${t.id} | ${t.name} | ${t.ratio}`).join("\n");
+  const toolName=TOOLS[tool].name;
+  const ask=`Bạn là designer hơn 10 năm kinh nghiệm, chuyên viết prompt tạo ảnh AI cho marketing.
+Ảnh đính kèm là ẢNH THAM CHIẾU: người dùng muốn sản xuất một ảnh có bố cục, ánh sáng và phong cách tương tự, nhưng cho thương hiệu và sản phẩm của họ.
+
+Việc cần làm:
+1. Chọn đúng một loại hình phù hợp nhất với ảnh tham chiếu trong danh sách (id | tên | tỉ lệ):
+${list}
+2. Phân tích ảnh ngắn gọn theo 7 mục: bố cục, chủ thể, bối cảnh, màu sắc, ánh sáng, góc máy, chữ trên ảnh. Mỗi mục 1 câu, tiếng Việt.
+3. Viết MỘT prompt tiếng Việt để tạo ảnh tương tự, theo thứ tự: loại ấn phẩm và tỉ lệ; chủ thể và vị trí; bối cảnh và đạo cụ; màu và phong cách; ánh sáng và góc máy; chữ trên ảnh ghi chính xác trong ngoặc kép.
+   Prompt phải tự đủ nghĩa khi gửi cho model tạo ảnh không nhìn thấy ảnh tham chiếu: mô tả cụ thể, không viết "như ảnh mẫu".
+   Dùng thông tin brief sau (ô nào trống thì để nguyên chỗ giữ trong ngoặc vuông):
+   - Thương hiệu: ${v("thuong_hieu")||"[Thương hiệu]"}
+   - Sản phẩm: ${v("san_pham")||"[Sản phẩm]"}
+   - Màu chủ đạo: ${v("mau_chu_dao")||"[Màu chủ đạo]"} (thay màu của ảnh tham chiếu bằng màu này, giữ cách phối và độ tương phản)
+   - Phong cách: ${v("phong_cach")||"[Phong cách]"}
+   - Thông điệp / tiêu đề: ${v("thong_diep")||"[Thông điệp]"}
+   - Yêu cầu thêm: ${v("them")||"không có"}
+   Công cụ tạo ảnh: ${toolName}. Không ghi tham số kỹ thuật như --ar; trang sẽ tự thêm.
+   Không nhắc tên, logo, nhân vật có bản quyền hay chữ nguyên văn của thương hiệu trong ảnh tham chiếu. Chữ trên ảnh dùng thông điệp của người dùng.
+4. Chọn tỉ lệ khung gần nhất với ảnh tham chiếu trong: 1:1, 4:5, 9:16, 16:9, 2:3, 4:3, 21:9.
+
+Chỉ trả về JSON đúng dạng:
+{"loai_hinh":"id","ly_do":"1 câu","ti_le":"4:5","phan_tich":{"bo_cuc":"","chu_the":"","boi_canh":"","mau_sac":"","anh_sang":"","goc_may":"","chu_tren_anh":""},"prompt":""}`;
+  ctl=new AbortController();
+  refEls.analyze.disabled=true; refEls.stop.classList.remove("hidden");
+  setStatus("Đang đọc ảnh và viết prompt… thường mất 20–60 giây.");
+  try{
+    const r=await sampleFn.json(ask,{images:refBlob,signal:ctl.signal});
+    renderResult(r);
+  }catch(e){
+    const code=e&&e.code;
+    if(code==="cancelled") setStatus("Đã dừng.");
+    else if(HIDE.includes(code)){refEls.analyze.classList.add("hidden");setStatus("Tính năng phân tích không dùng được ở đây. Bạn vẫn dùng được ảnh tham chiếu với các prompt trong bảng.",true)}
+    else setStatus(ERR[code]||"Chưa phân tích được. Bấm thử lại.",true);
+  }finally{refEls.analyze.disabled=false;refEls.stop.classList.add("hidden");ctl=null}
+};
+const ANA=[["bo_cuc","Bố cục"],["chu_the","Chủ thể"],["boi_canh","Bối cảnh"],["mau_sac","Màu sắc"],["anh_sang","Ánh sáng"],["goc_may","Góc máy"],["chu_tren_anh","Chữ trên ảnh"]];
+function renderResult(r){
+  if(!r||typeof r!=="object"||!r.prompt){setStatus("Kết quả chưa đầy đủ. Bấm phân tích lại.",true);return}
+  const t=TYPES.find(x=>x.id===String(r.loai_hinh));
+  const ratio=RATIOS.includes(String(r.ti_le))?String(r.ti_le):(t?t.ratio:"1:1");
+  const raw=String(r.prompt).trim();
+  const s=suffixFor(ratio); const full=raw+(s?" "+s:"");
+  const a=r.phan_tich||{};
+  refEls.out.innerHTML=`
+    ${t?`<div class="match"><b>${esc(t.name)}</b><span>Tỉ lệ ${esc(ratio)}. ${esc(String(r.ly_do||""))}</span><button class="btn" type="button" id="go-card">Xem thẻ này</button></div>`:""}
+    <dl class="ana">${ANA.map(([k,l])=>a[k]?`<dt>${l}</dt><dd>${esc(String(a[k]))}</dd>`:"").join("")}</dl>
+    <div class="ref-prompt" id="ref-prompt"></div>
+    <div class="ref-btns"><button class="btn go" type="button" id="gen-ref">Tạo ảnh từ prompt này</button><button class="btn" type="button" id="copy-ref">Copy prompt</button></div>
+    <p class="status" style="margin-top:8px">Prompt viết theo brief lúc bấm phân tích. Đổi thông tin thì bấm phân tích lại.</p>`;
+  $("ref-prompt").textContent=full;
+  $("copy-ref").onclick=e=>copyText(full,e.currentTarget,"Copy prompt");
+  $("gen-ref").onclick=()=>{loadIntoStudio({text:raw,ratio,label:"Theo ảnh tham chiếu"+(t?" · "+t.name:"")}); generate()};
+  clearSuggest();
+  if(t){const c=document.querySelector(`.card[data-id="${t.id}"]`); if(c){c.classList.add("suggested");
+    $("go-card").onclick=()=>{active="Tất cả";chipsEl.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x.textContent==="Tất cả"));q.value="";applyFilter();c.scrollIntoView({behavior:"smooth",block:"center"})}}}
+}
+
+/* ---------- brief fields ---------- */
+const inputs=document.querySelectorAll("[data-key]");
+function afterBrief(){
+  store.set("brief-vals",JSON.stringify(vals)); cards.forEach(c=>c._refresh());
+  if(S.src&&!S.dirty&&!S.base) $("s-prompt").value=fillBody(S.src);
+}
+inputs.forEach(i=>{
+  i.value=vals[i.dataset.key]||"";
+  i.addEventListener("input",()=>{vals[i.dataset.key]=i.value;afterBrief()});
+});
+function setAll(o){inputs.forEach(i=>{i.value=o[i.dataset.key]||"";vals[i.dataset.key]=i.value});afterBrief()}
+const sel=$("f-tool");
+tool=store.get("brief-tool")||"gemini"; if(!TOOLS[tool]) tool="gemini"; sel.value=tool; renderTips(); cards.forEach(c=>c._refresh());
+sel.addEventListener("change",()=>{tool=sel.value;store.set("brief-tool",tool);renderTips();cards.forEach(c=>c._refresh())});
+$("fill-demo").onclick=()=>setAll(DEMO);
+$("clear").onclick=()=>setAll({});
+
+/* ---------- boot ---------- */
+(function boot(){
+  const saved=store.get("xa-engine");
+  S.engine=(saved&&ENGINES[saved]&&avail[saved].st!=="no")?saved:(IN_CLAUDE?"canva":"gemini");
+  const first=TYPES[0];
+  S.src=first; S.ratio=first.ratio; $("s-prompt").value=fillBody(first);
+  renderRatio(); renderSrc(); renderEngines(); renderResults(); syncRefSlot();
+  loadHistory();
+})();
+
+(async()=>{
+  dl=await use("downloads");
+  if(!IN_CLAUDE) return;
+  mcp=await use("mcp");
+  if(!mcp){avail.canva={st:"no",msg:"Trang này chưa dùng được Canva. Mở trang trong Claude và cho phép kết nối Canva khi được hỏi."}; renderEngines(); return}
+  try{
+    const lt=await mcp.listTools("Canva");
+    const sv=(lt.servers||[]).find(x=>x.server==="Canva");
+    if(!sv) avail.canva={st:"no",msg:MCP_ERR.server_not_connected};
+    else if(sv.authStatus==="needs_reauth") avail.canva={st:"no",msg:MCP_ERR.needs_reauth};
+    else avail.canva={st:"ok",msg:""};
+  }catch(e){
+    avail.canva=(e&&MCP_ERR[e.code])?{st:"no",msg:MCP_ERR[e.code]}:{st:"ok",msg:""};
+  }
+  renderEngines();
+})();
+</script>
