@@ -11,6 +11,8 @@ if not exist .venv (
 )
 call .venv\Scripts\activate.bat
 pip install -q -r requirements.txt || (echo Loi cai thu vien, kiem tra mang Internet & pause & exit /b 1)
+REM yt-dlp can cap nhat thuong xuyen de tai duoc video TikTok moi
+pip install -q -U yt-dlp >nul 2>nul
 echo.
 echo App dang chay. GIU CUA SO NAY MO trong luc dung app. Dong cua so = tat app.
 python -m app %*

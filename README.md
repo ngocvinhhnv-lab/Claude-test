@@ -18,7 +18,7 @@ App mở tại http://127.0.0.1:8000. Để máy khác trong mạng nội bộ d
 
 ### Quy trình
 
-1. **Kịch bản.** Upload video đối thủ (tải từ TikTok về) hoặc dán link. AI xem khung hình, đọc chữ, nghe lời thoại, rồi tách thành từng cảnh: cảnh quay gì, lời đọc, chữ trên màn hình, độ dài. Sau đó bấm **Viết lại cho sản phẩm của tôi**: AI giữ cấu trúc và nhịp nhưng viết lời mới, không bịa giá hay khuyến mãi. Thư viện có sẵn 3 kịch bản mẫu KB1–KB3.
+1. **Kịch bản.** Upload video đối thủ (tải từ TikTok về) hoặc dán link TikTok/Facebook (app tự tải bằng yt-dlp, được cập nhật mỗi lần mở app). AI xem khung hình, đọc chữ, nghe lời thoại, rồi tách thành từng cảnh: cảnh quay gì, lời đọc, chữ trên màn hình, độ dài. Sau đó bấm **Viết lại cho sản phẩm của tôi**: AI giữ cấu trúc và nhịp nhưng viết lời mới, không bịa giá hay khuyến mãi. Thư viện có sẵn 3 kịch bản mẫu KB1–KB3.
 2. **Video nguồn.** Upload video tự quay, được nhiều file một lúc. App tạo bản xem thử, chia thành các đoạn ngắn và tự chuyển màu video HDR của iPhone.
 3. **Dựng video.** Từ kịch bản bấm **Dựng video từ kịch bản này**, rồi:
    - **Chọn cảnh:** bấm **AI ghép cảnh tự động** (AI chọn đoạn nguồn cho từng cảnh và báo cảnh còn thiếu), hoặc tự chọn từng đoạn.
@@ -43,7 +43,6 @@ App mở tại http://127.0.0.1:8000. Để máy khác trong mạng nội bộ d
 - **Logo:** chèn góc trên phải video.
 - **Tuỳ chọn thêm:**
   - `pip install faster-whisper` để chuyển lời thoại video đối thủ thành chữ, giúp AI bóc kịch bản chính xác hơn.
-  - `pip install yt-dlp` để tải video đối thủ trực tiếp từ link.
 
 ---
 

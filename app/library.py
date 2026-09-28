@@ -3,8 +3,6 @@
 import json
 import os
 import re
-import shutil
-import subprocess
 import tempfile
 
 from make_videos import probe
@@ -29,14 +27,35 @@ def process_source(source_id, log=print):
 
 
 def download_url(url, out_dir):
-    """Tải video từ link (TikTok, Facebook...) bằng yt-dlp nếu đã cài."""
-    if not shutil.which("yt-dlp"):
-        raise RuntimeError("Chưa cài yt-dlp nên không tải được từ link. Hãy tải video về máy rồi upload.")
-    result = subprocess.run(["yt-dlp", "-f", "mp4/best", "-o", os.path.join(out_dir, "video.%(ext)s"), url],
-                            capture_output=True, text=True)
-    files = [f for f in os.listdir(out_dir) if f.startswith("video.")]
-    if result.returncode != 0 or not files:
-        raise RuntimeError(f"Không tải được video: {result.stderr.strip()[-300:]}")
+    """Tải video từ link (TikTok, Facebook, YouTube...) bằng thư viện yt-dlp."""
+    try:
+        import yt_dlp
+    except ImportError:
+        raise RuntimeError("Thiếu thư viện yt-dlp. Tắt app rồi mở lại bằng chay_app.bat để tự cài, "
+                           "hoặc tải video về máy rồi upload.") from None
+    from make_videos import FFMPEG
+
+    opts = {
+        "outtmpl": os.path.join(out_dir, "video.%(ext)s"),
+        # Ưu tiên mp4 H.264 một file (xem được trên trình duyệt, không cần ghép hình và tiếng)
+        "format": "best[ext=mp4][vcodec^=avc]/best[ext=mp4]/best",
+        "ffmpeg_location": FFMPEG,
+        "noplaylist": True,
+        "quiet": True,
+        "no_warnings": True,
+        "retries": 3,
+    }
+    try:
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            ydl.download([url])
+    except Exception as err:  # yt-dlp báo lỗi bằng nhiều loại ngoại lệ khác nhau
+        msg = str(err).replace("ERROR: ", "").strip()
+        raise RuntimeError(
+            f"Không tải được video từ link ({msg[:200]}). Kiểm tra link mở được trên trình duyệt; "
+            "video riêng tư hoặc cần đăng nhập thì phải tải về máy rồi upload.") from err
+    files = [f for f in os.listdir(out_dir) if f.startswith("video.") and not f.endswith(".part")]
+    if not files:
+        raise RuntimeError("Không tải được video từ link. Hãy tải video về máy rồi upload.")
     return os.path.join(out_dir, files[0])
 
 
