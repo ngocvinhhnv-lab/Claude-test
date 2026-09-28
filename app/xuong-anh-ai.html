@@ -144,6 +144,34 @@ aside p.hint{color:var(--muted);font-size:13px;margin:0 0 14px}
 .ref-details summary{cursor:pointer;font-size:12.5px;font-weight:600}
 .ref-details dl.ana{margin:6px 0 0;font-size:12.5px;grid-template-columns:90px 1fr}
 .stage.mystage{padding:10px}
+.s-cost{font-size:13px;font-weight:700;color:var(--ink);background:var(--warn-soft);border-radius:999px;padding:4px 10px;font-variant-numeric:tabular-nums}
+.s-cost:empty{display:none}
+.spend{font-size:12.5px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums;margin-left:auto;margin-right:8px}
+.shot-cost{color:var(--ink);font-weight:600;white-space:nowrap}
+.price-cfg{border-bottom:1px solid var(--line);padding:8px 18px;font-size:13px}
+.price-cfg summary{cursor:pointer;font-weight:600;color:var(--muted)}
+.price-cfg[open] summary{margin-bottom:8px}
+.pc-fx{display:inline-flex;align-items:center;gap:6px;font-weight:600;margin-bottom:8px}
+.pc-fx input{width:90px}
+.pc-scroll{overflow-x:auto;display:flex;gap:18px;flex-wrap:wrap}
+table.pc{border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+table.pc caption{text-align:left;font-weight:700;padding-bottom:4px}
+table.pc th,table.pc td{padding:3px 6px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+table.pc input,.pc-fx input{width:72px;background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:3px 5px;font-size:12.5px}
+.ext-cfg{padding:12px 18px;border-bottom:1px solid var(--line);background:var(--ok-soft);display:flex;flex-direction:column;gap:10px}
+.ext-top{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap}
+.ext-top .field{margin:0;min-width:180px}
+.ext-top .field span{display:block;font-size:12.5px;font-weight:600;margin-bottom:4px}
+.ext-top select{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:7px 9px;font-size:14px}
+.ext-top .note{flex:1 1 300px;margin:0;font-size:13px;color:var(--ink)}
+.ext-steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.ext-steps li::marker{font-weight:700;color:var(--ok)}
+.x-list{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.x-file{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--sheet);border-radius:6px;padding:4px 10px 4px 4px;cursor:pointer;font-size:12px;text-align:left}
+.x-file img{width:40px;height:40px;object-fit:cover;border-radius:4px}
+.x-file b{display:block;font-size:12.5px}
+.x-file:hover{border-color:var(--ok)}
+.ed-ext{display:flex;flex-direction:column;gap:6px;padding:10px;border-radius:6px;background:var(--ok-soft);font-size:12.5px}
 .tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .tabs [role=tab]{display:inline-flex;align-items:center;gap:8px;border:1px solid transparent;border-bottom:0;background:none;border-radius:6px 6px 0 0;padding:10px 16px;font-family:var(--ff-d);font-size:16px;font-weight:700;color:var(--muted);cursor:pointer;margin-bottom:-1px}
 .tabs [role=tab] i{font-style:normal;color:var(--mag)}
@@ -480,6 +508,19 @@ dl.ana dd{margin:0;color:var(--muted)}
           <button class="btn" type="button" id="k-forget">Xoá key</button>
           <p class="note" id="k-note"></p>
         </div>
+        <div class="ext-cfg hidden" id="ext-cfg">
+          <div class="ext-top">
+            <label class="field"><span>Tạo ảnh bằng</span><select id="x-target"><option value="gpt">ChatGPT</option><option value="gemini">Gemini (ứng dụng)</option><option value="mj">Midjourney</option><option value="other">Công cụ khác</option></select></label>
+            <p class="note"><b>Không tốn tiền theo ảnh.</b> Trang viết sẵn prompt và chuẩn bị ảnh đính kèm; bạn tạo ảnh trong gói tháng của mình (ChatGPT Go/Plus, Google AI Pro…) rồi đưa ảnh về đây để thêm chữ, logo, cắt khổ miễn phí.</p>
+          </div>
+          <ol class="ext-steps">
+            <li><b>Bấm "Copy prompt &amp; mở…"</b> ở dưới, rồi dán (Ctrl + V) vào khung chat.</li>
+            <li><b>Đính kèm ảnh theo đúng số thứ tự</b> (prompt có ghi "ảnh đính kèm số 1, 2…"). Bấm vào ảnh để tải từng ảnh về máy.<div id="x-files"></div></li>
+            <li><b>Tạo ảnh, ưng thì tải ảnh về máy.</b></li>
+            <li><b>Đưa ảnh về để hoàn thiện</b> (chữ tiếng Việt chuẩn dấu, logo, cắt khổ): <button class="btn primary" type="button" id="x-back">Đưa ảnh về để sửa</button></li>
+          </ol>
+        </div>
+        <details class="price-cfg" id="price-cfg"><summary>Bảng giá &amp; tỉ giá dùng để ước tính tiền</summary><div id="price-body"></div></details>
         <div class="studio-body">
           <div class="s-src" id="s-src"><b>Prompt tự viết</b></div>
           <textarea id="s-prompt" aria-label="Prompt tạo ảnh" placeholder="Mô tả ảnh cần tạo: loại ấn phẩm, chủ thể, bối cảnh, màu, ánh sáng, chữ trên ảnh trong ngoặc kép…"></textarea>
@@ -502,6 +543,8 @@ dl.ana dd{margin:0;color:var(--muted)}
           </div>
           <div class="s-actions">
             <button class="btn go" type="button" id="s-go">Tạo ảnh</button>
+            <a class="btn go hidden" id="s-ext" role="button">Copy prompt &amp; mở ChatGPT</a>
+            <span class="s-cost" id="s-cost" aria-live="polite"></span>
             <button class="btn hidden" type="button" id="s-stop">Dừng</button>
             <button class="btn" type="button" id="s-copy">Copy prompt</button>
             <p class="s-msg" id="s-msg" role="status" aria-live="polite">Ctrl + Enter để tạo nhanh.</p>
@@ -509,6 +552,7 @@ dl.ana dd{margin:0;color:var(--muted)}
         </div>
         <div class="results-head">
           <h3>Ảnh đã tạo<span id="r-count"></span></h3>
+          <span class="spend" id="spend"></span>
           <button class="btn hidden" type="button" id="r-clear">Xoá tất cả</button>
         </div>
         <div class="results" id="results"></div>
@@ -754,6 +798,7 @@ const RATIOS=["1:1","4:5","9:16","16:9","2:3","4:3","21:9"];
 const CANVA_AR={"1:1":"SQUARE_1_1","4:5":"PORTRAIT_4_5","9:16":"PORTRAIT_9_16","16:9":"LANDSCAPE_16_9","2:3":"PORTRAIT_2_3","4:3":"LANDSCAPE_4_3","21:9":"LANDSCAPE_2_1"};
 const ENGINES={
   canva:{name:"Canva AI",sub:"Qua kết nối Canva trong Claude",short:"Canva"},
+  ext:{name:"Dùng gói tháng",sub:"Copy prompt sang ChatGPT, Gemini…",short:"Gói tháng"},
   gemini:{name:"Gemini · Nano Banana",sub:"API key Google AI Studio",short:"Gemini",models:[
     {id:"gemini-3-pro-image-preview",label:"Nano Banana Pro · đẹp nhất",hint:"Chất lượng cao nhất của Google, chữ trên ảnh đẹp, tới 4K. Giá cao nhất."},
     {id:"gemini-3.1-flash-image",label:"Nano Banana 2 · nhanh, tới 4K",hint:"Cân bằng tốc độ và chất lượng, chữ trên ảnh tốt, tới 4K."},
@@ -770,7 +815,7 @@ const ENGINES={
     keyLabel:"OpenAI API key",keyUrl:"https://platform.openai.com/api-keys",host:"OpenAI"}
 };
 const S={engine:null,ratio:"1:1",src:null,dirty:false,base:null,products:[],busy:false,ctl:null};
-const avail={canva:{st:"wait",msg:"Đang kiểm tra kết nối Canva…"},gemini:{st:"ok"},openai:{st:"ok"}};
+const avail={canva:{st:"wait",msg:"Đang kiểm tra kết nối Canva…"},ext:{st:"ok"},gemini:{st:"ok"},openai:{st:"ok"}};
 let mcp=null, dl=null;
 
 if(IN_CLAUDE){
@@ -787,7 +832,7 @@ function renderEngines(){
     const a=avail[k];
     const b=document.createElement("button"); b.type="button"; b.className="eng"; b.dataset.eng=k;
     b.setAttribute("aria-pressed",S.engine===k);
-    const dot=a.st==="ok"?(k!=="canva"&&!keyOf(k)?"wait":"ok"):a.st;
+    const dot=a.st==="ok"?(k!=="canva"&&k!=="ext"&&!keyOf(k)?"wait":"ok"):a.st;
     b.innerHTML=`<b><span class="dot ${dot}"></span>${esc(e.name)}</b><span>${esc(e.sub)}</span>`;
     b.onclick=()=>setEngine(k);
     box.appendChild(b);
@@ -796,7 +841,7 @@ function renderEngines(){
   msg.className="eng-msg"+(a.st==="ok"?" hidden":a.st==="wait"?" warn":" no");
   msg.textContent=a.msg||"";
   const cfg=$("eng-cfg");
-  cfg.classList.toggle("hidden",S.engine==="canva"||a.st==="no");
+  cfg.classList.toggle("hidden",S.engine==="canva"||S.engine==="ext"||a.st==="no");
   if(e.models){
     $("k-key-label").textContent=e.keyLabel;
     $("k-key").value=keyOf(S.engine);
@@ -816,7 +861,9 @@ function renderEngines(){
   renderAuto();
 }
 function keyOf(k){return store.get("xa-key-"+k)||""}
-function setEngine(k){S.engine=k;store.set("xa-engine",k);renderEngines(); if(typeof TAB!=="undefined"&&TAB==="edit") renderEditEng()}
+function setEngine(k){S.engine=k;store.set("xa-engine",k);
+  if(k==="ext"&&!store.get("brief-tool")){tool="gpt"; store.set("brief-tool","gpt"); $("f-tool").value="gpt"; renderTips(); cards.forEach(c=>c._refresh())}
+  renderEngines(); if(typeof TAB!=="undefined"&&TAB==="edit") renderEditEng()}
 $("k-key").addEventListener("input",e=>{const v=e.target.value.trim(); v?store.set("xa-key-"+S.engine,v):store.del("xa-key-"+S.engine); renderEngines(); $("k-key").focus()});
 function modelOf(k){const e=ENGINES[k]; if(!e||!e.models) return ""; return (store.get("xa-model2-"+k)||e.models[0].id).trim()}
 function resOf(k){return store.get("xa-res-"+k)||"2K"}
@@ -827,8 +874,8 @@ $("k-model").addEventListener("change",e=>{
   store.set("xa-model2-"+S.engine,v); renderEngines();
 });
 $("k-model-custom").addEventListener("change",e=>{const v=e.target.value.trim(); if(v){store.set("xa-model2-"+S.engine,v);renderEngines()}});
-$("k-res").addEventListener("change",e=>{store.set("xa-res-"+S.engine,e.target.value)});
-$("k-q").addEventListener("change",e=>{store.set("xa-q-openai",e.target.value)});
+$("k-res").addEventListener("change",e=>{store.set("xa-res-"+S.engine,e.target.value); renderCost()});
+$("k-q").addEventListener("change",e=>{store.set("xa-q-openai",e.target.value); renderCost()});
 $("k-forget").onclick=()=>{store.del("xa-key-"+S.engine);renderEngines();sMsg("Đã xoá key khỏi trình duyệt này.")};
 
 // ratio chips
@@ -872,6 +919,7 @@ function autoLines(){
   return L;
 }
 function renderAuto(){
+  renderCost(); renderExt();
   const L=autoLines(), el=$("s-auto");
   el.classList.toggle("hidden",!L.length);
   el.innerHTML=L.length?"Trang tự thêm khi gửi: "+L.map(x=>`<mark>${esc(x)}</mark>`).join(" "):"";
@@ -1013,7 +1061,7 @@ async function runGemini(prompt,imgs,ratio,n,signal){
       throw new GenError("Gemini báo lỗi: "+m,"api");
     }
     const cand=(j.candidates||[])[0]; const ps=(cand&&cand.content&&cand.content.parts)||[];
-    const out=ps.map(p=>p.inlineData||p.inline_data).filter(Boolean).map(d=>({blob:b64ToBlob(d.data,d.mimeType||d.mime_type)}));
+    const out=ps.map(p=>p.inlineData||p.inline_data).filter(Boolean).map(d=>({blob:b64ToBlob(d.data,d.mimeType||d.mime_type),usage:j.usageMetadata||null}));
     if(!out.length){
       const why=(j.promptFeedback&&j.promptFeedback.blockReason)||(cand&&cand.finishReason)||"";
       const txt=ps.map(p=>p.text).filter(Boolean).join(" ").trim();
@@ -1067,6 +1115,7 @@ async function runOpenAI(prompt,imgs,ratio,n,signal,mask){
     else if(d.url){try{items.push({blob:await (await fetch(d.url)).blob()})}catch(_){items.push({link:d.url})}}
   }
   if(!items.length) throw new GenError("OpenAI không trả về ảnh. Bấm tạo lại.","noimg");
+  items.forEach(it=>{it.usage=j.usage||null; it.share=items.length});
   return {items,failed:0};
 }
 
@@ -1208,13 +1257,13 @@ function renderResults(){
     const f=document.createElement("figure"); f.className="shot"+(fresh.has(rec.id)?" new":""); f.dataset.id=rec.id;
     const img=rec.blob?`<button class="shot-img" type="button" data-a="view" aria-label="Xem lớn"><img src="${urlOf(rec)}" alt="${esc(rec.label)}" loading="lazy"></button>`
       :phHTML(rec.ratio,`<b>Ảnh nằm trong Canva</b><span>Không xem trước được ở đây</span>`);
-    f.innerHTML=`${img}<figcaption><div class="shot-meta"><b>${esc(rec.label)}</b><span>${esc(engLabel(rec.engine))} · ${rec.ratio} · ${fmtTime(rec.created)}</span></div><div class="shot-act">${shotActions(rec)}</div></figcaption>`;
+    f.innerHTML=`${img}<figcaption><div class="shot-meta"><b>${esc(rec.label)}</b><span>${esc(engLabel(rec.engine))} · ${rec.ratio} · ${fmtTime(rec.created)}${rec.cost>0?` · <span class="shot-cost">≈ ${vnd(rec.cost)}</span>`:rec.engine==="manual"?" · 0 đ":""}</span></div><div class="shot-act">${shotActions(rec)}</div></figcaption>`;
     box.appendChild(f);
   });
   if(!pending.length&&!HIST.length){
     box.innerHTML=`<div class="empty-shots"><div class="mini" aria-hidden="true">${["1:1","4:5","9:16"].map(r=>`<i data-r="${r}" style="aspect-ratio:${r.replace(":"," / ")}"></i>`).join("")}</div><div><b>Chưa có ảnh nào</b><span>Bấm Tạo ảnh ở trên, hoặc chọn một mẫu trong thư viện bên dưới. Ảnh tạo xong hiện ở đây và được giữ lại trong trình duyệt này.</span></div></div>`;
   }
-  $("r-count").textContent=HIST.length?`${HIST.length} ảnh`:"";
+  $("r-count").textContent=HIST.length?`${HIST.length} ảnh`:""; renderSpend();
   renderEditList();
   $("r-clear").classList.toggle("hidden",!HIST.length);
 }
@@ -1276,6 +1325,7 @@ async function generate(){
   const userPrompt=$("s-prompt").value.trim();
   if(!userPrompt){sMsg(S.base?"Ghi điều muốn đổi trên ảnh trước đã.":"Viết prompt hoặc chọn một mẫu bên dưới trước đã.","err");$("s-prompt").focus();return}
   if(a.st==="no"){sMsg(a.msg,"err");return}
+  if(eng==="ext"){await copyText(extPrompt()); sMsg(`Đã copy prompt. Bấm "Copy prompt & mở…" để mở ${(EXT_TARGETS[tool]||EXT_TARGETS.gpt).name}, dán vào và đính kèm ảnh theo số thứ tự.`,"ok"); return}
   if(S.base&&eng==="canva"&&!S.base.mediaId){sMsg("Ảnh đang sửa không nằm trong Canva. Chọn Gemini hoặc OpenAI để sửa tiếp.","err");return}
   if(S.base&&eng!=="canva"&&!S.base.blob){sMsg("Ảnh đang sửa chỉ nằm trong Canva. Chọn Canva AI để sửa tiếp.","err");return}
   if(eng!=="canva"&&!keyOf(eng)){sMsg(`Dán ${ENGINES[eng].keyLabel} vào ô phía trên trước đã.`,"err");$("k-key").focus();return}
@@ -1294,12 +1344,14 @@ async function generate(){
     else res=await runCanva(prompt,ratio,n,S.ctl.signal);
     const now=Date.now();
     const recs=res.items.map((it,i)=>({id:now.toString(36)+"-"+i+"-"+Math.random().toString(36).slice(2,6),created:now-i,blob:it.blob||null,prompt,userPrompt,ratio,engine:eng,
-      model:eng==="canva"?"":modelOf(eng),label,mediaId:it.mediaId||null,link:it.link||null,parent:baseRef?baseRef.id:null}));
+      model:eng==="canva"?"":modelOf(eng),label,mediaId:it.mediaId||null,link:it.link||null,parent:baseRef?baseRef.id:null,
+      cost:eng==="canva"?null:actualOne(eng,ratio,it.usage,it.share)}));
+    const spent=recs.reduce((t,r)=>t+(r.cost||0),0); addSpend(spent,recs.length);
     fresh.clear(); recs.forEach(r=>fresh.add(r.id));
     pending.splice(0,pending.length,...pending.filter(p=>!ps.includes(p)));
     await addRecords(recs);
     const secs=Math.round((Date.now()-t0)/1000);
-    let m=`Xong ${recs.length} ảnh sau ${secs} giây.`;
+    let m=`Xong ${recs.length} ảnh sau ${secs} giây${eng==="canva"?" · trừ vào lượt Canva":` · ≈ ${vnd(spent)}`}.`;
     if(res.failed) m+=` ${res.failed} ảnh lỗi: ${errText(res.firstErr)}`;
     if(recs.some(r=>!r.blob)) m+=" Canva không gửi ảnh xem trước, bấm Mở trong Canva để xem.";
     sMsg(m,res.failed?"err":"ok");
@@ -1923,7 +1975,7 @@ cv.addEventListener("pointerup",endDrag); cv.addEventListener("pointercancel",en
 /* ---- mở / đóng ---- */
 async function openEditor(o){
   ED.mode=o.mode; ED.rec=o.rec||null; ED.onSave=o.onSave||null; ED.title=o.title||"Chỉnh sửa ảnh"; ED.label=o.label||"";
-  ED.objs=[]; ED.sel=-1; ED.undo=[]; ED.redo=[]; ED.crop=null; ED.cropRatio=0; ED.prevImg=null; ED.showPrev=false; ED.dirty=false; ED.baseChanged=false; ED.status=""; ED.statusKind="";
+  ED.ext=null; ED.objs=[]; ED.sel=-1; ED.undo=[]; ED.redo=[]; ED.crop=null; ED.cropRatio=0; ED.prevImg=null; ED.showPrev=false; ED.dirty=false; ED.baseChanged=false; ED.status=""; ED.statusKind="";
   if(o.mode==="layout"){const r=ratioNum(o.ratio||"1:1"); ED.W=r>=1?1200:Math.round(1200*r); ED.H=r>=1?Math.round(1200/r):1200; ED.base=null; ED.baseImg=null;
     ED.objs=(o.boxes||[]).map(b=>({type:"box",label:b.label,x:b.x*ED.W,y:b.y*ED.H,w:b.w*ED.W,h:b.h*ED.H}));}
   else{ED.base=o.blob; ED.baseImg=await blobToImg(o.blob); ED.W=ED.baseImg.naturalWidth; ED.H=ED.baseImg.naturalHeight;
@@ -2008,7 +2060,8 @@ function renderEdSide(){
       ${marks.length?marks.map(([o,i])=>`<div class="ed-mark${i===ED.sel?" on":""}"><button type="button" class="num" data-sel="${i}">${markNo(o)}</button><input data-note="${i}" value="${esc(o.note||"")}" placeholder="VD: đổi chữ thành &quot;Rước lộc vào nhà&quot;"><button type="button" class="x" data-rm="${i}" aria-label="Xoá vùng">×</button></div>`).join(""):""}
       ${marks.length?`<div class="sug-chips">${QUICK.map(q=>`<button type="button" class="sug-chip" data-quick="${esc(q)}">${esc(q)}</button>`).join("")}</div>`:""}
       <label class="ed-f"><span>Sửa cho cả ảnh (tuỳ chọn)</span><textarea id="ed-global" rows="2" placeholder="VD: nền sáng hơn một chút, thêm ánh nắng ấm">${esc(ED.global||"")}</textarea></label>
-      <div class="sug-chips"><button class="btn go" type="button" data-ed="ai" ${ED.busy?"disabled":""}>Sửa bằng AI</button>${ED.busy?`<button class="btn" type="button" data-ed="stop">Dừng</button>`:""}</div>
+      <div class="sug-chips"><button class="btn go" type="button" data-ed="ai" ${ED.busy?"disabled":""}>${S.engine==="ext"?"Chuẩn bị để sửa ở "+esc((EXT_TARGETS[tool]||EXT_TARGETS.gpt).name):"Sửa bằng AI"}</button>${ED.busy?`<button class="btn" type="button" data-ed="stop">Dừng</button>`:""}<span class="s-cost">${esc(S.engine==="ext"?"0 đ · gói tháng":S.engine==="canva"?"Trừ vào lượt Canva":"≈ "+vnd(estOne(S.engine,nearestRatio(ED.W,ED.H))))}</span></div>
+      ${ED.ext?`<div class="ed-ext"><b>Đã copy yêu cầu sửa.</b><span>Tải 2 ảnh dưới đây, đính kèm theo đúng thứ tự, dán yêu cầu (Ctrl + V) rồi tạo. Xong tải ảnh về và đưa lại vào tab "Sửa ảnh có sẵn".</span><div class="sug-chips"><button class="btn" type="button" data-ed="xb1">Tải ảnh 1 · ảnh gốc</button><button class="btn" type="button" data-ed="xb2">Tải ảnh 2 · ảnh đánh dấu</button>${(EXT_TARGETS[tool]||EXT_TARGETS.gpt).url?`<a class="btn primary" href="${(EXT_TARGETS[tool]||EXT_TARGETS.gpt).url}" target="_blank" rel="noopener">Mở ${esc((EXT_TARGETS[tool]||EXT_TARGETS.gpt).name)}</a>`:""}</div></div>`:""}
     </section>${status}
     <section class="ed-sec"><h4>Chữ và logo <span>chữ đúng dấu 100%</span></h4>
       <div class="sug-chips"><button class="btn" type="button" data-ed="addtext">+ Thêm chữ</button><button class="btn" type="button" data-ed="addlogo">+ Chèn logo, sticker</button></div>
@@ -2039,6 +2092,8 @@ side.addEventListener("click",async e=>{
   if(a==="nocrop"){ED.crop=null; renderEdSide(); edDraw()}
   if(a==="crop") await applyCrop();
   if(a==="ai") edAI();
+  if(a==="xb1"&&ED.ext) dlBlob(ED.ext.base,"1-anh-goc.png");
+  if(a==="xb2"&&ED.ext) dlBlob(ED.ext.annot,"2-anh-danh-dau.jpg");
   if(a==="stop"&&ED.ctl) ED.ctl.abort();
   if(a==="save") edSave(false);
   if(a==="dl") edSave(true);
@@ -2104,7 +2159,7 @@ async function edSave(toDl){
 /* ---- sửa bằng AI theo vùng khoanh ---- */
 function baseLabel(l){return String(l||"ảnh").replace(/^((Đã chỉnh|Sửa bằng AI|Sửa vùng) · )+/,"")||"ảnh"}
 function engineProblem(eng){
-  const a=avail[eng]; if(a.st==="no") return a.msg;
+  const a=avail[eng]; if(a.st==="no") return a.msg; if(eng==="ext") return "";
   if(eng!=="canva"&&!keyOf(eng)) return `Dán ${ENGINES[eng].keyLabel} ở khung Xưởng tạo ảnh trước đã.`;
   return "";
 }
@@ -2131,6 +2186,12 @@ async function edAI(){
     prompt=`Chỉnh sửa ảnh đính kèm: ${glob}. ${keep}`;
   }
   const ratio=nearestRatio(ED.W,ED.H);
+  if(eng==="ext"){
+    const annot=marks.length?imgs[1]:null;
+    await copyText(prompt+` Tỉ lệ khung ${ratio}.`);
+    ED.ext={base,annot:annot||base}; renderEdSide(); edStatus("Đã copy yêu cầu sửa, làm theo các bước trong khung xanh.","ok"); return;
+  }
+  ED.ext=null;
   ED.busy=true; ED.ctl=new AbortController(); renderEdSide(); edStatus(`${ENGINES[eng].short} đang sửa ảnh, thường mất 10–40 giây…`);
   try{
     let res;
@@ -2139,7 +2200,9 @@ async function edAI(){
     else res=await runCanva(prompt,ratio,1,ED.ctl.signal,ED.rec.mediaId);
     const it=res.items[0], now=Date.now(), rec0=ED.rec||{};
     const rec={id:now.toString(36)+"-ai-"+Math.random().toString(36).slice(2,6),created:now,blob:it.blob||null,prompt,userPrompt:prompt,ratio,engine:eng,model:eng==="canva"?"":modelOf(eng),
-      label:("Sửa bằng AI · "+baseLabel(rec0.label)).slice(0,70),mediaId:it.mediaId||null,link:it.link||null,parent:rec0.id||null};
+      label:("Sửa bằng AI · "+baseLabel(rec0.label)).slice(0,70),mediaId:it.mediaId||null,link:it.link||null,parent:rec0.id||null,
+      cost:eng==="canva"?null:actualOne(eng,ratio,it.usage,it.share)};
+    addSpend(rec.cost||0,1);
     fresh.clear(); fresh.add(rec.id); await addRecords([rec]); renderResults();
     if(!it.blob){edStatus("Canva đã sửa xong nhưng không gửi ảnh xem trước. Mở trong Canva để xem.","ok"); return}
     ED.prevImg=ED.baseImg; ED.baseImg=await blobToImg(it.blob); ED.base=it.blob; ED.baseChanged=false; ED.rec=rec;
@@ -2147,7 +2210,7 @@ async function edAI(){
       ED.objs=ED.objs.map(o=>o.type==="text"?{...o,x:o.x*sx,y:o.y*sy,size:o.size*sx}:o.type==="logo"?{...o,x:o.x*sx,y:o.y*sy,w:o.w*sx,h:o.h*sx}:o);
       ED.W=ED.baseImg.naturalWidth; ED.H=ED.baseImg.naturalHeight; cv.width=ED.W; cv.height=ED.H}
     ED.objs=ED.objs.filter(o=>o.type!=="mark"); ED.global=""; ED.sel=-1; ED.undo=[]; ED.redo=[];
-    setEdTool("select"); edStatus("Đã sửa xong và lưu vào Ảnh đã tạo. Bấm giữ nút \"Xem ảnh trước\" để so sánh.","ok");
+    setEdTool("select"); edStatus(`Đã sửa xong${rec.cost?" (≈ "+vnd(rec.cost)+")":""} và lưu vào Ảnh đã tạo. Bấm giữ nút "Xem ảnh trước" để so sánh.`,"ok");
   }catch(e){
     edStatus(e&&e.code==="cancelled"?"Đã dừng.":errText(e),e&&e.code==="cancelled"?"":"err");
   }finally{ED.busy=false; ED.ctl=null; renderEdSide(); edDraw()}
@@ -2198,6 +2261,136 @@ $("layoutbox").addEventListener("click",e=>{
     S.layout={boxes,ratio:S.ratio}; store.set("xa-layout",JSON.stringify(S.layout)); renderAuto(); sMsg("Đã lưu bố cục. Lần tạo ảnh tới AI sẽ đặt các thành phần theo sơ đồ này.","ok")}});
 });
 
+/* =====================================================================
+   CHI PHÍ (ước tính) + DÙNG GÓI THÁNG (mang prompt ra ngoài)
+   ===================================================================== */
+// Giá USD, tra tháng 9/2026 từ trang tổng hợp giá; người dùng sửa được trong "Bảng giá".
+// Gemini: giá mỗi ảnh theo độ nét, in = USD / 1 triệu token đầu vào.
+// OpenAI: giá mỗi ảnh 1024×1024 theo chất lượng (khổ lớn hơn nhân theo số điểm ảnh); tok = giá token để tính từ số token thật.
+const PRICE0={fx:26000,
+  gemini:{
+    "gemini-3-pro-image-preview":{"1K":0.134,"2K":0.134,"4K":0.24,in:2},
+    "gemini-3.1-flash-image":{"1K":0.067,"2K":0.101,"4K":0.151,in:0.5},
+    "gemini-3.1-flash-lite-image":{"1K":0.039,"2K":0.039,"4K":0.039,in:0.25,guess:1},
+    "gemini-2.5-flash-image":{"1K":0.039,"2K":0.039,"4K":0.039,in:0.3}},
+  openai:{
+    "gpt-image-2.5-sunburst":{low:0.004,medium:0.013,high:0.053,tok:{text:5,img:8,out:30}},
+    "gpt-image-2.5-flare":{low:0.004,medium:0.013,high:0.053,tok:{text:5,img:8,out:30}},
+    "gpt-image-2":{low:0.006,medium:0.053,high:0.211},
+    "gpt-image-1.5":{low:0.009,medium:0.034,high:0.133,guess:1},
+    "gpt-image-1-mini":{low:0.005,medium:0.011,high:0.036,guess:1},
+    "gpt-image-1":{low:0.011,medium:0.042,high:0.167}}};
+let PRICE=JSON.parse(JSON.stringify(PRICE0));
+try{const u=JSON.parse(store.get("xa-prices")||"null"); if(u){ if(u.fx) PRICE.fx=+u.fx;
+  ["gemini","openai"].forEach(g=>Object.entries(u[g]||{}).forEach(([m,v])=>{PRICE[g][m]={...(PRICE[g][m]||{}),...v}}))}}catch(e){}
+function savePrice(){store.set("xa-prices",JSON.stringify(PRICE))}
+function vnd(usd){ if(usd==null) return "?"; const v=usd*PRICE.fx; if(v>0&&v<100) return "< 100 đ"; return (Math.round(v/100)*100).toLocaleString("vi-VN")+" đ" }
+function gemRow(model){return PRICE.gemini[model]||(/pro/.test(model)?PRICE.gemini["gemini-3-pro-image-preview"]:PRICE.gemini["gemini-3.1-flash-image"])}
+function oaiRow(model){return PRICE.openai[model]||PRICE.openai["gpt-image-2"]}
+// Giá ước tính cho 1 ảnh với cài đặt hiện tại
+function estOne(eng,ratio){
+  if(eng==="gemini"){const m=modelOf("gemini"), r=gemRow(m); return r[/gemini-3/.test(m)?resOf("gemini"):"1K"]}
+  if(eng==="openai"){const m=modelOf("openai"), r=oaiRow(m), q=(store.get("xa-q-openai")||"high"), base=r[q==="auto"?"high":q]; const [w,h]=openaiSize(ratio,m,resOf("openai")).split("x").map(Number); return base*(w*h)/(1024*1024)}
+  return 0;
+}
+// Giá sau khi xong: dùng số token thật nếu API trả về
+function actualOne(eng,ratio,usage,share){
+  const est=estOne(eng,ratio);
+  if(eng==="gemini"){const r=gemRow(modelOf("gemini")); return est+((usage&&usage.promptTokenCount)||0)*(r.in||0)/1e6}
+  if(eng==="openai"){const r=oaiRow(modelOf("openai"));
+    if(r.tok&&usage&&usage.output_tokens){const d=usage.input_tokens_details||{}; return ((d.text_tokens||0)*r.tok.text+(d.image_tokens||0)*r.tok.img+usage.output_tokens*r.tok.out)/1e6/(share||1)}
+    return est}
+  return 0;
+}
+function monthKey(t){const d=new Date(t||Date.now()); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
+function spendAll(){try{return JSON.parse(store.get("xa-spend")||"{}")||{}}catch(e){return {}}}
+function addSpend(usd,n){if(!(usd>0)) return; const s=spendAll(), k=monthKey(); s[k]=s[k]||{usd:0,n:0}; s[k].usd+=usd; s[k].n+=n; store.set("xa-spend",JSON.stringify(s)); renderSpend()}
+function renderSpend(){
+  const el=$("spend"); if(!el) return; const s=spendAll()[monthKey()]; const d=new Date();
+  el.textContent=s&&s.n?`Tháng ${d.getMonth()+1}/${d.getFullYear()}: ${s.n} lượt AI ≈ ${vnd(s.usd)}`:`Tháng ${d.getMonth()+1}: chưa tốn đồng nào`;
+}
+function costLabelFor(eng,n){
+  if(eng==="ext") return "0 đ · tính vào gói tháng";
+  if(eng==="canva") return "Trừ vào lượt Canva";
+  const one=estOne(eng,S.ratio); return n>1?`≈ ${vnd(one*n)} (${n} × ${vnd(one)})`:`≈ ${vnd(one)}`;
+}
+function renderCost(){
+  const el=$("s-cost"); if(!el) return;
+  const n=Number($("s-count").value)||1;
+  el.textContent=costLabelFor(S.engine,n);
+  el.title=S.engine==="gemini"||S.engine==="openai"?"Ước tính theo Bảng giá bên dưới, chưa tính phần ảnh đính kèm (vài chục đồng). Số tiền thật xem ở trang quản lý key.":"";
+}
+$("s-count").addEventListener("change",renderCost);
+
+/* ---- Bảng giá sửa được ---- */
+function renderPriceCfg(){
+  const box=$("price-body"); if(!box) return;
+  const num=(g,m,k,v)=>`<input type="number" step="0.001" min="0" data-g="${g}" data-m="${m}" data-k="${k}" value="${v}" aria-label="${m} ${k}">`;
+  box.innerHTML=`<label class="pc-fx">Tỉ giá: 1 USD = <input type="number" step="100" min="1" id="pc-fx" value="${PRICE.fx}"> đ</label>
+  <div class="pc-scroll"><table class="pc"><caption>Gemini · USD mỗi ảnh</caption><thead><tr><th>Model</th><th>1K</th><th>2K</th><th>4K</th></tr></thead><tbody>
+  ${Object.entries(PRICE.gemini).map(([m,r])=>`<tr><th>${esc(m)}${r.guess?' <span title="Chưa rõ giá chính thức">*</span>':""}</th><td>${num("gemini",m,"1K",r["1K"])}</td><td>${num("gemini",m,"2K",r["2K"])}</td><td>${num("gemini",m,"4K",r["4K"])}</td></tr>`).join("")}</tbody></table>
+  <table class="pc"><caption>OpenAI · USD mỗi ảnh 1024×1024 (khổ lớn hơn nhân theo số điểm ảnh)</caption><thead><tr><th>Model</th><th>Nhanh</th><th>Vừa</th><th>Cao</th></tr></thead><tbody>
+  ${Object.entries(PRICE.openai).map(([m,r])=>`<tr><th>${esc(m)}${r.guess?' <span title="Chưa rõ giá chính thức">*</span>':""}</th><td>${num("openai",m,"low",r.low)}</td><td>${num("openai",m,"medium",r.medium)}</td><td>${num("openai",m,"high",r.high)}</td></tr>`).join("")}</tbody></table></div>
+  <p class="sug-note">Giá tra tháng 9/2026 từ trang tổng hợp, dấu * là chưa rõ giá chính thức. Các hãng hay đổi giá: sửa ô cho khớp bảng giá thật. Sau khi tạo, trang tính lại theo số token thật khi API có trả về. <button class="btn" type="button" id="pc-reset" style="padding:1px 8px;font-size:12px">Về giá mặc định</button></p>`;
+}
+$("price-body").addEventListener("change",e=>{
+  const t=e.target;
+  if(t.id==="pc-fx"){PRICE.fx=Math.max(1,+t.value||PRICE0.fx)}
+  else if(t.dataset.g){PRICE[t.dataset.g][t.dataset.m][t.dataset.k]=Math.max(0,+t.value||0)}
+  savePrice(); renderCost(); renderSpend(); renderResults();
+});
+$("price-body").addEventListener("click",e=>{if(e.target.id==="pc-reset"){PRICE=JSON.parse(JSON.stringify(PRICE0)); store.del("xa-prices"); renderPriceCfg(); renderCost(); renderSpend(); renderResults()}});
+
+/* ---- Dùng gói tháng: mang prompt + ảnh đính kèm ra ChatGPT / Gemini ---- */
+const EXT_TARGETS={gpt:{name:"ChatGPT",url:"https://chatgpt.com/"},gemini:{name:"Gemini",url:"https://gemini.google.com/app"},mj:{name:"Midjourney",url:"https://www.midjourney.com/imagine"},other:{name:"công cụ khác",url:""}};
+function extPrompt(){
+  if(tool==="mj") return $("s-prompt").value.trim()+" --ar "+S.ratio;
+  return fullPrompt()+` Tỉ lệ khung ${S.ratio}.`;
+}
+async function extFiles(){
+  const f=[]; let i=0;
+  S.products.forEach(p=>{i++; f.push({n:i,what:"ảnh sản phẩm",blob:p.blob,name:`${i}-anh-san-pham.${(p.blob.type.split("/")[1]||"jpg").replace("jpeg","jpg")}`})});
+  if(refBlob){i++; f.push({n:i,what:"ảnh mẫu",blob:refBlob,name:`${i}-anh-mau.${(refBlob.type.split("/")[1]||"jpg").replace("jpeg","jpg")}`})}
+  if(S.layout){i++; f.push({n:i,what:"sơ đồ bố cục",blob:await layoutBlob(S.ratio),name:`${i}-so-do-bo-cuc.png`})}
+  return f;
+}
+async function dlBlob(blob,name){
+  if(dl){try{await dl.save({filename:name,data:blob}); return true}catch(e){ if(e&&e.code!=="declined") sMsg("Không lưu được file ở đây.","err"); return false }}
+  if(IN_CLAUDE){sMsg("Trang chưa được cấp quyền tải file.","err"); return false}
+  const u=URL.createObjectURL(blob), a=document.createElement("a"); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); return true;
+}
+let EXT_FILES=[];
+async function renderExt(){
+  const box=$("ext-cfg"); if(!box) return;
+  box.classList.toggle("hidden",S.engine!=="ext");
+  const go=$("s-go"), ex=$("s-ext");
+  go.classList.toggle("hidden",S.engine==="ext"); ex.classList.toggle("hidden",S.engine!=="ext");
+  if(S.engine!=="ext") return;
+  const t=EXT_TARGETS[tool]||EXT_TARGETS.gpt;
+  $("x-target").value=tool;
+  ex.textContent=t.url?`Copy prompt & mở ${t.name}`:"Copy prompt";
+  if(t.url){ex.href=t.url; ex.target="_blank"; ex.rel="noopener"} else ex.removeAttribute("href");
+  EXT_FILES=await extFiles();
+  const mj=tool==="mj";
+  $("x-files").innerHTML=EXT_FILES.length?(mj?`<p class="sug-note">Midjourney không đọc được ảnh đính kèm theo số thứ tự như prompt. Muốn giữ sản phẩm thật, tải ảnh lên Midjourney rồi dùng làm ảnh tham chiếu.</p>`:"")+
+    `<div class="x-list">${EXT_FILES.map((f,k)=>`<button type="button" class="x-file" data-xf="${k}" title="Tải ${esc(f.name)}"><img src="${URL.createObjectURL(f.blob)}" alt=""><span><b>Ảnh ${f.n}</b>${esc(f.what)}</span></button>`).join("")}</div>
+    <button class="btn" type="button" id="x-all">Tải cả ${EXT_FILES.length} ảnh đính kèm</button>`
+    :`<p class="sug-note">Không có ảnh cần đính kèm. Muốn giữ đúng sản phẩm thật, tải ảnh sản phẩm lên ở khung bên dưới.</p>`;
+}
+$("x-target").addEventListener("change",e=>{tool=e.target.value; store.set("brief-tool",tool); $("f-tool").value=tool; renderTips(); cards.forEach(c=>c._refresh()); renderExt()});
+$("f-tool").addEventListener("change",()=>{ if(S.engine==="ext") renderExt() });
+$("s-ext").addEventListener("click",async e=>{
+  const p=extPrompt(); if(!$("s-prompt").value.trim()){e.preventDefault(); sMsg("Viết prompt hoặc chọn một mẫu bên dưới trước đã.","err"); return}
+  await copyText(p);
+  const t=EXT_TARGETS[tool]||EXT_TARGETS.gpt;
+  sMsg(`Đã copy prompt. ${t.url?`Trong ${t.name} bấm Ctrl + V để dán`:"Dán vào công cụ bạn dùng"}${EXT_FILES.length&&tool!=="mj"?`, rồi đính kèm ${EXT_FILES.length} ảnh theo đúng số thứ tự`:""}. Tạo xong, tải ảnh về và bấm "Đưa ảnh về để sửa".`,"ok");
+});
+$("ext-cfg").addEventListener("click",async e=>{
+  const f=e.target.closest("[data-xf]"); if(f){const x=EXT_FILES[+f.dataset.xf]; if(x) dlBlob(x.blob,x.name); return}
+  if(e.target.id==="x-all"){for(const x of EXT_FILES){await dlBlob(x.blob,x.name)} return}
+  if(e.target.id==="x-back"){setTab("edit"); $("edit-file").click()}
+});
+
 /* ---------- Tab: Sửa ảnh có sẵn ---------- */
 let TAB="new";
 function setTab(t,focus){
@@ -2213,7 +2406,8 @@ function renderEditEng(){
   const sel=$("edit-eng");
   sel.innerHTML=Object.entries(ENGINES).map(([k,e])=>`<option value="${k}" ${k===S.engine?"selected":""} ${avail[k].st==="no"?"disabled":""}>${esc(e.name)}${avail[k].st==="no"?" (không dùng được ở đây)":k!=="canva"&&!keyOf(k)?" (chưa có key)":""}</option>`).join("");
   const a=avail[S.engine], m=$("edit-msg");
-  if(a.st==="no") {m.className="s-msg err"; m.textContent=a.msg}
+  if(S.engine==="ext"){m.className="s-msg"; m.textContent=`"Sửa bằng AI" sẽ copy yêu cầu sửa và cho tải ảnh gốc + ảnh đánh dấu để bạn sửa trong ${(EXT_TARGETS[tool]||EXT_TARGETS.gpt).name} theo gói tháng, không tốn tiền theo ảnh.`}
+  else if(a.st==="no") {m.className="s-msg err"; m.textContent=a.msg}
   else if(S.engine!=="canva"&&!keyOf(S.engine)){m.className="s-msg err"; m.innerHTML=`Chưa có ${esc(ENGINES[S.engine].keyLabel)}. Dán key ở tab <button type="button" class="btn" data-goto="new" style="padding:1px 8px;font-size:12px">Tạo ảnh mới</button> để dùng Sửa bằng AI. Thêm chữ, logo và cắt ảnh vẫn dùng được không cần key.`}
   else if(S.engine==="canva"){m.className="s-msg"; m.textContent="Canva chỉ sửa được ảnh do chính Canva tạo. Ảnh bạn tải lên hãy sửa bằng Gemini hoặc OpenAI; thêm chữ, logo và cắt ảnh vẫn dùng được."}
   else {m.className="s-msg"; m.textContent=`Sửa bằng AI sẽ dùng ${ENGINES[S.engine].name} (${modelOf(S.engine)}).`}
@@ -2274,6 +2468,7 @@ $("edit-list").addEventListener("click",e=>{
   S.src=first; S.ratio=first.ratio; $("s-prompt").value=fillBody(first);
   renderRatio(); renderSrc(); renderEngines(); renderResults();
   setTab(location.hash==="#sua-anh"?"edit":(store.get("xa-tab")||"new"));
+  renderPriceCfg(); renderSpend();
   restoreSug(); loadHistory(); loadProducts(); loadMyTpl(); restoreRef();
 })();
 
