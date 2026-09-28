@@ -130,6 +130,21 @@ aside p.hint{color:var(--muted);font-size:13px;margin:0 0 14px}
 .pup:hover{filter:brightness(1.05)}
 .prods .pwarn{font-size:12px;color:var(--warn);margin:0}
 .panel .prods{margin:-4px 0 10px}
+.refbox{border-color:var(--mag);background:var(--mag-soft)}
+.refbox .pup{border-color:var(--mag);color:var(--mag)}
+.refbox .pup.big{background:var(--mag);border-color:var(--mag);color:#fff}
+.refbox.drag{box-shadow:0 0 0 3px var(--mag)}
+.ref-row{display:flex;gap:10px;align-items:flex-start;min-width:0}
+.ref-th{width:72px;height:72px}
+.ref-meta{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ref-meta b{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px}
+.ref-meta span{font-size:12px;color:var(--muted)}
+.ref-mode{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600}
+.ref-mode select{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:4px 8px;font-size:13px;flex:1;min-width:0}
+.ref-details summary{cursor:pointer;font-size:12.5px;font-weight:600}
+.ref-details dl.ana{margin:6px 0 0;font-size:12.5px;grid-template-columns:90px 1fr}
+.stage.mystage{padding:10px}
+.stage.mystage img{max-width:100%;max-height:100%;object-fit:contain;display:block;box-shadow:0 0 0 1px var(--wire-2)}
 .prods .pbusy{font-size:12px;color:var(--cyan);margin:0;font-weight:600}
 .sug{border:1px solid var(--cyan);border-radius:6px;background:var(--sheet);padding:10px 12px;margin:0 0 14px;font-size:13px;display:flex;flex-direction:column;gap:8px}
 .sug-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
@@ -374,10 +389,8 @@ dl.ana dd{margin:0;color:var(--muted)}
             </div>
             <div class="prods" data-prods aria-label="Ảnh sản phẩm thật" style="flex:1 1 320px"></div>
             <input type="file" id="prod-file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple hidden>
-            <div class="slot" id="slot-ref">
-              <div class="th" id="refs-th">+</div>
-              <div class="tx"><b>Ảnh tham chiếu</b><span id="refs-tx">Chưa có · import ở khung bên dưới</span></div>
-            </div>
+            <div class="prods refbox" id="refbox" aria-label="Ảnh mẫu muốn làm giống" style="flex:1 1 320px"></div>
+            <input type="file" id="ref-file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
           </div>
           <div class="s-actions">
             <button class="btn go" type="button" id="s-go">Tạo ảnh</button>
@@ -391,32 +404,6 @@ dl.ana dd{margin:0;color:var(--muted)}
           <button class="btn hidden" type="button" id="r-clear">Xoá tất cả</button>
         </div>
         <div class="results" id="results"></div>
-      </section>
-
-      <section class="ref" id="ref" aria-label="Ảnh tham chiếu">
-        <div class="ref-empty" id="ref-empty">
-          <div>
-            <h2>Có ảnh mẫu muốn làm giống?</h2>
-            <p>Import ảnh tham chiếu (hoặc dán bằng Ctrl + V). Ảnh được gửi kèm khi tạo ảnh bằng Gemini hoặc OpenAI, và mọi prompt copy ra sẽ dặn AI bám theo bố cục, phong cách của ảnh này.</p>
-          </div>
-          <button class="btn primary" type="button" id="ref-pick">Import ảnh tham chiếu</button>
-        </div>
-        <div class="ref-loaded hidden" id="ref-loaded">
-          <div class="ref-img"><span class="ratio-tag" id="ref-ratio"></span><img id="ref-preview" alt="Ảnh tham chiếu"></div>
-          <div>
-            <div class="ref-head">
-              <div><h2>Ảnh tham chiếu</h2><p id="ref-name"></p></div>
-              <div class="ref-btns">
-                <button class="btn primary hidden" type="button" id="ref-analyze">Phân tích và viết prompt</button>
-                <button class="btn hidden" type="button" id="ref-stop">Dừng</button>
-                <button class="btn" type="button" id="ref-change">Đổi ảnh</button>
-                <button class="btn" type="button" id="ref-remove">Bỏ ảnh</button>
-              </div>
-            </div>
-            <div class="ref-out" id="ref-out"><p class="status" id="ref-status">Khi dán prompt vào công cụ AI khác, nhớ đính kèm cả ảnh này.</p></div>
-          </div>
-        </div>
-        <input type="file" id="ref-file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
       </section>
 
       <h2 class="lib-title">Thư viện mẫu</h2>
@@ -479,6 +466,7 @@ function renderTips(){
   const extra = refBlob ? [tool==="mj" ? "Tải ảnh tham chiếu lên Midjourney rồi thay [link ảnh tham chiếu] bằng link ảnh." : "Đính kèm ảnh tham chiếu cùng prompt khi dán vào công cụ."] : [];
   $("tips").innerHTML=`<b>Mẹo khi dùng ${TOOLS[tool].name}</b><ul>${[...extra,...TOOLS[tool].tips].map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`}
 const GROUPS = ["Social & Ads","Sản phẩm & E-commerce","Sự kiện & In ấn","Con người & Lifestyle"];
+const MYTPL = [];
 
 // Wireframe blocks: [kind, x, y, w, h, extraClass]
 const WF = {
@@ -606,7 +594,7 @@ function renderChips(){
   const hasSug=document.querySelector(".card.suggested")!==null;
   if(!hasSug&&active==="Hợp với sản phẩm") active="Tất cả";
   chipsEl.innerHTML="";
-  [...(hasSug?["Hợp với sản phẩm"]:[]),"Tất cả",...GROUPS].forEach(g=>{
+  [...(hasSug?["Hợp với sản phẩm"]:[]),"Tất cả",...(MYTPL.length?["Mẫu của tôi"]:[]),...GROUPS].forEach(g=>{
     const b=document.createElement("button"); b.type="button"; b.className="chip"+(g==="Hợp với sản phẩm"?" chip-sug":""); b.textContent=g;
     b.setAttribute("aria-pressed",g===active);
     b.onclick=()=>setLibFilter(g);
@@ -720,18 +708,19 @@ RATIOS.forEach(r=>{const b=document.createElement("button");b.type="button";b.cl
   b.onclick=()=>{S.ratio=r;renderRatio();renderAuto()};$("ratios").appendChild(b)});
 function renderRatio(){document.querySelectorAll(".rchip").forEach(b=>b.setAttribute("aria-pressed",b.dataset.r===S.ratio))}
 
-function loadIntoStudio({src=null,text="",ratio=null,label=null}){
+function loadIntoStudio({src=null,text="",ratio=null,label=null,noScroll=false}){
   if(S.base) clearBase(true);
   S.src=src; S.srcLabel=label; S.dirty=false;
   $("s-prompt").value=text;
   if(ratio&&RATIOS.includes(ratio)) S.ratio=ratio;
   renderRatio(); renderSrc(); renderAuto();
-  $("studio").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
+  if(!noScroll) $("studio").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
 }
 function renderSrc(){
   const el=$("s-src");
   if(S.base){el.innerHTML=`<b>Sửa tiếp ảnh</b><span>Ghi điều muốn đổi, VD: đổi nền sang màu cam, giữ nguyên mọi thứ khác.</span>`;return}
-  if(S.src) el.innerHTML=`<b>${esc(S.src.name)}</b><span>Mẫu từ thư viện · tỉ lệ gợi ý ${S.src.ratio}${S.dirty?" · đã sửa tay":""}</span>`;
+  if(S.src){const kind=S.src.kind==="ref"?`Làm theo ảnh mẫu · ${REF_MODES[REF.mode].label.toLowerCase()}`:S.src.kind==="my"?"Mẫu của tôi":"Mẫu từ thư viện";
+    el.innerHTML=`<b>${esc(S.src.name)}</b><span>${kind} · tỉ lệ ${S.src.ratio}${S.dirty?" · đã sửa tay":""}</span>`}
   else if(S.srcLabel) el.innerHTML=`<b>${esc(S.srcLabel)}</b>`;
   else el.innerHTML=`<b>Prompt tự viết</b>`;
 }
@@ -746,7 +735,7 @@ function autoLines(){
   if(imgs&&S.products.length){const a=n+1; n+=S.products.length;
     L.push(S.products.length===1?`Ảnh đính kèm số ${a} là sản phẩm thật: giữ đúng hình dáng, màu, nhãn và logo của sản phẩm.`
       :`Ảnh đính kèm số ${a} đến ${n} là cùng một sản phẩm thật chụp ở nhiều góc: giữ đúng hình dáng, màu, nhãn và logo của sản phẩm.`)}
-  if(imgs&&refBlob&&!S.base){n++; L.push(`Ảnh đính kèm số ${n} là ảnh tham chiếu: bám theo bố cục, màu sắc, ánh sáng và phong cách; không sao chép chữ, logo hay thương hiệu trong ảnh đó.`)}
+  if(imgs&&refBlob&&!S.base){n++; L.push(`Ảnh đính kèm số ${n} là ảnh mẫu: ${REF_MODES[REF.mode].clause}`)}
   if(E==="openai"&&openaiLegacy(modelOf("openai"))) L.push(`Tỉ lệ khung ${S.ratio}.`);
   return L;
 }
@@ -757,7 +746,7 @@ function renderAuto(){
   // attachment hints per engine
   const canva=S.engine==="canva";
   renderProducts();
-  $("refs-tx").textContent=refBlob?(canva?"Có · Canva không nhận ảnh đính kèm, chỉ dùng để phân tích":(S.base?"Có · tạm bỏ qua khi sửa tiếp":"Có · sẽ gửi kèm khi tạo")):"Chưa có · import ở khung bên dưới";
+  renderRefBox();
 }
 function fullPrompt(){return [$("s-prompt").value.trim(),...autoLines()].filter(Boolean).join(" ")}
 $("s-copy").onclick=e=>copyText(fullPrompt(),e.currentTarget,"Copy prompt");
@@ -1042,8 +1031,8 @@ function errText(e){
 
 /* ---------- history (IndexedDB) ---------- */
 const DB={p:null,
-  open(){ if(this.p) return this.p; this.p=new Promise(res=>{try{const r=indexedDB.open("xuong-anh-ai",2);
-    r.onupgradeneeded=()=>{const db=r.result; ["img","prod"].forEach(n=>{if(!db.objectStoreNames.contains(n)) db.createObjectStore(n,{keyPath:"id"})})};
+  open(){ if(this.p) return this.p; this.p=new Promise(res=>{try{const r=indexedDB.open("xuong-anh-ai",3);
+    r.onupgradeneeded=()=>{const db=r.result; ["img","prod","tpl","misc"].forEach(n=>{if(!db.objectStoreNames.contains(n)) db.createObjectStore(n,{keyPath:"id"})})};
     r.onsuccess=()=>res(r.result);r.onerror=()=>res(null);r.onblocked=()=>res(null)}catch(e){res(null)}}); return this.p},
   async tx(store,mode,fn){const db=await this.open(); if(!db) return null; return new Promise(res=>{try{const t=db.transaction(store,mode);const st=t.objectStore(store);const r=fn(st);t.oncomplete=()=>res(r&&r.result);t.onerror=()=>res(null)}catch(e){res(null)}})},
   all(store="img"){return this.tx(store,"readonly",s=>s.getAll())}, put(v,store="img"){return this.tx(store,"readwrite",s=>s.put(v))},
@@ -1188,117 +1177,251 @@ async function generate(){
 $("s-go").onclick=generate;
 $("s-stop").onclick=()=>S.ctl&&S.ctl.abort();
 
-/* ---------- reference image ---------- */
-const refEls={empty:$("ref-empty"),loaded:$("ref-loaded"),file:$("ref-file"),img:$("ref-preview"),name:$("ref-name"),ratio:$("ref-ratio"),
-  analyze:$("ref-analyze"),stop:$("ref-stop"),out:$("ref-out"),box:$("ref")};
-let refURL=null, sampleFn=null, sampleLim=null, ctl=null;
+/* ---------- ảnh mẫu: làm giống ảnh này ---------- */
+let sampleFn=null, sampleLim=null;
 function nearestRatio(w,h){const r=w/h;let best=RATIOS[0],d=9;RATIOS.forEach(x=>{const dd=Math.abs(Math.log(ratioNum(x)/r));if(dd<d){d=dd;best=x}});return best}
-function setStatus(txt,err){refEls.out.innerHTML=`<p class="status${err?" err":""}">${esc(txt)}</p>`}
-function syncRefSlot(){
-  $("refs-th").innerHTML=refURL?`<img src="${refURL}" alt="">`:"+";
-  $("slot-ref").classList.toggle("on",!!refBlob);
-  renderAuto();
+function clearSuggest(){document.querySelectorAll(".card.suggested").forEach(c=>c.classList.remove("suggested"))}
+const ERR={rate_limited:"Đang vượt giới hạn sử dụng, thử lại sau ít phút.",image_rejected:"Ảnh không đọc được. Thử ảnh JPG hoặc PNG khác.",refused:"Không phân tích được ảnh này. Thử ảnh khác.",session_expired:"Phiên đăng nhập đã hết, hãy đăng nhập lại Claude.",invalid_json:"Kết quả chưa đúng định dạng. Bấm Phân tích lại."};
+const HIDE=["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed","images_unavailable"];
+const REF_MODES={
+  gan_het:{label:"Giống gần hết",
+    ask:"Giữ gần như toàn bộ ảnh mẫu: bố cục, góc máy, ánh sáng, bảng màu, bối cảnh, đạo cụ và phong cách. Chỉ thay sản phẩm bằng {san_pham} và thay chữ bằng \"{thong_diep}\".",
+    clause:"làm gần giống ảnh này: cùng bố cục, góc máy, ánh sáng, bảng màu, đạo cụ và phong cách; chỉ thay sản phẩm bằng sản phẩm thật và thay chữ bằng chữ trong prompt; không sao chép logo hay thương hiệu trong ảnh đó."},
+  bo_cuc:{label:"Giống bố cục",
+    ask:"Chỉ giữ bố cục, vị trí chủ thể, góc máy và khoảng trống cho chữ của ảnh mẫu. Màu dùng {mau_chu_dao}, phong cách dùng {phong_cach}, bối cảnh và đạo cụ chọn cho hợp với sản phẩm.",
+    clause:"chỉ bám theo bố cục, vị trí chủ thể, góc máy và khoảng trống cho chữ; màu sắc, bối cảnh và phong cách theo prompt này; không sao chép chữ, logo hay thương hiệu trong ảnh đó."},
+  mau:{label:"Giống màu và ánh sáng",
+    ask:"Chỉ giữ bảng màu, ánh sáng, chất ảnh và không khí của ảnh mẫu. Bố cục theo loại ấn phẩm của mẫu thư viện gần nhất, bối cảnh và đạo cụ chọn cho hợp với sản phẩm, phong cách dùng {phong_cach}.",
+    clause:"chỉ bám theo bảng màu, ánh sáng, chất ảnh và không khí; bố cục và bối cảnh theo prompt này; không sao chép chữ, logo hay thương hiệu trong ảnh đó."}
+};
+const REF={blob:null,url:null,name:"",guess:"",mode:store.get("xa-ref-mode")||"gan_het",status:"idle",data:null,applied:false,prev:null,msg:"",virt:null};
+if(!REF_MODES[REF.mode]) REF.mode="gan_het";
+let refCtl=null;
+const refFile=$("ref-file");
+
+function refAsk(){
+  const m=REF_MODES[REF.mode];
+  return `Bạn là art director hơn 10 năm kinh nghiệm, chuyên viết prompt tạo ảnh AI cho marketing tại Việt Nam.
+Ảnh đính kèm là ẢNH MẪU: người dùng muốn làm một ảnh theo ảnh này cho sản phẩm của họ.
+Mức giống người dùng chọn: ${m.label}. ${m.ask}
+
+Việc cần làm:
+1. Chọn đúng một mẫu gần nhất với ảnh mẫu trong thư viện (id | tên | tỉ lệ | dùng cho):
+${TYPES.map(t=>`${t.id} | ${t.name} | ${t.ratio} | ${t.use}`).join("\n")}
+2. Phân tích ảnh mẫu theo 7 mục: bố cục, chủ thể, bối cảnh, màu sắc, ánh sáng, góc máy, chữ trên ảnh. Mỗi mục 1 câu.
+3. Viết MỘT prompt tiếng Việt để tạo ảnh theo mức giống ở trên, theo thứ tự: loại ấn phẩm và tỉ lệ; chủ thể và vị trí; bối cảnh và đạo cụ; màu và phong cách; ánh sáng và góc máy; chữ trên ảnh trong ngoặc kép.
+   Prompt phải đủ chi tiết để model KHÔNG nhìn thấy ảnh mẫu vẫn vẽ lại được; không viết "như ảnh mẫu".
+   Dùng đúng các chỗ giữ trong ngoặc nhọn thay cho thông tin của người dùng, không viết thẳng giá trị: {san_pham} là sản phẩm, {thuong_hieu} là thương hiệu, "{thong_diep}" là chữ tiêu đề trên ảnh${REF.mode==="gan_het"?"":", {mau_chu_dao} là màu chủ đạo, {phong_cach} là phong cách"}.
+   Không nhắc tên, logo, nhân vật có bản quyền hay chữ nguyên văn trong ảnh mẫu.
+4. Chọn tỉ lệ khung gần nhất với ảnh mẫu trong: ${RATIOS.join(", ")}.
+5. Đặt một tên ngắn 3–6 chữ mô tả kiểu ảnh này, để lưu vào thư viện.
+
+Chỉ trả về JSON đúng dạng:
+{"ten_mau":"","loai_hinh":"id","ly_do":"1 câu","ti_le":"4:5","phan_tich":{"bo_cuc":"","chu_the":"","boi_canh":"","mau_sac":"","anh_sang":"","goc_may":"","chu_tren_anh":""},"prompt":""}`;
 }
-function loadRef(f){
-  if(!f||!/^image\/(jpeg|png|webp|gif)$/.test(f.type)){setStatus("Chọn ảnh JPG, PNG, WebP hoặc GIF.",true);refEls.empty.classList.add("hidden");refEls.loaded.classList.remove("hidden");return}
-  if(refURL) URL.revokeObjectURL(refURL);
-  refBlob=f; refURL=URL.createObjectURL(f);
-  refEls.img.onload=()=>{refEls.ratio.textContent="≈ "+nearestRatio(refEls.img.naturalWidth,refEls.img.naturalHeight)};
-  refEls.img.src=refURL; refEls.name.textContent=f.name||"Ảnh đã import";
-  refEls.empty.classList.add("hidden"); refEls.loaded.classList.remove("hidden");
-  setStatus("Ảnh này sẽ được gửi kèm khi tạo ảnh bằng Gemini hoặc OpenAI."+(sampleFn?" Bấm \"Phân tích và viết prompt\" để Claude đọc ảnh và viết prompt riêng cho brand của bạn.":""));
-  clearSuggest(); renderTips(); cards.forEach(c=>c._refresh()); syncRefSlot();
+async function setRef(blob,name,{analyze=true,persist=true}={}){
+  if(REF.url) URL.revokeObjectURL(REF.url);
+  if(refCtl) refCtl.abort();
+  if(REF.applied) undoRef(true);
+  REF.blob=blob; refBlob=blob; REF.url=URL.createObjectURL(blob); REF.name=name||"ảnh mẫu"; REF.data=null; REF.status="idle"; REF.msg="";
+  try{const bmp=await createImageBitmap(blob); REF.guess=nearestRatio(bmp.width,bmp.height); bmp.close&&bmp.close()}catch(e){REF.guess=""}
+  if(persist) DB.put({id:"ref",blob,name:REF.name},"misc");
+  renderTips(); cards.forEach(c=>c._refresh()); renderAuto();
+  if(analyze) analyzeRef();
+}
+async function loadRefFile(f){
+  if(!f||!/^image\//.test(f.type)){sMsg("Ảnh mẫu cần là JPG, PNG hoặc WebP.","err");return}
+  let blob; try{blob=await shrink(f)}catch(e){sMsg("Không đọc được ảnh này. Dùng ảnh JPG, PNG hoặc WebP.","err");return}
+  setRef(blob,f.name||"ảnh dán vào");
 }
 function clearRef(){
-  if(ctl) ctl.abort();
-  refBlob=null; if(refURL) URL.revokeObjectURL(refURL); refURL=null; refEls.img.removeAttribute("src");
-  refEls.loaded.classList.add("hidden"); refEls.empty.classList.remove("hidden");
-  clearSuggest(); renderTips(); cards.forEach(c=>c._refresh()); syncRefSlot();
+  if(refCtl) refCtl.abort();
+  if(REF.applied) undoRef(true);
+  if(REF.url) URL.revokeObjectURL(REF.url);
+  Object.assign(REF,{blob:null,url:null,name:"",guess:"",status:"idle",data:null,applied:false,prev:null,msg:"",virt:null});
+  refBlob=null; DB.del("ref","misc");
+  renderTips(); cards.forEach(c=>c._refresh()); renderAuto();
 }
-function clearSuggest(){document.querySelectorAll(".card.suggested").forEach(c=>c.classList.remove("suggested"))}
-$("ref-pick").onclick=()=>refEls.file.click();
-$("ref-change").onclick=()=>refEls.file.click();
-$("ref-remove").onclick=clearRef;
-$("slot-ref").onclick=()=>refBlob?refEls.box.scrollIntoView({behavior:"smooth",block:"center"}):refEls.file.click();
-refEls.file.addEventListener("change",()=>{loadRef(refEls.file.files[0]);refEls.file.value=""});
-["dragenter","dragover"].forEach(ev=>refEls.box.addEventListener(ev,e=>{e.preventDefault();refEls.box.classList.add("drag")}));
-["dragleave","drop"].forEach(ev=>refEls.box.addEventListener(ev,e=>{e.preventDefault();refEls.box.classList.remove("drag")}));
-refEls.box.addEventListener("drop",e=>{const f=e.dataTransfer.files[0]; if(f) loadRef(f)});
-document.addEventListener("paste",e=>{const it=[...(e.clipboardData?.items||[])].find(x=>x.type.startsWith("image/")); if(it) loadRef(it.getAsFile())});
+function refVirt(d){
+  const tpl=TYPES.find(t=>t.id===String(d.loai_hinh));
+  const ratio=RATIOS.includes(String(d.ti_le))?String(d.ti_le):(REF.guess||(tpl?tpl.ratio:"1:1"));
+  return {id:"__ref",kind:"ref",name:"Theo ảnh mẫu"+(tpl?" · gần "+tpl.name:""),ratio,p:String(d.prompt||"").trim(),like:tpl?tpl.id:null};
+}
+function studioState(){return {src:S.src,srcLabel:S.srcLabel,text:$("s-prompt").value,ratio:S.ratio,dirty:S.dirty}}
+function applyRef(quiet){
+  if(!REF.data) return;
+  const v=refVirt(REF.data); if(!v.p) return;
+  if(!REF.applied) REF.prev=studioState();
+  REF.virt=v; REF.applied=true;
+  loadIntoStudio({src:v,text:fillBody(v),ratio:v.ratio,noScroll:quiet});
+  renderAuto();
+  if(!quiet) sMsg(`Đã viết prompt theo ảnh mẫu (${REF_MODES[REF.mode].label.toLowerCase()}), tỉ lệ ${v.ratio}. Kiểm tra rồi bấm Tạo ảnh.`,"ok");
+}
+function undoRef(silent){
+  if(!REF.applied) return;
+  const p=REF.prev; REF.applied=false;
+  if(p){S.src=p.src; S.srcLabel=p.srcLabel; S.dirty=p.dirty; $("s-prompt").value=p.text; if(p.ratio) S.ratio=p.ratio; renderRatio(); renderSrc()}
+  renderAuto();
+  if(!silent) sMsg("Đã hoàn tác: prompt và tỉ lệ trở lại như trước khi dùng ảnh mẫu.");
+}
+async function analyzeRef(){
+  if(!REF.blob) return;
+  const via=sugVia();
+  if(!via){
+    REF.status="need"; if(REF.guess&&!S.base){S.ratio=REF.guess; renderRatio()}
+    renderAuto(); return;
+  }
+  if(refCtl) refCtl.abort();
+  refCtl=new AbortController(); const signal=refCtl.signal;
+  REF.status="loading"; REF.msg=""; REF.via=via; renderAuto();
+  try{
+    let d;
+    if(via==="claude") d=parseJSONLoose(await sampleFn.json(refAsk(),{images:[REF.blob],signal}));
+    else if(via==="gemini") d=await visionGemini(refAsk(),[REF.blob],signal);
+    else d=await visionOpenAI(refAsk(),[REF.blob],signal);
+    if(!d||!d.prompt) throw new GenError("Kết quả phân tích chưa đầy đủ. Bấm Phân tích lại.","empty");
+    REF.data=d; REF.status="done";
+    DB.put({id:"ref",blob:REF.blob,name:REF.name,data:d,mode:REF.mode},"misc");
+    applyRef(false);
+  }catch(e){
+    if(e&&e.code==="cancelled"||signal.aborted) return;
+    REF.status="error";
+    REF.msg=e instanceof GenError?e.message:(e&&ERR[e.code])||("Chưa phân tích được"+(e&&e.message?": "+e.message:"")+". Bấm Phân tích lại.");
+    if(e&&HIDE.includes(e.code)){sampleFn=null; REF.msg="Claude không đọc ảnh được ở đây. Dán API key Gemini hoặc OpenAI rồi bấm Phân tích lại."}
+  }finally{ if(refCtl&&refCtl.signal===signal) refCtl=null; renderAuto() }
+}
+const ANA=[["bo_cuc","Bố cục"],["chu_the","Chủ thể"],["boi_canh","Bối cảnh"],["mau_sac","Màu sắc"],["anh_sang","Ánh sáng"],["goc_may","Góc máy"],["chu_tren_anh","Chữ trên ảnh"]];
+function renderRefBox(){
+  const box=$("refbox"); if(!box) return;
+  const top=`<div class="prods-top"><b>Ảnh mẫu muốn làm giống</b><span>${REF.blob?"":"Kéo thả, dán Ctrl + V hoặc bấm tải"}</span></div>`;
+  if(!REF.blob){
+    box.innerHTML=top+`<div class="prods-row"><button type="button" class="pup big" data-ra="pick"><i>⤒</i>Tải ảnh mẫu lên</button></div><p class="sug-note">Hệ thống tự phân tích ảnh, viết prompt theo ảnh cho sản phẩm của bạn và đặt đúng tỉ lệ.</p>`;
+    return;
+  }
+  const canva=S.engine==="canva", busy=REF.status==="loading", via=sugVia();
+  const modeSel=`<label class="ref-mode"><span>Mức giống</span><select data-ra="mode" ${busy?"disabled":""}>${Object.entries(REF_MODES).map(([k,m])=>`<option value="${k}" ${k===REF.mode?"selected":""}>${m.label}</option>`).join("")}</select></label>`;
+  let status="";
+  if(busy) status=`<p class="sug-load">${esc(VIA_NAME[REF.via]||"AI")} đang phân tích ảnh mẫu và viết prompt… thường mất 10–40 giây.</p>`;
+  else if(REF.status==="need") status=`<p class="sug-note">Ảnh vẫn được gửi kèm khi tạo bằng Gemini hoặc OpenAI, tỉ lệ đã đặt ≈ ${esc(REF.guess)}. Để trang tự viết prompt theo ảnh: dán API key Gemini hoặc OpenAI${IN_CLAUDE?"":" (hoặc mở trang trong Claude)"} rồi bấm Phân tích.</p>`;
+  else if(REF.status==="error") status=`<p class="sug-err">${esc(REF.msg)}</p>`;
+  else if(REF.data&&REF.applied){const v=REF.virt||refVirt(REF.data); status=`<p class="sug-note"><b style="color:var(--ok)">✓ Đang dùng prompt theo ảnh mẫu</b> · tỉ lệ ${v.ratio}${v.like?` · gần mẫu "${esc((TYPES.find(t=>t.id===v.like)||{}).name||"")}"`:""}. ${esc(String(REF.data.ly_do||""))}</p>`}
+  else if(REF.data) status=`<p class="sug-note">Đã có prompt viết theo ảnh mẫu này, hiện chưa dùng trong xưởng.</p>`;
+  const btns=[];
+  if(REF.data&&REF.applied&&!busy) btns.push(`<button class="btn" type="button" data-ra="undo">Hoàn tác</button>`);
+  if(REF.data&&!REF.applied&&!busy) btns.push(`<button class="btn primary" type="button" data-ra="apply">Dùng lại prompt này</button>`);
+  if(!busy) btns.push(`<button class="btn" type="button" data-ra="run" ${via?"":"disabled title=\"Cần API key Gemini/OpenAI hoặc mở trong Claude\""}>${REF.data?"Phân tích lại":"Phân tích"}</button>`);
+  if(REF.data&&!busy) btns.push(`<button class="btn" type="button" data-ra="save">Lưu vào Mẫu của tôi</button>`);
+  const a=REF.data&&REF.data.phan_tich||{};
+  const details=REF.data?`<details class="ref-details"><summary>Xem phân tích ảnh mẫu</summary><dl class="ana">${ANA.map(([k,l])=>a[k]?`<dt>${l}</dt><dd>${esc(String(a[k]))}</dd>`:"").join("")}</dl></details>`:"";
+  box.innerHTML=top+`<div class="ref-row"><div class="pthumb ref-th"><img src="${REF.url}" alt="Ảnh mẫu"></div>
+    <div class="ref-meta"><b title="${esc(REF.name)}">${esc(REF.name)}</b><span>${REF.guess?"Ảnh gốc ≈ "+REF.guess:""}</span>
+    <div class="sug-chips"><button class="btn" type="button" data-ra="pick">Đổi ảnh</button><button class="btn" type="button" data-ra="clear">Bỏ ảnh</button></div></div></div>
+    ${modeSel}${status}${btns.length?`<div class="sug-chips">${btns.join("")}</div>`:""}
+    ${canva?`<p class="pwarn">Canva chưa nhận ảnh đính kèm: prompt đã mô tả lại ảnh mẫu bằng chữ. Muốn giống sát hơn, chọn Gemini hoặc OpenAI.</p>`:S.base?`<p class="sug-note">Đang sửa tiếp một ảnh: tạm không gửi kèm ảnh mẫu.</p>`:""}
+    ${details}`;
+}
+const refbox=$("refbox");
+refbox.addEventListener("click",e=>{
+  const b=e.target.closest("[data-ra]"); if(!b||b.tagName==="SELECT") return;
+  const a=b.dataset.ra;
+  if(a==="pick") refFile.click();
+  if(a==="clear") clearRef();
+  if(a==="run") analyzeRef();
+  if(a==="undo"){undoRef(false)}
+  if(a==="apply"){applyRef(false)}
+  if(a==="save") saveMyTpl();
+  renderAuto();
+});
+refbox.addEventListener("change",e=>{
+  if(e.target.dataset.ra!=="mode") return;
+  REF.mode=e.target.value; store.set("xa-ref-mode",REF.mode); renderAuto();
+  if(REF.data||REF.status==="error") analyzeRef();   // viết lại prompt theo mức giống mới
+});
+refFile.addEventListener("change",()=>{loadRefFile(refFile.files[0]);refFile.value=""});
+["dragenter","dragover"].forEach(ev=>refbox.addEventListener(ev,e=>{e.preventDefault();e.stopPropagation();refbox.classList.add("drag")}));
+["dragleave","drop"].forEach(ev=>refbox.addEventListener(ev,e=>{e.preventDefault();e.stopPropagation();refbox.classList.remove("drag")}));
+refbox.addEventListener("drop",e=>{const f=e.dataTransfer.files[0]; if(f) loadRefFile(f)});
+document.addEventListener("paste",e=>{
+  if(e.target&&(e.target.tagName==="TEXTAREA"||e.target.tagName==="INPUT")&&!(e.clipboardData?.items&&[...e.clipboardData.items].some(x=>x.type.startsWith("image/")))) return;
+  const it=[...(e.clipboardData?.items||[])].find(x=>x.type.startsWith("image/")); if(it){e.preventDefault(); loadRefFile(it.getAsFile())}
+});
+async function restoreRef(){
+  const all=await DB.all("misc"); const r=(all||[]).find(x=>x.id==="ref"); if(!r||!r.blob) return;
+  if(r.mode&&REF_MODES[r.mode]) REF.mode=r.mode;
+  await setRef(r.blob,r.name,{analyze:false,persist:false});
+  if(r.data){REF.data=r.data; REF.status="done"; renderAuto()}
+}
 
-// AI analysis (Claude)
+/* ---------- Mẫu của tôi (lưu từ ảnh mẫu) ---------- */
+const MY_G="Mẫu của tôi";
+async function thumbOf(blob){
+  try{const bmp=await createImageBitmap(blob); const k=Math.min(1,480/Math.max(bmp.width,bmp.height)); const c=document.createElement("canvas");
+    c.width=Math.round(bmp.width*k); c.height=Math.round(bmp.height*k); c.getContext("2d").drawImage(bmp,0,0,c.width,c.height); bmp.close&&bmp.close();
+    return await new Promise(r=>c.toBlob(r,"image/jpeg",0.85))||blob}catch(e){return blob}
+}
+async function saveMyTpl(){
+  if(!REF.data||!REF.blob) return;
+  const v=refVirt(REF.data);
+  const rec={id:"my-"+Date.now().toString(36),kind:"my",g:MY_G,name:String(REF.data.ten_mau||"").trim()||("Mẫu từ "+REF.name).slice(0,40),ratio:v.ratio,p:v.p,mode:REF.mode,
+    use:`Làm theo ảnh mẫu đã lưu · ${REF_MODES[REF.mode].label.toLowerCase()}.`,like:v.like,created:Date.now(),ref:REF.blob,thumb:await thumbOf(REF.blob)};
+  await DB.put(rec,"tpl"); MYTPL.unshift(rec); renderMyGroup();
+  sMsg(`Đã lưu "${rec.name}" vào nhóm Mẫu của tôi trong thư viện.`,"ok");
+}
+function myCard(t){
+  const c=document.createElement("article"); c.className="card my"; c.dataset.id=t.id; c.dataset.g=MY_G;
+  c.dataset.search=(t.name+" "+t.use+" "+MY_G).toLowerCase();
+  t._url=t._url||URL.createObjectURL(t.thumb||t.ref);
+  c.innerHTML=`<div class="stage mystage"><span class="ratio-tag">${t.ratio}</span><img src="${t._url}" alt="${esc(t.name)}"></div>
+    <div class="body"><div><span class="flag">Được gợi ý cho bạn</span><h4>${esc(t.name)}</h4><div class="meta">Tỉ lệ ${t.ratio} · ${esc(REF_MODES[t.mode]?.label||"")} · ảnh mẫu được gửi kèm khi tạo</div></div>
+    <details class="prompt"><summary>Prompt đã lưu</summary><div class="ptext"></div></details>
+    <div class="actions"><button class="btn go" type="button" data-act="gen">Tạo ảnh</button><button class="btn" type="button" data-act="load">Sửa prompt trước</button><button class="btn" type="button" data-act="copy">Copy prompt</button><button class="btn" type="button" data-act="del">Xoá</button></div></div>`;
+  const pt=c.querySelector(".ptext");
+  c._refresh=()=>{pt.innerHTML=promptHTML(t)};
+  c._refresh();
+  c.addEventListener("click",async e=>{
+    const a=e.target.closest("[data-act]"); if(!a) return;
+    const act=a.dataset.act;
+    if(act==="copy"){copyText(promptText(t),a,"Copy prompt");return}
+    if(act==="del"){
+      if(a.dataset.sure!=="1"){a.dataset.sure="1";a.textContent="Xoá thật?";a.classList.add("warn");setTimeout(()=>{if(a.isConnected){a.dataset.sure="";a.textContent="Xoá";a.classList.remove("warn")}},3000);return}
+      await DB.del(t.id,"tpl"); const i=MYTPL.indexOf(t); if(i>=0) MYTPL.splice(i,1); if(t._url) URL.revokeObjectURL(t._url); renderMyGroup(); return;
+    }
+    await useMyTpl(t);
+    if(act==="gen") generate(); else $("s-prompt").focus();
+  });
+  return c;
+}
+async function useMyTpl(t){
+  REF.mode=t.mode&&REF_MODES[t.mode]?t.mode:REF.mode;
+  await setRef(t.ref,t.name,{analyze:false});
+  REF.data={prompt:t.p,ti_le:t.ratio,loai_hinh:t.like,ten_mau:t.name,ly_do:"Từ mẫu đã lưu."}; REF.status="done";
+  REF.prev=studioState(); REF.applied=true; REF.virt={...t,kind:"my"};
+  DB.put({id:"ref",blob:t.ref,name:t.name,data:REF.data,mode:REF.mode},"misc");
+  loadIntoStudio({src:REF.virt,text:fillBody(t),ratio:t.ratio}); renderAuto();
+}
+function renderMyGroup(){
+  for(let i=cards.length-1;i>=0;i--) if(cards[i].classList.contains("my")) cards.splice(i,1);
+  let s=groupsEl.querySelector(`section.group[data-g="${MY_G}"]`);
+  if(!MYTPL.length){if(s) s.remove(); renderChips(); return}
+  if(!s){s=document.createElement("section"); s.className="group"; s.dataset.g=MY_G; groupsEl.prepend(s)}
+  s.innerHTML=`<h3>${MY_G} <span>${MYTPL.length} mẫu lưu từ ảnh mẫu</span></h3>`;
+  const grid=document.createElement("div"); grid.className="grid";
+  MYTPL.forEach(t=>{const c=myCard(t); cards.push(c); grid.appendChild(c)});
+  s.appendChild(grid); renderChips();
+}
+async function loadMyTpl(){
+  const all=await DB.all("tpl"); if(!all||!all.length) return;
+  MYTPL.splice(0,MYTPL.length,...all.sort((a,b)=>b.created-a.created)); renderMyGroup();
+}
+
+// Claude đọc ảnh (chỉ khi trang mở trong Claude)
 (async()=>{
   try{
     const s=await use("sample"); if(!s) return;
     const lim=await s.limits().catch(()=>null); if(!lim||!lim.images) return;
-    sampleFn=s; sampleLim=lim; refEls.analyze.classList.remove("hidden"); renderProducts();
-    if(refBlob) setStatus("Ảnh này sẽ được gửi kèm khi tạo ảnh bằng Gemini hoặc OpenAI. Bấm \"Phân tích và viết prompt\" để Claude đọc ảnh và viết prompt riêng cho brand của bạn.");
+    sampleFn=s; sampleLim=lim; renderProducts(); renderRefBox();
   }catch(e){}
 })();
-const ERR={rate_limited:"Đang vượt giới hạn sử dụng, thử lại sau ít phút.",image_rejected:"Ảnh không đọc được. Thử ảnh JPG hoặc PNG khác.",refused:"Không phân tích được ảnh này. Thử ảnh khác.",session_expired:"Phiên đăng nhập đã hết, hãy đăng nhập lại Claude.",invalid_json:"Kết quả chưa đúng định dạng. Bấm phân tích lại."};
-const HIDE=["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed","images_unavailable"];
-refEls.stop.onclick=()=>ctl&&ctl.abort();
-refEls.analyze.onclick=async()=>{
-  if(!sampleFn||!refBlob) return;
-  const v=k=>(vals[k]||"").trim();
-  const list=TYPES.map(t=>`${t.id} | ${t.name} | ${t.ratio}`).join("\n");
-  const toolName=TOOLS[tool].name;
-  const ask=`Bạn là designer hơn 10 năm kinh nghiệm, chuyên viết prompt tạo ảnh AI cho marketing.
-Ảnh đính kèm là ẢNH THAM CHIẾU: người dùng muốn sản xuất một ảnh có bố cục, ánh sáng và phong cách tương tự, nhưng cho thương hiệu và sản phẩm của họ.
-
-Việc cần làm:
-1. Chọn đúng một loại hình phù hợp nhất với ảnh tham chiếu trong danh sách (id | tên | tỉ lệ):
-${list}
-2. Phân tích ảnh ngắn gọn theo 7 mục: bố cục, chủ thể, bối cảnh, màu sắc, ánh sáng, góc máy, chữ trên ảnh. Mỗi mục 1 câu, tiếng Việt.
-3. Viết MỘT prompt tiếng Việt để tạo ảnh tương tự, theo thứ tự: loại ấn phẩm và tỉ lệ; chủ thể và vị trí; bối cảnh và đạo cụ; màu và phong cách; ánh sáng và góc máy; chữ trên ảnh ghi chính xác trong ngoặc kép.
-   Prompt phải tự đủ nghĩa khi gửi cho model tạo ảnh không nhìn thấy ảnh tham chiếu: mô tả cụ thể, không viết "như ảnh mẫu".
-   Dùng thông tin brief sau (ô nào trống thì để nguyên chỗ giữ trong ngoặc vuông):
-   - Thương hiệu: ${v("thuong_hieu")||"[Thương hiệu]"}
-   - Sản phẩm: ${v("san_pham")||"[Sản phẩm]"}
-   - Màu chủ đạo: ${v("mau_chu_dao")||"[Màu chủ đạo]"} (thay màu của ảnh tham chiếu bằng màu này, giữ cách phối và độ tương phản)
-   - Phong cách: ${v("phong_cach")||"[Phong cách]"}
-   - Thông điệp / tiêu đề: ${v("thong_diep")||"[Thông điệp]"}
-   - Yêu cầu thêm: ${v("them")||"không có"}
-   Công cụ tạo ảnh: ${toolName}. Không ghi tham số kỹ thuật như --ar; trang sẽ tự thêm.
-   Không nhắc tên, logo, nhân vật có bản quyền hay chữ nguyên văn của thương hiệu trong ảnh tham chiếu. Chữ trên ảnh dùng thông điệp của người dùng.
-4. Chọn tỉ lệ khung gần nhất với ảnh tham chiếu trong: 1:1, 4:5, 9:16, 16:9, 2:3, 4:3, 21:9.
-
-Chỉ trả về JSON đúng dạng:
-{"loai_hinh":"id","ly_do":"1 câu","ti_le":"4:5","phan_tich":{"bo_cuc":"","chu_the":"","boi_canh":"","mau_sac":"","anh_sang":"","goc_may":"","chu_tren_anh":""},"prompt":""}`;
-  ctl=new AbortController();
-  refEls.analyze.disabled=true; refEls.stop.classList.remove("hidden");
-  setStatus("Đang đọc ảnh và viết prompt… thường mất 20–60 giây.");
-  try{
-    const r=await sampleFn.json(ask,{images:refBlob,signal:ctl.signal});
-    renderResult(r);
-  }catch(e){
-    const code=e&&e.code;
-    if(code==="cancelled") setStatus("Đã dừng.");
-    else if(HIDE.includes(code)){refEls.analyze.classList.add("hidden");setStatus("Tính năng phân tích không dùng được ở đây. Bạn vẫn dùng được ảnh tham chiếu với các prompt trong bảng.",true)}
-    else setStatus(ERR[code]||"Chưa phân tích được. Bấm thử lại.",true);
-  }finally{refEls.analyze.disabled=false;refEls.stop.classList.add("hidden");ctl=null}
-};
-const ANA=[["bo_cuc","Bố cục"],["chu_the","Chủ thể"],["boi_canh","Bối cảnh"],["mau_sac","Màu sắc"],["anh_sang","Ánh sáng"],["goc_may","Góc máy"],["chu_tren_anh","Chữ trên ảnh"]];
-function renderResult(r){
-  if(!r||typeof r!=="object"||!r.prompt){setStatus("Kết quả chưa đầy đủ. Bấm phân tích lại.",true);return}
-  const t=TYPES.find(x=>x.id===String(r.loai_hinh));
-  const ratio=RATIOS.includes(String(r.ti_le))?String(r.ti_le):(t?t.ratio:"1:1");
-  const raw=String(r.prompt).trim();
-  const s=suffixFor(ratio); const full=raw+(s?" "+s:"");
-  const a=r.phan_tich||{};
-  refEls.out.innerHTML=`
-    ${t?`<div class="match"><b>${esc(t.name)}</b><span>Tỉ lệ ${esc(ratio)}. ${esc(String(r.ly_do||""))}</span><button class="btn" type="button" id="go-card">Xem thẻ này</button></div>`:""}
-    <dl class="ana">${ANA.map(([k,l])=>a[k]?`<dt>${l}</dt><dd>${esc(String(a[k]))}</dd>`:"").join("")}</dl>
-    <div class="ref-prompt" id="ref-prompt"></div>
-    <div class="ref-btns"><button class="btn go" type="button" id="gen-ref">Tạo ảnh từ prompt này</button><button class="btn" type="button" id="copy-ref">Copy prompt</button></div>
-    <p class="status" style="margin-top:8px">Prompt viết theo brief lúc bấm phân tích. Đổi thông tin thì bấm phân tích lại.</p>`;
-  $("ref-prompt").textContent=full;
-  $("copy-ref").onclick=e=>copyText(full,e.currentTarget,"Copy prompt");
-  $("gen-ref").onclick=()=>{loadIntoStudio({text:raw,ratio,label:"Theo ảnh tham chiếu"+(t?" · "+t.name:"")}); generate()};
-  clearSuggest();
-  if(t){const c=document.querySelector(`.card[data-id="${t.id}"]`); if(c){c.classList.add("suggested");
-    $("go-card").onclick=()=>{active="Tất cả";chipsEl.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x.textContent==="Tất cả"));q.value="";applyFilter();c.scrollIntoView({behavior:"smooth",block:"center"})}}}
-}
 
 /* ---------- brief fields ---------- */
 const inputs=document.querySelectorAll("[data-key]");
@@ -1422,7 +1545,8 @@ function applySuggestion(data){
   store.set("brief-vals",JSON.stringify(vals));
   applyAdapt(); afterBrief();
   const top=TYPES.find(t=>t.id===SUG.picks[0]);
-  if(top){loadIntoStudio({src:top,text:fillBody(top),ratio:top.ratio}); setLibFilter(SUG_CHIP)}
+  if(top&&!REF.applied){loadIntoStudio({src:top,text:fillBody(top),ratio:top.ratio}); setLibFilter(SUG_CHIP)}
+  else if(top) setLibFilter(SUG_CHIP);
   sMsg(top?`Đã đọc ảnh: chọn mẫu "${top.name}" và điền brief theo sản phẩm. Kiểm tra lại rồi bấm Tạo ảnh.`:"Đã điền brief theo sản phẩm.","ok");
 }
 function undoSuggestion(){
@@ -1510,8 +1634,8 @@ function restoreSug(){
   S.engine=(saved&&ENGINES[saved]&&avail[saved].st!=="no")?saved:(IN_CLAUDE?"canva":"gemini");
   const first=TYPES[0];
   S.src=first; S.ratio=first.ratio; $("s-prompt").value=fillBody(first);
-  renderRatio(); renderSrc(); renderEngines(); renderResults(); syncRefSlot();
-  restoreSug(); loadHistory(); loadProducts();
+  renderRatio(); renderSrc(); renderEngines(); renderResults();
+  restoreSug(); loadHistory(); loadProducts(); loadMyTpl(); restoreRef();
 })();
 
 (async()=>{
