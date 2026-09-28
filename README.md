@@ -66,6 +66,26 @@ Dựng trang "Thị trường [ngành] TikTok" từ dữ liệu quét FastMoss +
 python3 -m tools.bao_cao_tiktok.chay --nganh tranh_lich --du-lieu du_lieu/tranh_lich/2026-10-10 --truoc du_lieu/tranh_lich/2026-09-26
 ```
 
+## 5. Làm maket lịch — `app/maket-lich.html`
+
+Mở file Photoshop (.psd) hoặc ảnh (.jpg, .png) của tờ lịch, thay logo, tên công ty, địa chỉ, điện thoại, email của từng khách rồi xuất maket để gửi khách duyệt. Chạy hoàn toàn trên trình duyệt, file không gửi đi đâu.
+
+Cách dùng: mở `app/maket-lich.html` bằng Chrome/Edge (để nguyên thư mục `app/thu-vien/` bên cạnh).
+
+1. **File thiết kế**: kéo file PSD vào. Phần mềm đọc từng lớp (layer), gồm cả hiệu ứng thường dùng: đổ bóng, viền chữ, phủ màu, phủ chuyển màu vàng kim, mặt nạ, clipping.
+2. **Thông tin khách**: nhập tên, địa chỉ, điện thoại, email, chọn logo. Logo nền trắng được tự xoá nền. Ô để trống thì dòng đó ẩn đi.
+3. **Lớp trong file**: phần mềm tự đoán lớp chữ nào là tên, địa chỉ, điện thoại… theo tên lớp và nội dung. Chữ mới giữ nguyên phông, cỡ, màu, căn lề, hiệu ứng của lớp cũ; dài quá thì tự thu nhỏ cho vừa. “Khuôn chữ” giữ phần nhãn, ví dụ `Điện thoại: {}`.
+4. **Khung thông tin như mẫu**: với file ảnh JPG/PNG hoặc PSD không có lớp chữ, bật mục này để vẽ khung logo trái, tên to ở giữa, địa chỉ, dòng ĐT trái và Email phải. Chọn nền “Che kín thông tin cũ” để phủ header cũ có sẵn trong ảnh.
+5. **Phông chữ**: máy thiếu phông của file PSD thì tải file .ttf/.otf lên.
+
+Xuất: **JPG/PNG** đủ độ phân giải, **Ảnh nhẹ gửi Zalo** (1600 px), **PSD** giữ nguyên các lớp với chữ và logo đã thay, có thể bật chữ chìm “MAKET CHỜ DUYỆT”.
+
+Tab **Làm hàng loạt**: nạp file Excel/CSV (cột Tên công ty, Địa chỉ, Điện thoại, Email, Website, Logo) hoặc dán từ Excel, chọn nhiều file logo (tên file trùng tên công ty hoặc cột Logo thì tự ghép), bấm “Tạo maket” rồi tải cả loạt về một file .zip.
+
+Giới hạn: file PSB (file lớn), 16-bit, và lớp điều chỉnh màu (Adjustment Layer) chưa hỗ trợ; hiệu ứng Bevel, Inner Shadow, Pattern chưa vẽ; file CMYK đọc được nhưng màu trên màn hình là quy đổi gần đúng. Nút “Bản gốc” hiện ảnh gộp Photoshop lưu trong file để so. Safari/iPhone giới hạn kích thước canvas nên file quá lớn nên xuất trên máy tính.
+
+Thư viện đọc PSD: [ag-psd](https://github.com/Agamnentzar/ag-psd) 31.0.2 (MIT), bản trong `app/thu-vien/ag-psd.js` được sửa một dòng để mở được file CMYK.
+
 ## Chạy test
 
 ```bash

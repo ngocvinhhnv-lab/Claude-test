@@ -1,0 +1,1437 @@
+<meta charset="utf-8">
+<title>Maket Lịch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Noto+Serif:wght@400;700;900&family=Playfair+Display:wght@700;900&family=Roboto:wght@400;700;900&family=Roboto+Slab:wght@400;700&family=Montserrat:wght@400;700;800&family=Oswald:wght@500;700&family=Lora:wght@400;700&family=Dancing+Script:wght@700&family=Pattaya&family=Lobster&family=Paytone+One&family=Roboto+Mono:wght@500&display=swap&subset=vietnamese">
+<style>
+:root{
+  --bg:#F4F0EE; --surface:#FFFFFF; --surface-2:#EEE6E3; --line:#E1D6D2; --line-strong:#C8B8B2;
+  --ink:#231816; --muted:#6E5D58; --accent:#9C1C17; --accent-ink:#FFFFFF; --accent-soft:#F5DEDA;
+  --gold:#946A12; --gold-soft:#F3E6C6; --ok:#2B6E47; --ok-soft:#DCEEE2; --warn:#8A5A0B; --warn-soft:#F5E6C3;
+  --stage:#E6DDDA; --check:#DCD2CE;
+  --shadow:0 1px 2px rgba(35,24,22,.06),0 6px 20px rgba(35,24,22,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#130E0D; --surface:#1C1514; --surface-2:#261D1B; --line:#352926; --line-strong:#4D3C38;
+    --ink:#F1E8E5; --muted:#A99691; --accent:#E86A5E; --accent-ink:#1B0D0B; --accent-soft:#3D1B17;
+    --gold:#DDB256; --gold-soft:#33280F; --ok:#7FCB98; --ok-soft:#16301F; --warn:#E6B75C; --warn-soft:#382A11;
+    --stage:#0C0808; --check:#161010;
+    --shadow:0 1px 2px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#130E0D; --surface:#1C1514; --surface-2:#261D1B; --line:#352926; --line-strong:#4D3C38;
+  --ink:#F1E8E5; --muted:#A99691; --accent:#E86A5E; --accent-ink:#1B0D0B; --accent-soft:#3D1B17;
+  --gold:#DDB256; --gold-soft:#33280F; --ok:#7FCB98; --ok-soft:#16301F; --warn:#E6B75C; --warn-soft:#382A11;
+  --stage:#0C0808; --check:#161010;
+  --shadow:0 1px 2px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:14.5px;line-height:1.5}
+h1,h2,h3{margin:0;line-height:1.25;text-wrap:balance}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:"Roboto Mono",ui-monospace,Menlo,monospace;font-size:12.5px;font-variant-numeric:tabular-nums}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{max-width:1480px;margin:0 auto;padding-inline:20px;padding-block:10px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 24px}
+.brand{display:flex;align-items:center;gap:12px;margin-right:auto}
+.dau{width:38px;height:38px;border-radius:6px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-family:"Noto Serif",Georgia,serif;font-weight:900;font-size:19px;letter-spacing:-.02em;box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--gold) 70%,transparent)}
+.brand h1{font-family:"Noto Serif",Georgia,serif;font-size:19px;font-weight:700}
+.brand p{margin:0;font-size:12.5px;color:var(--muted)}
+.tabs{display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:9px;max-width:100%;overflow-x:auto}
+.tab{border:0;background:transparent;padding:7px 14px;border-radius:6px;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+
+.wrap{max-width:1480px;margin:0 auto;padding-inline:20px;padding-block:20px 56px}
+.layout{display:grid;grid-template-columns:392px minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:960px){.layout{grid-template-columns:minmax(0,1fr)}}
+
+.panel{display:flex;flex-direction:column;gap:14px;min-width:0}
+.khoi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.khoi-dau{display:flex;align-items:baseline;gap:10px}
+.buoc{font-family:"Noto Serif",Georgia,serif;font-weight:900;color:var(--accent);font-size:15px;min-width:1.1em}
+.khoi h2{font-size:15px;font-weight:700}
+.khoi .phu{margin:0;color:var(--muted);font-size:13px}
+.khoi-dau .them{margin-left:auto;font-size:12.5px}
+
+.tha{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;border:1.5px dashed var(--line-strong);border-radius:9px;padding:18px 12px;cursor:pointer;background:var(--surface-2);transition:border-color .15s,background .15s}
+.tha:hover,.tha.keo{border-color:var(--accent);background:var(--accent-soft)}
+.tha b{font-size:14px}
+.tha span{font-size:12.5px;color:var(--muted)}
+.tha input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.tep{display:flex;flex-direction:column;gap:2px;font-size:13px}
+.tep strong{word-break:break-word}
+.tep .mono{color:var(--muted)}
+
+.canh{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.canh li{font-size:12.5px;padding:7px 10px;border-radius:7px;background:var(--warn-soft);color:var(--warn)}
+.canh li.loi{background:var(--accent-soft);color:var(--accent)}
+.canh li.tot{background:var(--ok-soft);color:var(--ok)}
+
+.truong{display:flex;flex-direction:column;gap:4px;min-width:0}
+.truong>label,.nhan{font-size:12.5px;font-weight:600;color:var(--muted)}
+.o{width:100%;border:1px solid var(--line-strong);background:var(--surface);border-radius:7px;padding:8px 10px;min-width:0}
+textarea.o{resize:vertical;min-height:58px;field-sizing:content}
+textarea.o[rows="1"]{min-height:0}
+.o:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+.hang{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:420px){.hang{grid-template-columns:1fr}}
+
+.logo-o{display:flex;gap:12px;align-items:center}
+.logo-xem{width:84px;height:84px;flex:none;border-radius:8px;border:1px solid var(--line);display:grid;place-items:center;overflow:hidden;
+  background:repeating-conic-gradient(var(--check) 0 25%,var(--surface) 0 50%) 0 0/14px 14px;font-size:11px;color:var(--muted);text-align:center;padding:4px}
+.logo-xem canvas{max-width:100%;max-height:100%}
+.logo-nut{display:flex;flex-direction:column;gap:6px;align-items:flex-start;min-width:0}
+.chk{display:flex;gap:8px;align-items:center;font-size:13px;cursor:pointer}
+.chk input{accent-color:var(--accent);width:16px;height:16px}
+
+.nut{border:1px solid var(--line-strong);background:var(--surface);border-radius:7px;padding:7px 12px;font-weight:600;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.nut:hover{border-color:var(--ink)}
+.nut.chinh{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.nut.chinh:hover{filter:brightness(1.08)}
+.nut:disabled{opacity:.5;cursor:not-allowed}
+.lien{border:0;background:none;padding:0;color:var(--accent);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+
+/* danh sách lớp */
+.lop-ds{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:8px;overflow:hidden;max-height:460px;overflow-y:auto}
+.lop{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:4px 8px;align-items:center;padding:7px 10px;border-top:1px solid var(--line);background:var(--surface)}
+.lop:first-child{border-top:0}
+.lop.co-vai{background:color-mix(in srgb,var(--gold-soft) 55%,var(--surface))}
+.lop input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;margin:0}
+.lop-ten{display:flex;flex-direction:column;min-width:0}
+.lop-ten b{font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lop-ten small{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.loai{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+.lop select{max-width:132px;font-size:12.5px;padding:4px 6px;border-radius:6px;border:1px solid var(--line-strong);background:var(--surface)}
+.lop-ct{grid-column:2 / -1;display:grid;grid-template-columns:1fr 1fr;gap:6px 8px;padding-top:4px}
+.lop-ct .truong label{font-size:11.5px}
+.lop-ct .o{padding:5px 8px;font-size:12.5px}
+.lop-ct .rong{grid-column:1 / -1;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.lop-ct .rong input{flex:1;accent-color:var(--accent)}
+.font-tt{grid-column:1 / -1;font-size:11.5px}
+.font-tt.thieu{color:var(--warn)}
+.font-tt.du{color:var(--ok)}
+.trong{padding:14px;color:var(--muted);font-size:13px;text-align:center}
+
+/* sân khấu xem trước */
+.san{position:sticky;top:calc(env(safe-area-inset-top,0px) + 76px);display:flex;flex-direction:column;gap:10px;min-width:0}
+@media (max-width:960px){.san{position:static}}
+.thanh{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.phan{display:flex;background:var(--surface-2);border-radius:7px;padding:3px;gap:2px}
+.phan button{border:0;background:transparent;padding:5px 11px;border-radius:5px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+.phan button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.thanh .gian{flex:1}
+.khung-xem{background:var(--stage);border-radius:10px;padding:18px;display:grid;place-items:center;min-height:320px;position:relative;overflow:hidden}
+.khung-xem canvas{display:block;max-width:100%;max-height:calc(100vh - 200px);width:auto;height:auto;box-shadow:0 10px 40px rgba(0,0,0,.35);
+  background:repeating-conic-gradient(#d9d4d2 0 25%,#fff 0 50%) 0 0/16px 16px}
+@media (max-width:960px){.khung-xem canvas{max-height:none}}
+.tt{font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 14px}
+.dang-ve{position:absolute;top:12px;right:14px;font-size:12px;background:rgba(0,0,0,.6);color:#fff;padding:3px 9px;border-radius:20px}
+
+/* hàng loạt */
+.bang-o{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+.bang{border-collapse:collapse;width:100%;font-size:12.5px}
+.bang th,.bang td{padding:6px 8px;border-top:1px solid var(--line);text-align:left;white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis}
+.bang th{background:var(--surface-2);font-weight:600;border-top:0}
+.bang td.khong{color:var(--muted);font-style:italic}
+.tien{height:6px;background:var(--surface-2);border-radius:4px;overflow:hidden}
+.tien i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+.luoi{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
+.the{background:var(--surface);border:1px solid var(--line);border-radius:9px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;text-align:left;padding:0}
+.the:hover{border-color:var(--accent)}
+.the img{width:100%;aspect-ratio:2/3;object-fit:contain;background:var(--stage);display:block}
+.the div{padding:8px 10px;display:flex;flex-direction:column;gap:4px}
+.the b{font-size:12.5px;line-height:1.35}
+.chip{font-size:11px;font-weight:600;border-radius:20px;padding:1px 8px;align-self:flex-start;background:var(--warn-soft);color:var(--warn)}
+.chip.tot{background:var(--ok-soft);color:var(--ok)}
+.rong-trong{background:var(--surface);border:1px dashed var(--line-strong);border-radius:10px;padding:32px 20px;text-align:center;color:var(--muted)}
+.rong-trong b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}
+
+dialog{border:0;border-radius:12px;padding:0;background:var(--surface);color:var(--ink);max-width:min(92vw,720px);box-shadow:0 20px 60px rgba(0,0,0,.4)}
+dialog::backdrop{background:rgba(10,6,5,.65)}
+.hop{display:flex;flex-direction:column;gap:10px;padding:14px}
+.hop img{max-height:74vh;width:auto;max-width:100%;align-self:center;background:var(--stage)}
+.hop-thanh{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.hop-thanh b{margin-right:auto}
+.thong-bao{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:13.5px;z-index:20;max-width:calc(100vw - 32px)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <div class="dau" aria-hidden="true">M</div>
+      <div><h1>Maket Lịch</h1><p>Mở file Photoshop, thay thông tin khách, xuất maket duyệt</p></div>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-don" aria-selected="true" data-tab="don">Maket từng khách</button>
+      <button class="tab" role="tab" id="tab-loat" aria-selected="false" data-tab="loat">Làm hàng loạt</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="layout">
+    <aside class="panel">
+      <section class="khoi">
+        <div class="khoi-dau"><span class="buoc">1</span><h2>File thiết kế</h2><button class="lien them" id="b-vi-du" type="button">Mở lại file ví dụ</button></div>
+        <label class="tha" id="tha-mau">
+          <input type="file" id="f-mau" accept=".psd,.psb,.png,.jpg,.jpeg,.webp">
+          <b>Kéo file PSD vào đây</b>
+          <span>hoặc bấm để chọn · nhận .psd, .jpg, .png</span>
+        </label>
+        <div class="tep"><strong id="mau-ten">—</strong><span class="mono" id="mau-info"></span></div>
+        <ul class="canh" id="mau-canh"></ul>
+      </section>
+
+      <section class="khoi" data-tab="don">
+        <div class="khoi-dau"><span class="buoc">2</span><h2>Thông tin khách</h2></div>
+        <div class="logo-o">
+          <div class="logo-xem" id="logo-xem">Chưa có logo</div>
+          <div class="logo-nut">
+            <label class="nut" for="f-logo">Chọn logo…</label>
+            <input type="file" id="f-logo" accept="image/*" hidden>
+            <label class="chk"><input type="checkbox" id="logo-nen" checked> Xoá nền trắng của logo</label>
+            <button class="lien" id="b-bo-logo" type="button" hidden>Bỏ logo</button>
+          </div>
+        </div>
+        <div class="truong"><label for="i-ten">Tên công ty / cửa hàng</label><textarea class="o" id="i-ten" data-vai="ten" rows="1" autocomplete="off"></textarea></div>
+        <div class="truong"><label for="i-diaChi">Địa chỉ</label><textarea class="o" id="i-diaChi" data-vai="diaChi" rows="2"></textarea></div>
+        <div class="hang">
+          <div class="truong"><label for="i-dienThoai">Điện thoại</label><input class="o" id="i-dienThoai" data-vai="dienThoai" inputmode="tel" autocomplete="off"></div>
+          <div class="truong"><label for="i-email">Email</label><input class="o" id="i-email" data-vai="email" inputmode="email" autocomplete="off"></div>
+        </div>
+        <div class="truong"><label for="i-web">Website / dòng thêm</label><input class="o" id="i-web" data-vai="web" autocomplete="off"></div>
+        <p class="phu">Ô nào để trống thì dòng đó được ẩn khỏi maket. Tên hoặc địa chỉ dài quá thì bấm Enter để xuống dòng, không thì chữ tự thu nhỏ cho vừa.</p>
+      </section>
+
+      <section class="khoi" data-tab="loat" hidden>
+        <div class="khoi-dau"><span class="buoc">2</span><h2>Danh sách khách</h2></div>
+        <p class="phu">File Excel/CSV có các cột: Tên công ty, Địa chỉ, Điện thoại, Email, Website, Logo (tên file ảnh). Hoặc dán thẳng từ Excel vào ô dưới.</p>
+        <label class="tha" id="tha-ds">
+          <input type="file" id="f-ds" accept=".xlsx,.xls,.csv,.txt">
+          <b>Chọn file danh sách</b><span>.xlsx, .xls, .csv</span>
+        </label>
+        <div class="truong"><label for="ds-dan">Hoặc dán bảng (mỗi khách một dòng)</label>
+          <textarea class="o mono" id="ds-dan" rows="4" placeholder="Tên công ty&#9;Địa chỉ&#9;Điện thoại&#9;Email"></textarea></div>
+        <div id="ds-tom" class="tep"></div>
+        <div class="bang-o" id="ds-bang-o" hidden><table class="bang" id="ds-bang"></table></div>
+        <div class="truong">
+          <span class="nhan">Logo của khách</span>
+          <label class="nut" for="f-logos">Chọn nhiều file logo…</label>
+          <input type="file" id="f-logos" accept="image/*" multiple hidden>
+          <span class="phu" id="logos-tom">Tên file logo trùng tên công ty hoặc trùng cột Logo thì tự ghép.</span>
+        </div>
+        <div class="truong"><label for="bl-khong-logo">Khách không có logo thì</label>
+          <select class="o" id="bl-khong-logo"><option value="an">Ẩn logo của file mẫu</option><option value="giu">Giữ logo của file mẫu</option></select></div>
+      </section>
+
+      <section class="khoi">
+        <div class="khoi-dau"><span class="buoc">3</span><h2>Lớp trong file</h2><label class="chk them"><input type="checkbox" id="lop-tatca"> Hiện mọi lớp</label></div>
+        <p class="phu">Phần mềm tự đoán lớp nào là tên, địa chỉ, điện thoại… theo tên lớp và nội dung chữ. Sai thì chọn lại ở cột bên phải. Trong “Khuôn chữ”, dấu {} là chỗ điền thông tin.</p>
+        <div class="lop-ds" id="ds-lop"><div class="trong">Chưa mở file</div></div>
+      </section>
+
+      <section class="khoi">
+        <div class="khoi-dau"><span class="buoc">4</span><h2>Khung thông tin như mẫu</h2></div>
+        <label class="chk"><input type="checkbox" id="h-bat"> Vẽ khung logo, tên, địa chỉ, điện thoại, email lên đầu tờ lịch</label>
+        <p class="phu">Dùng khi file là ảnh JPG/PNG, hoặc PSD chưa có sẵn lớp chữ thông tin.</p>
+        <div class="hang" id="h-tuychon">
+          <div class="truong"><label for="h-mau">Màu chữ</label>
+            <select class="o" id="h-mau"><option value="vang">Vàng kim</option><option value="trang">Trắng</option><option value="do">Đỏ son</option><option value="den">Đen</option></select></div>
+          <div class="truong"><label for="h-font">Phông chữ</label><select class="o" id="h-font"></select></div>
+          <div class="truong"><label for="h-vitri">Vị trí</label>
+            <select class="o" id="h-vitri"><option value="tren">Đầu tờ lịch</option><option value="duoi">Chân tờ lịch</option></select></div>
+          <div class="truong"><label for="h-nen">Dải nền sau chữ</label>
+            <select class="o" id="h-nen"><option value="khong">Không</option><option value="che">Che kín thông tin cũ</option><option value="toi">Dải tối mờ</option><option value="sang">Dải sáng mờ</option></select></div>
+          <div class="truong"><label for="h-nhan">Nhãn dòng liên hệ</label>
+            <select class="o" id="h-nhan"><option value="vi">ĐT: / Email:</option><option value="en">Phone: / Email:</option><option value="khong">Không ghi nhãn</option></select></div>
+          <div class="truong"><label for="h-co">Cỡ chữ <span class="mono" id="h-co-so">100%</span></label>
+            <input type="range" id="h-co" min="70" max="140" value="100" style="accent-color:var(--accent)"></div>
+        </div>
+      </section>
+
+      <section class="khoi">
+        <div class="khoi-dau"><span class="buoc">5</span><h2>Phông chữ</h2></div>
+        <p class="phu">Máy thiếu phông của file PSD thì chữ sẽ vẽ bằng phông thay thế. Tải file phông (.ttf, .otf) lên để maket giống bản gốc.</p>
+        <label class="nut" for="f-font">Thêm file phông…</label>
+        <input type="file" id="f-font" accept=".ttf,.otf,.woff,.woff2" multiple hidden>
+        <ul class="canh" id="ds-font"></ul>
+      </section>
+    </aside>
+
+    <section class="san">
+      <div class="thanh" data-tab="don">
+        <div class="phan" role="group" aria-label="Chế độ xem">
+          <button type="button" id="v-maket" aria-pressed="true">Maket</button>
+          <button type="button" id="v-goc" aria-pressed="false">Bản gốc</button>
+        </div>
+        <label class="chk"><input type="checkbox" id="wm"> Chữ “MAKET CHỜ DUYỆT”</label>
+        <span class="gian"></span>
+        <button class="nut chinh" id="x-jpg" type="button">Tải JPG</button>
+        <button class="nut" id="x-png" type="button">PNG</button>
+        <button class="nut" id="x-psd" type="button" title="File PSD giữ nguyên các lớp, chữ đã thay">PSD</button>
+        <button class="nut" id="x-nhe" type="button" title="Ảnh 1600 px, nhẹ để gửi Zalo">Ảnh nhẹ gửi Zalo</button>
+      </div>
+      <div class="khung-xem" data-tab="don">
+        <canvas id="cv" width="600" height="900" aria-label="Xem trước maket"></canvas>
+        <span class="dang-ve" id="dang-ve" hidden>Đang vẽ…</span>
+      </div>
+      <div class="tt" id="tt" data-tab="don"></div>
+
+      <div class="thanh" data-tab="loat" hidden>
+        <label class="chk"><input type="checkbox" id="wm2"> Chữ “MAKET CHỜ DUYỆT”</label>
+        <select class="o" id="b-dang" style="width:auto"><option value="jpg">JPG</option><option value="png">PNG</option></select>
+        <span class="gian"></span>
+        <button class="nut chinh" id="b-tao" type="button" disabled>Tạo maket</button>
+        <button class="nut" id="b-zip" type="button" disabled>Tải tất cả (.zip)</button>
+      </div>
+      <div class="tien" id="b-tien" data-tab="loat" hidden><i></i></div>
+      <div class="tt" id="b-tt" data-tab="loat" hidden></div>
+      <div id="luoi-o" data-tab="loat" hidden>
+        <div class="rong-trong" id="luoi-trong"><b>Chưa có maket nào</b>Chọn file thiết kế, nạp danh sách khách rồi bấm “Tạo maket”.</div>
+        <div class="luoi" id="luoi"></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<dialog id="hop">
+  <div class="hop">
+    <div class="hop-thanh"><b id="hop-ten"></b><button class="nut chinh" id="hop-tai" type="button">Tải ảnh này</button><button class="nut" id="hop-dong" type="button">Đóng</button></div>
+    <img id="hop-anh" alt="">
+  </div>
+</dialog>
+<div class="thong-bao" id="thong-bao" role="status" hidden></div>
+
+<script src="thu-vien/ag-psd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+"use strict";
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const use = n => (window.claude && typeof window.claude.use === "function")
+  ? window.claude.use(n).catch(() => null) : Promise.resolve(null);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const khongDau = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase();
+const gon = s => khongDau(s).replace(/\.[a-z0-9]{2,5}$/, "").replace(/[^a-z0-9]/g, "");
+
+/* ================= Trạng thái ================= */
+const VAI = [["ten","Tên công ty"],["diaChi","Địa chỉ"],["dienThoai","Điện thoại"],["email","Email"],["web","Website / dòng thêm"],["logo","Logo"]];
+const VAI_CHU = ["ten","diaChi","dienThoai","email","web"];
+const GOOGLE = ["Be Vietnam Pro","Noto Serif","Playfair Display","Roboto","Roboto Slab","Montserrat","Oswald","Lora","Dancing Script","Pattaya","Lobster","Paytone One"];
+const S = {
+  doc: null, tab: "don", xem: "maket",
+  logo: null,              // {cv, goc, ten}
+  fonts: [],               // font người dùng tải lên: {family, ten, gon}
+  ds: [], logos: new Map(), ketQua: [],
+};
+let DL = null;
+use("downloads").then(d => { DL = d; });
+
+/* ================= Tiện ích màu, đơn vị ================= */
+function rgb(c){
+  if (!c) return [0,0,0];
+  if ("r" in c) return [c.r, c.g, c.b];
+  if ("fr" in c) return [c.fr*255, c.fg*255, c.fb*255];
+  if ("c" in c){ const f = v => (v > 100 ? v/255 : v/100); const k = f(c.k); return [255*(1-f(c.c))*(1-k), 255*(1-f(c.m))*(1-k), 255*(1-f(c.y))*(1-k)]; }
+  if ("h" in c){ const h = c.h, s = c.s/100, v = c.b/100, f = n => { const k = (n + h/60) % 6; return 255*(v - v*s*Math.max(0, Math.min(k, 4-k, 1))); }; return [f(5), f(3), f(1)]; }
+  if ("k" in c){ const g = c.k > 100 ? c.k : 255*(1 - c.k/100); return [g,g,g]; }
+  return [0,0,0];
+}
+const css = (c, a = 1) => { const [r,g,b] = rgb(c); return `rgba(${Math.round(r)},${Math.round(g)},${Math.round(b)},${a})`; };
+const dv = u => (u && typeof u === "object") ? (+u.value || 0) : (+u || 0);
+const BLEND = {"normal":"source-over","pass through":"source-over","dissolve":"source-over","multiply":"multiply","screen":"screen","overlay":"overlay",
+  "darken":"darken","lighten":"lighten","color dodge":"color-dodge","color burn":"color-burn","hard light":"hard-light","soft light":"soft-light",
+  "difference":"difference","exclusion":"exclusion","hue":"hue","saturation":"saturation","color":"color","luminosity":"luminosity",
+  "linear dodge":"lighter","darker color":"darken","lighter color":"lighten","linear burn":"multiply","vivid light":"overlay","linear light":"overlay","pin light":"overlay"};
+const cheDo = L => BLEND[L.blendMode] || "source-over";
+
+function taoCv(w, h){ const c = document.createElement("canvas"); c.width = Math.max(1, Math.ceil(w)); c.height = Math.max(1, Math.ceil(h)); return c; }
+function beMat(x, y, w, h, s){
+  const x0 = Math.floor(x*s)/s, y0 = Math.floor(y*s)/s;
+  const cv = taoCv((x + w - x0)*s + 1, (y + h - y0)*s + 1);
+  return {cv, ctx: cv.getContext("2d"), x: x0, y: y0, s};
+}
+function dan(dst, src, op = "source-over", a = 1){
+  if (a <= 0) return;
+  const c = dst.ctx; c.save(); c.globalCompositeOperation = op; c.globalAlpha = a;
+  c.drawImage(src.cv, Math.round((src.x - dst.x)*dst.s), Math.round((src.y - dst.y)*dst.s)); c.restore();
+}
+function veAnh(dst, p, op = "source-over", a = 1){
+  if (a <= 0) return;
+  const c = dst.ctx, s = dst.s; c.save(); c.globalCompositeOperation = op; c.globalAlpha = a;
+  c.imageSmoothingQuality = "high";
+  c.drawImage(p.cv, (p.x - dst.x)*s, (p.y - dst.y)*s, p.w*s, p.h*s); c.restore();
+}
+
+/* ================= Phông chữ ================= */
+const MAU_CHU = "ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠƯẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỂỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪỬỮỰỲỴỶỸàáâãèéêìíòóôõùúăđĩũơưạảấầẩẫậắằẳẵặẹẻẽềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ AZaz09@.:()+-";
+const daTai = new Map();
+function taiFont(f){ if (!daTai.has(f)) daTai.set(f, document.fonts.load(f, MAU_CHU).catch(() => [])); return daTai.get(f); }
+const coSanCache = new Map();
+function coSan(family){
+  if (!family) return false;
+  if (GOOGLE.includes(family) || S.fonts.some(f => f.family === family)) return true;
+  if (coSanCache.has(family)) return coSanCache.get(family);
+  const c = taoCv(10,10).getContext("2d"), mau = "mmmmmmmmmmlliiWWWQ@#Ặ";
+  let ok = false;
+  for (const g of ["monospace","serif","sans-serif"]){
+    c.font = `72px ${g}`; const a = c.measureText(mau).width;
+    c.font = `72px "${family}", ${g}`; if (Math.abs(c.measureText(mau).width - a) > .5){ ok = true; break; }
+  }
+  coSanCache.set(family, ok); return ok;
+}
+function tachFont(ps){
+  const [goc, kieu = ""] = String(ps || "").split("-");
+  const ho = goc.replace(/(PSMT|PS|MT)$/, "").replace(/([a-z])([A-Z])/g, "$1 $2").replace(/_/g, " ").trim();
+  const k = khongDau(kieu + " " + goc);
+  let weight = 400;
+  if (/black|heavy|ultra ?bold|extra ?black/.test(k)) weight = 900;
+  else if (/extra ?bold|xbold/.test(k)) weight = 800;
+  else if (/semi ?bold|demi/.test(k)) weight = 600;
+  else if (/bold|bd\b/.test(k)) weight = 700;
+  else if (/medium/.test(k)) weight = 500;
+  else if (/light/.test(k)) weight = 300;
+  else if (/thin|hairline/.test(k)) weight = 200;
+  return {ho, goc, weight, italic: /italic|oblique|\bit\b/.test(k)};
+}
+function fontThayThe(ps){
+  const k = khongDau(ps);
+  if (/(script|brush|hand|calli|thu ?phap|signature|dancing|vibes|pacifico|lobster|hl ?thphap|thufap)/.test(k)) return "Dancing Script";
+  if (/(times|roman|serif|garamond|georgia|minion|baskerville|bodoni|merriweather|playfair|lora|caslon|didot|cambria|centur|cafeta|trajan|book)/.test(k)) return "Noto Serif";
+  if (/(condensed|oswald|bebas|impact|narrow|compressed)/.test(k)) return "Oswald";
+  return "Be Vietnam Pro";
+}
+/* Trả về {family, weight, italic, thieu, ps} cho một lớp chữ */
+function giaiFont(n){
+  const st = kieuGoc(n), ps = (st.font && st.font.name) || "";
+  const t = tachFont(ps);
+  const weight = Math.max(t.weight, st.fauxBold ? 700 : 0);
+  if (n.font) return {family: n.font, weight, italic: t.italic || !!st.fauxItalic, thieu: false, ps, chon: true};
+  const gps = gon(ps), gho = gon(t.ho);
+  const up = S.fonts.find(f => f.gon === gps || f.gon === gho || f.gon === gon(t.goc));
+  if (up) return {family: up.family, weight: 400, italic: false, thieu: false, ps};
+  for (const fam of [t.ho, t.goc, ps]) if (fam && coSan(fam)) return {family: fam, weight, italic: t.italic, thieu: false, ps};
+  return {family: fontThayThe(ps), weight, italic: t.italic, thieu: !!ps, ps};
+}
+const chuoiFont = (f, px) => `${f.italic ? "italic " : ""}${f.weight} ${px.toFixed(2)}px "${f.family}", ${/Serif|Lora|Playfair|Slab/.test(f.family) ? "serif" : "sans-serif"}`;
+
+/* ================= Vẽ chữ ================= */
+function kieuGoc(n){
+  const t = n.layer.text || {};
+  return Object.assign({}, t.style || {}, (t.styleRuns && t.styleRuns[0] && t.styleRuns[0].style) || {});
+}
+function thongSoChu(n){
+  const t = n.layer.text, st = kieuGoc(n), tr = t.transform || [1,0,0,1,0,0];
+  const kx = Math.hypot(tr[0], tr[1]) || 1, ky = Math.hypot(tr[2], tr[3]) || kx;
+  const size = (st.fontSize || 24) * ky;
+  const ps = (t.paragraphStyle || (t.paragraphStyleRuns && t.paragraphStyleRuns[0] && t.paragraphStyleRuns[0].style) || {});
+  const j = String(ps.justification || "left");
+  return {
+    size, kx, ky, tr,
+    align: /center/.test(j) ? "center" : /right/.test(j) ? "right" : "left",
+    leading: (st.autoLeading === false && st.leading) ? st.leading * ky : size * ((ps.autoLeading) || 1.2),
+    tracking: (st.tracking || 0) / 1000 * size,
+    hs: (st.horizontalScale || 1) * (kx / ky),
+    caps: st.fontCaps === 2,
+    mau: st.fillColor || {r:0,g:0,b:0},
+    fauxBold: !!st.fauxBold,
+    goc: Math.atan2(tr[1], tr[0]),
+    hop: t.shapeType === "box" && t.boxBounds ? t.boxBounds : null,
+  };
+}
+/* Điểm neo (theo toạ độ file) và độ rộng tối đa mặc định cho một lớp chữ */
+function neoChu(n, W){
+  const L = n.layer, k = thongSoChu(n), tr = k.tr;
+  let ax, ay, hopW = 0;
+  const l = L.left || 0, r = L.right || 0, t = L.top || 0, b = L.bottom || 0;
+  if (k.hop){
+    const [x0, y0, x1] = k.hop;
+    hopW = (x1 - x0) * k.kx;
+    const xl = tr[4] + x0*k.kx, xr = tr[4] + x1*k.kx;
+    ax = k.align === "center" ? (xl + xr)/2 : k.align === "right" ? xr : xl;
+    ay = tr[5] + y0*k.ky + k.size*0.9;
+  } else { ax = tr[4]; ay = tr[5]; }
+  // Kiểm tra neo có khớp vùng ảnh của lớp không; không khớp thì lấy theo vùng ảnh
+  const khop = r > l && ax >= l - k.size*2 && ax <= r + k.size*2 && ay >= t - k.size*0.5 && ay <= b + k.size*2;
+  if (!khop && r > l){
+    ax = k.align === "center" ? (l + r)/2 : k.align === "right" ? r : l;
+    ay = t + (b - t) * 0.5 + k.size * 0.35;
+  }
+  const m = W * 0.04;
+  let maxW = k.align === "left" ? W - m - ax : k.align === "right" ? ax - m : 2*Math.min(ax - m, W - m - ax);
+  if (hopW) maxW = Math.min(maxW, hopW);
+  return {ax, ay, maxW: Math.max(maxW, (r - l) || 40, 40)};
+}
+/* Vẽ một khối chữ; trả {cv, x, y, w, h, co} theo toạ độ file. co = tỉ lệ đã co chữ để vừa độ rộng. */
+function veKhoiChu(noiDung, k, f, s, neo, maxW, mauTo){
+  const dong = (k.caps ? noiDung.toUpperCase() : noiDung).split("\n");
+  const c0 = taoCv(4,4).getContext("2d");
+  const doRong = px => {
+    c0.font = chuoiFont(f, px);
+    if ("letterSpacing" in c0) c0.letterSpacing = `${k.tracking * px / k.size}px`;
+    return Math.max(...dong.map(d => c0.measureText(d).width)) * k.hs;
+  };
+  let co = 1; const w0 = doRong(k.size);
+  if (maxW && w0 > maxW) co = maxW / w0;
+  const size = k.size * co, rong = w0 * co, lead = k.leading * co;
+  c0.font = chuoiFont(f, size);
+  const m = c0.measureText("ÁẶHgÝ");
+  const len = m.actualBoundingBoxAscent || size*0.95, xuong = m.actualBoundingBoxDescent || size*0.25;
+  const pad = size * 0.35 + 4;
+  const W = rong + pad*2, H = len + xuong + lead*(dong.length - 1) + pad*2;
+  const cv = taoCv(W*s, H*s), c = cv.getContext("2d");
+  c.scale(s, s);
+  c.font = chuoiFont(f, size);
+  if ("letterSpacing" in c) c.letterSpacing = `${k.tracking * co}px`;
+  c.textBaseline = "alphabetic";
+  c.fillStyle = mauTo || css(k.mau);
+  const neoX = k.align === "center" ? W/2 : k.align === "right" ? W - pad : pad;
+  dong.forEach((d, i) => {
+    c.save(); c.translate(neoX, pad + len + i*lead); c.scale(k.hs, 1);
+    c.textAlign = k.align;
+    c.fillText(d, 0, 0);
+    if (k.fauxBold){ c.lineWidth = size*0.035; c.strokeStyle = c.fillStyle; c.strokeText(d, 0, 0); }
+    c.restore();
+  });
+  let out = {cv, x: neo.ax - neoX, y: neo.ay - (pad + len), w: W, h: H, co};
+  if (Math.abs(k.goc) > 0.001) out = xoayCv(out, k.goc, neo.ax, neo.ay, s);
+  return out;
+}
+function xoayCv(p, goc, px, py, s){
+  const cos = Math.cos(goc), sin = Math.sin(goc);
+  const pts = [[p.x,p.y],[p.x+p.w,p.y],[p.x,p.y+p.h],[p.x+p.w,p.y+p.h]].map(([x,y]) => [px + (x-px)*cos - (y-py)*sin, py + (x-px)*sin + (y-py)*cos]);
+  const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]);
+  const x0 = Math.min(...xs), y0 = Math.min(...ys), w = Math.max(...xs) - x0, h = Math.max(...ys) - y0;
+  const cv = taoCv(w*s, h*s), c = cv.getContext("2d");
+  c.translate((px - x0)*s, (py - y0)*s); c.rotate(goc); c.drawImage(p.cv, (p.x - px)*s, (p.y - py)*s, p.w*s, p.h*s);
+  return {cv, x: x0, y: y0, w, h, co: p.co};
+}
+
+/* ================= Hiệu ứng lớp (Layer Style) ================= */
+const bat = e => e && e.enabled !== false && e.present !== false;
+function dsHU(L){
+  const E = L.effects; if (!E || E.disabled) return null;
+  const mang = v => Array.isArray(v) ? v : v ? [v] : [];
+  const r = {
+    bong: mang(E.dropShadow).filter(bat), sang: mang(E.outerGlow).filter(bat), vien: mang(E.stroke).filter(bat),
+    to: mang(E.solidFill).filter(bat), chuyen: mang(E.gradientOverlay).filter(bat),
+  };
+  return (r.bong.length || r.sang.length || r.vien.length || r.to.length || r.chuyen.length) ? r : null;
+}
+function lePad(h){
+  let p = 2;
+  for (const e of h.bong) p = Math.max(p, dv(e.distance) + dv(e.size)*1.6 + 2);
+  for (const e of h.sang) p = Math.max(p, dv(e.size)*1.6 + 2);
+  for (const e of h.vien) p = Math.max(p, dv(e.size) + 2);
+  return p;
+}
+function taoChuyen(c, g, rect, T, e){
+  const s = T.s, gr = g || {}, a = ((e.angle ?? 90) * Math.PI) / 180;
+  const cx = (rect.x - T.x + rect.w/2)*s + (e.offset ? e.offset.x/100*rect.w*s : 0);
+  const cy = (rect.y - T.y + rect.h/2)*s + (e.offset ? e.offset.y/100*rect.h*s : 0);
+  const dx = Math.cos(a), dy = -Math.sin(a);
+  let sc = e.scale == null ? 1 : e.scale; if (sc > 5) sc /= 100;
+  const nua = Math.max(1, (Math.abs(rect.w*dx) + Math.abs(rect.h*dy)) / 2 * s * sc);
+  const grad = e.type === "radial" ? c.createRadialGradient(cx, cy, 0, cx, cy, nua) : c.createLinearGradient(cx - dx*nua, cy - dy*nua, cx + dx*nua, cy + dy*nua);
+  const dm = (gr.colorStops || []).slice().sort((p, q) => p.location - q.location);
+  const dt = (gr.opacityStops || []).slice().sort((p, q) => p.location - q.location);
+  const vt = v => (v > 1.001 ? v / 4096 : v);
+  const doMo = x => {
+    if (!dt.length) return 1;
+    if (x <= vt(dt[0].location)) return dt[0].opacity;
+    for (let i = 1; i < dt.length; i++){ const p = dt[i-1], q = dt[i], a0 = vt(p.location), a1 = vt(q.location);
+      if (x <= a1) return p.opacity + (q.opacity - p.opacity) * ((x - a0) / ((a1 - a0) || 1)); }
+    return dt[dt.length-1].opacity;
+  };
+  if (!dm.length){ grad.addColorStop(0, "#fff"); grad.addColorStop(1, "#000"); return grad; }
+  for (const d of dm){ let x = Math.min(1, Math.max(0, vt(d.location))); const o = doMo(x); if (e.reverse) x = 1 - x; grad.addColorStop(x, css(d.color, o)); }
+  return grad;
+}
+function veBong(ctx, C, dx, dy, blur, mau){
+  const LON = C.width + 4096;
+  ctx.save(); ctx.shadowColor = mau; ctx.shadowBlur = blur; ctx.shadowOffsetX = dx + LON; ctx.shadowOffsetY = dy;
+  ctx.drawImage(C, -LON, 0); ctx.restore();
+}
+function taoVien(C, r, to){
+  const V = taoCv(C.width, C.height), g = V.getContext("2d");
+  if (r > 0.3){
+    const tang = r > 3 ? [r, r*0.66, r*0.33] : [r];
+    for (const rr of tang){ const n = Math.min(64, Math.max(12, Math.ceil(rr*2*Math.PI/1.5)));
+      for (let i = 0; i < n; i++){ const a = i/n*Math.PI*2; g.drawImage(C, Math.cos(a)*rr, Math.sin(a)*rr); } }
+  }
+  g.drawImage(C, 0, 0);
+  g.globalCompositeOperation = "source-in"; g.fillStyle = to; g.fillRect(0, 0, V.width, V.height);
+  return V;
+}
+function veHieuUng(T, p, L, h, fo){
+  const s = T.s, C = taoCv(T.cv.width, T.cv.height), c = C.getContext("2d");
+  c.drawImage(p.cv, (p.x - T.x)*s, (p.y - T.y)*s, p.w*s, p.h*s);
+  const hinh = taoCv(C.width, C.height); hinh.getContext("2d").drawImage(C, 0, 0);
+  for (const e of h.to){ c.save(); c.globalCompositeOperation = "source-atop"; c.globalAlpha = e.opacity ?? 1; c.fillStyle = css(e.color); c.fillRect(0,0,C.width,C.height); c.restore(); }
+  for (const e of h.chuyen){ c.save(); c.globalCompositeOperation = "source-atop"; c.globalAlpha = e.opacity ?? 1; c.fillStyle = taoChuyen(c, e.gradient, p, T, e); c.fillRect(0,0,C.width,C.height); c.restore(); }
+  const t = T.ctx;
+  for (const e of h.bong){
+    const a = ((e.angle ?? 120) * Math.PI) / 180, d = dv(e.distance)*s;
+    veBong(t, hinh, -Math.cos(a)*d, Math.sin(a)*d, dv(e.size)*s, css(e.color, e.opacity ?? .75));
+  }
+  for (const e of h.sang){ const m = css(e.color || {r:255,g:255,b:190}, e.opacity ?? .75); veBong(t, hinh, 0, 0, dv(e.size)*s, m); veBong(t, hinh, 0, 0, dv(e.size)*s*0.5, m); }
+  for (const e of h.vien){
+    const r = dv(e.size) * s * (e.position === "outside" || !e.position ? 1 : 0.5);
+    let to = css(e.color, 1);
+    if (e.fillType === "gradient" && e.gradient) to = taoChuyen(t, e.gradient, {x: p.x - dv(e.size), y: p.y - dv(e.size), w: p.w + 2*dv(e.size), h: p.h + 2*dv(e.size)}, T, e);
+    t.save(); t.globalAlpha = e.opacity ?? 1; t.drawImage(taoVien(hinh, r, to), 0, 0); t.restore();
+  }
+  t.save(); t.globalAlpha = fo; t.drawImage(C, 0, 0); t.restore();
+}
+
+/* ================= Mặt nạ lớp ================= */
+function coMask(L){ const m = L.mask; return !!(m && !m.disabled && m.canvas && (m.right - m.left) > 0); }
+function apMask(T, L){
+  if (!coMask(L)) return;
+  const m = L.mask;
+  if (!m._alpha){
+    const w = m.canvas.width, h = m.canvas.height, src = m.canvas.getContext("2d").getImageData(0, 0, w, h), d = src.data;
+    for (let i = 0; i < d.length; i += 4){ d[i+3] = d[i]; d[i] = d[i+1] = d[i+2] = 0; }
+    const a = taoCv(w, h); a.getContext("2d").putImageData(src, 0, 0); m._alpha = a;
+  }
+  const s = T.s, M = taoCv(T.cv.width, T.cv.height), g = M.getContext("2d");
+  const def = (m.defaultColor ?? 0) / 255;
+  if (def > 0){ g.fillStyle = `rgba(0,0,0,${def})`; g.fillRect(0, 0, M.width, M.height); }
+  const x = (m.left - T.x)*s, y = (m.top - T.y)*s, w = (m.right - m.left)*s, h = (m.bottom - m.top)*s;
+  g.clearRect(x, y, w, h); g.drawImage(m._alpha, x, y, w, h);
+  T.ctx.save(); T.ctx.globalCompositeOperation = "destination-in"; T.ctx.drawImage(M, 0, 0); T.ctx.restore();
+}
+
+/* ================= Dựng cây lớp từ PSD ================= */
+let uid = 0;
+function taoNut(L){
+  const n = {id: ++uid, ten: L.name || "(không tên)", layer: L, hien: !L.hidden, vai: "", khuon: "{}", font: "", maxW: 0, children: null};
+  if (L.children){ n.loai = "nhom"; n.children = L.children.map(taoNut); }
+  else if (L.text && typeof L.text.text === "string"){ n.loai = "chu"; n.goc = L.text.text.replace(/\r\n?/g, "\n").replace(/\u0003/g, "\n"); }
+  else if (L.adjustment) n.loai = "dieuchinh";
+  else if (L.canvas && (L.right - L.left) > 0) n.loai = "anh";
+  else n.loai = "rong";
+  return n;
+}
+function* duyet(ds){ for (const n of ds){ yield n; if (n.children) yield* duyet(n.children); } }
+
+function vaiTheoTen(ten){
+  const s = khongDau(ten);
+  if (/logo/.test(s)) return "logo";
+  if (/e-?mail/.test(s)) return "email";
+  if (/web|site/.test(s)) return "web";
+  if (/(dien thoai|phone|tel\b|hotline|sdt|so dt|\bdt\b|mobile|zalo)/.test(s)) return "dienThoai";
+  if (/(dia chi|address|\bdc\b|d\/c)/.test(s)) return "diaChi";
+  if (/(ten cong ty|cong ty|company|ten khach|ten dn|doanh nghiep|thuong hieu|brand|^ten\b|\bten$)/.test(s)) return "ten";
+  return "";
+}
+function vaiTheoNoiDung(text){
+  const s = khongDau(text), so = s.replace(/\D/g, "").length;
+  if (/[a-z0-9._+-]+@[a-z0-9-]+\.[a-z.]+/.test(s)) return "email";
+  if (/(www\.|https?:\/\/|\.com\b|\.vn\b|\.net\b)/.test(s)) return "web";
+  if (/(phone|dien thoai|hotline|tel\b|\bdt\b|sdt|mobile|zalo)/.test(s)) return "dienThoai";
+  if (so >= 9 && so <= 22 && /^[\s\d().+\-\/:;,.]*$/.test(s)) return "dienThoai";
+  if (/(dia chi|address|duong|pho |phuong|quan |huyen|tinh |thanh pho|tp\.|\bp\.|\bq\.|street|\brd\b|\bst\b|ave\b|unit|ward|district|thon|xa )/.test(s) || (/\b\d{5}\b/.test(s) && so < 12)) return "diaChi";
+  if (/(cong ty|\bcty\b|tnhh|co\.,? ?ltd|\bltd\b|\bjsc\b|cua hang|shop|company|group|tap doan|nha hang|khach san)/.test(s)) return "ten";
+  return "";
+}
+function tachKhuon(goc){
+  const m = goc.match(/^(\s*[^\s:：\d@][^:：\n@]{0,22}[:：]\s*)(.*)$/s);
+  if (m && /[a-zA-ZÀ-ỹ]/.test(m[1]) && m[2].trim()) return {khuon: m[1] + "{}", gt: m[2]};
+  return {khuon: "{}", gt: goc};
+}
+function tuGanVai(doc){
+  const tatCa = [...duyet(doc.nodes)], chu = tatCa.filter(n => n.loai === "chu");
+  const daCo = new Set();
+  for (const n of tatCa){
+    const v = vaiTheoTen(n.ten);
+    if (v === "logo" && n.loai !== "chu" && n.loai !== "dieuchinh" && n.loai !== "rong"){ if (!daCo.has("logo") && n.loai !== "nhom"){ n.vai = "logo"; daCo.add("logo"); } continue; }
+    if (v && v !== "logo" && n.loai === "chu"){ n.vai = v; daCo.add(v); }
+  }
+  for (const n of chu){ if (n.vai) continue; const v = vaiTheoNoiDung(n.goc); if (v && !daCo.has(v)){ n.vai = v; daCo.add(v); } }
+  if (!daCo.has("ten")){
+    // chữ to nhất nằm ở 35% phía trên hoặc 20% phía dưới
+    let tot = null;
+    for (const n of chu){
+      if (n.vai || n.goc.trim().length < 3 || /\d{4}/.test(n.goc)) continue;
+      const L = n.layer, cy = ((L.top || 0) + (L.bottom || 0)) / 2;
+      if (cy > doc.height*0.35 && cy < doc.height*0.8) continue;
+      const sz = thongSoChu(n).size;
+      if (!tot || sz > tot.sz) tot = {n, sz};
+    }
+    if (tot && daCo.size){ tot.n.vai = "ten"; daCo.add("ten"); }
+  }
+  for (const n of chu){
+    if (n.vai && n.vai !== "logo"){ const t = tachKhuon(n.goc); n.khuon = n.vai === "ten" ? "{}" : t.khuon; n.gtGoc = n.vai === "ten" ? n.goc : t.gt; }
+    n.maxW = neoChu(n, doc.width).maxW;
+  }
+}
+
+/* ================= Vẽ toàn bộ maket ================= */
+function giaTri(R, vai){ return String((R.info[vai] ?? "")).trim(); }
+function hienThi(n, R){
+  if (!n.hien) return false;
+  if (VAI_CHU.includes(n.vai)) return !!giaTri(R, n.vai);
+  if (n.vai === "logo" && !R.info.logo && R.opt.anLogoMau) return false;
+  return true;
+}
+function chuanBi(n, R){
+  if (R.prep.has(n)) return R.prep.get(n);
+  let p = null; const L = n.layer;
+  if (VAI_CHU.includes(n.vai) && n.loai === "chu"){
+    const gt = giaTri(R, n.vai), nd = n.khuon.includes("{}") ? n.khuon.split("{}").join(gt) : (n.khuon || gt);
+    const k = thongSoChu(n), f = giaiFont(n), neo = neoChu(n, R.W);
+    p = veKhoiChu(nd, k, f, R.s, neo, n.maxW || neo.maxW);
+    if (p.co < 0.995) R.notes.push(`${VAI.find(v => v[0] === n.vai)[1]}: chữ dài, đã thu nhỏ còn ${Math.round(p.co*100)}%`);
+  } else if (n.vai === "logo" && R.info.logo){
+    const lg = R.info.logo.cv, bw = (L.right - L.left) || R.W*0.15, bh = (L.bottom - L.top) || bw;
+    const k = Math.min(bw / lg.width, bh / lg.height), w = lg.width*k, h = lg.height*k;
+    p = {cv: lg, x: (L.left || 0) + (bw - w)/2, y: (L.top || 0) + (bh - h)/2, w, h};
+  } else if (L.canvas && (L.right - L.left) > 0){
+    p = {cv: L.canvas, x: L.left, y: L.top, w: L.right - L.left, h: L.bottom - L.top};
+  }
+  R.prep.set(n, p); return p;
+}
+function bien(n, R){
+  if (R.bien.has(n)) return R.bien.get(n);
+  let b = null;
+  if (!hienThi(n, R)) b = null;
+  else if (n.loai === "nhom"){
+    for (const c of n.children){ const q = bien(c, R); if (!q) continue;
+      if (!b) b = {...q}; else { const x1 = Math.max(b.x + b.w, q.x + q.w), y1 = Math.max(b.y + b.h, q.y + q.h); b.x = Math.min(b.x, q.x); b.y = Math.min(b.y, q.y); b.w = x1 - b.x; b.h = y1 - b.y; } }
+  } else {
+    const p = chuanBi(n, R);
+    if (p){ const h = dsHU(n.layer), pad = h ? lePad(h) : 0; b = {x: p.x - pad, y: p.y - pad, w: p.w + 2*pad, h: p.h + 2*pad}; }
+  }
+  R.bien.set(n, b); return b;
+}
+function veDs(surf, ds, R){
+  for (let i = 0; i < ds.length; i++){
+    const n = ds[i];
+    let j = i + 1; const kep = [];
+    while (j < ds.length && ds[j].layer.clipping){ kep.push(ds[j]); j++; }
+    if (kep.length && !n.layer.clipping){
+      if (hienThi(n, R)){
+        const b = bien(n, R);
+        if (b){
+          const T = beMat(b.x, b.y, b.w, b.h, R.s);
+          veNut(T, n, R, {tho: true});
+          for (const c of kep) veNut(T, c, R, {op: "source-atop"});
+          dan(surf, T, cheDo(n.layer), n.layer.opacity ?? 1);
+        }
+      }
+      i = j - 1; continue;
+    }
+    veNut(surf, n, R);
+  }
+}
+function veNut(surf, n, R, o = {}){
+  if (!hienThi(n, R)) return;
+  const L = n.layer, op = o.op || (o.tho ? "source-over" : cheDo(L)), a = o.tho ? 1 : (L.opacity ?? 1);
+  if (n.loai === "nhom"){
+    const xuyen = !L.blendMode || L.blendMode === "pass through";
+    if (xuyen && a >= 1 && !coMask(L) && !o.op){ veDs(surf, n.children, R); return; }
+    const b = bien(n, R); if (!b) return;
+    const T = beMat(b.x, b.y, b.w, b.h, R.s);
+    veDs(T, n.children, R); apMask(T, L); dan(surf, T, op, a); return;
+  }
+  if (n.loai === "dieuchinh"){ R.dieuChinh = true; return; }
+  const p = chuanBi(n, R); if (!p) return;
+  const h = dsHU(L), fo = L.fillOpacity ?? 1;
+  if (!h && !coMask(L)){ veAnh(surf, p, op, a*fo); return; }
+  const pad = h ? lePad(h) : 0;
+  const T = beMat(p.x - pad, p.y - pad, p.w + 2*pad, p.h + 2*pad, R.s);
+  if (h) veHieuUng(T, p, L, h, fo); else veAnh(T, p, "source-over", fo);
+  apMask(T, L); dan(surf, T, op, a);
+}
+
+/* Khung thông tin vẽ sẵn (giống mẫu: logo trái, tên to giữa, địa chỉ, dòng ĐT trái – Email phải) */
+function veKhung(surf, R, h){
+  const W = R.W, H = R.H, s = surf.s, c = surf.ctx, k = h.co/100, info = R.info;
+  const f = {family: h.font, weight: 700, italic: false}, fTen = {family: h.font, weight: 900, italic: false};
+  const nhan = {vi: ["ĐT: ", "Email: ", ""], en: ["Phone: ", "Email: ", "Website: "], khong: ["", "", ""]}[h.nhan] || ["","",""];
+  const pad = W*0.055, top = W*0.03;
+  const lg = info.logo && info.logo.cv;
+  let lw = 0, lh = W*0.115*k;
+  if (lg){ lw = Math.min(lg.width/lg.height*lh, W*0.2); lh = lw * lg.height/lg.width; }
+  const xL = pad*0.8, trai = lg ? xL + lw + W*0.025 : pad, cx = (trai + W - pad)/2, rongGiua = W - pad - trai;
+  const cot = [];                           // [text, x, y, size, align, maxW, font]
+  let y = top;
+  const ten = giaTri(R, "ten"), dc = giaTri(R, "diaChi"), dt = giaTri(R, "dienThoai"), em = giaTri(R, "email"), web = giaTri(R, "web");
+  if (ten){ y += W*0.056*k; cot.push([ten, cx, y, W*0.058*k, "center", rongGiua, fTen]); }
+  if (dc){ dc.split("\n").forEach(d => { y += W*0.047*k; cot.push([d, cx, y, W*0.031*k, "center", rongGiua, f]); }); }
+  if (lg) y = Math.max(y, top + lh - W*0.01);
+  const lienHe = [dt && nhan[0] + dt, em && nhan[1] + em].filter(Boolean);
+  if (lienHe.length){
+    y += W*0.058*k;
+    if (lienHe.length === 2){ cot.push([lienHe[0], pad*0.9, y, W*0.03*k, "left", W*0.44, f]); cot.push([lienHe[1], W - pad*0.9, y, W*0.03*k, "right", W*0.5, f]); }
+    else cot.push([lienHe[0], W/2, y, W*0.03*k, "center", W - 2*pad, f]);
+  }
+  if (web){ y += W*0.045*k; cot.push([nhan[2] + web, W/2, y, W*0.028*k, "center", W - 2*pad, f]); }
+  if (!cot.length && !lg) return;
+  const cao = y + W*0.035;
+  const dy = h.vitri === "duoi" ? H - cao - W*0.01 : 0;
+  let che = null;
+  if (h.nen === "che"){           // lấy màu nền ngay sát dải để phủ kín chữ cũ trong ảnh
+    const sy = h.vitri === "duoi" ? dy - W*0.025 : cao + W*0.005, sh = Math.max(1, Math.round(W*0.02*s));
+    const d = surf.ctx.getImageData(0, Math.min(surf.cv.height - sh, Math.max(0, Math.round(sy*s))), surf.cv.width, sh).data;
+    let r = 0, g = 0, b = 0, n = 0; for (let i = 0; i < d.length; i += 16){ r += d[i]; g += d[i+1]; b += d[i+2]; n++; }
+    che = [r/n, g/n, b/n].map(Math.round).join(",");
+  }
+  c.save(); c.scale(s, s); c.translate(0, dy);
+  if (che){
+    const mem = W*0.05, tren = h.vitri !== "duoi";
+    c.fillStyle = `rgb(${che})`; c.fillRect(0, tren ? 0 : 0, W, tren ? cao : cao + W*0.02);
+    const g = tren ? c.createLinearGradient(0, cao, 0, cao + mem) : c.createLinearGradient(0, 0, 0, -mem);
+    g.addColorStop(0, `rgba(${che},1)`); g.addColorStop(1, `rgba(${che},0)`);
+    c.fillStyle = g; c.fillRect(0, tren ? cao : -mem, W, mem);
+  } else if (h.nen !== "khong"){
+    const g = c.createLinearGradient(0, h.vitri === "duoi" ? cao : 0, 0, h.vitri === "duoi" ? 0 : cao);
+    const m = h.nen === "toi" ? "0,0,0" : "255,255,255";
+    g.addColorStop(0, `rgba(${m},.62)`); g.addColorStop(.75, `rgba(${m},.4)`); g.addColorStop(1, `rgba(${m},0)`);
+    c.fillStyle = g; c.fillRect(0, h.vitri === "duoi" ? -W*0.02 : 0, W, cao + W*0.03);
+  }
+  if (lg) c.drawImage(lg, xL, top + W*0.004, lw, lh);
+  for (const [t, x, yy, sz0, al, mw, ff] of cot){
+    c.font = chuoiFont(ff, sz0); let sz = sz0; const w = c.measureText(t).width;
+    if (w > mw){ sz = sz0 * mw / w; R.notes.push(`Khung thông tin: “${t.slice(0, 24)}…” đã thu nhỏ ${Math.round(sz/sz0*100)}%`); }
+    c.font = chuoiFont(ff, sz); c.textAlign = al; c.textBaseline = "alphabetic";
+    c.save();
+    if (h.mau === "vang"){
+      const g = c.createLinearGradient(0, yy - sz*0.82, 0, yy + sz*0.1);
+      g.addColorStop(0, "#FFF4B8"); g.addColorStop(.42, "#F6CC4A"); g.addColorStop(.58, "#D99A1C"); g.addColorStop(1, "#FFE07A");
+      c.fillStyle = g; c.shadowColor = "rgba(0,0,0,.65)"; c.shadowBlur = W*0.006*s; c.shadowOffsetY = W*0.0022*s;
+    } else if (h.mau === "trang"){ c.fillStyle = "#FFFFFF"; c.shadowColor = "rgba(0,0,0,.6)"; c.shadowBlur = W*0.006*s; c.shadowOffsetY = W*0.002*s; }
+    else if (h.mau === "do"){ c.fillStyle = "#A8161B"; c.shadowColor = "rgba(255,255,255,.55)"; c.shadowBlur = W*0.003*s; }
+    else { c.fillStyle = "#1B1514"; c.shadowColor = "rgba(255,255,255,.5)"; c.shadowBlur = W*0.003*s; }
+    c.fillText(t, x, yy); c.restore();
+  }
+  c.restore();
+}
+function veDau(surf, R){
+  const W = R.W, H = R.H, c = surf.ctx;
+  c.save(); c.scale(surf.s, surf.s);
+  const sz = W*0.055; c.font = `800 ${sz}px "Be Vietnam Pro", sans-serif`; c.textAlign = "center";
+  c.translate(W/2, H/2); c.rotate(-Math.PI/6);
+  c.fillStyle = "rgba(255,255,255,.26)"; c.strokeStyle = "rgba(0,0,0,.22)"; c.lineWidth = sz*0.04;
+  const buocY = sz*4.2, buocX = c.measureText("MAKET CHỜ DUYỆT").width + sz*2;
+  for (let i = 0, y = -H; y <= H; i++, y += buocY) for (let x = -W*1.2 + (i % 2 ? buocX/2 : 0); x <= W*1.2; x += buocX){ c.strokeText("MAKET CHỜ DUYỆT", x, y); c.fillText("MAKET CHỜ DUYỆT", x, y); }
+  c.restore();
+}
+async function veMaket(opt){
+  const d = S.doc, s = opt.s;
+  const R = {s, info: opt.info, opt, W: d.width, H: d.height, prep: new Map(), bien: new Map(), notes: []};
+  // nạp trước phông cần dùng
+  const can = [];
+  if (d.nodes) for (const n of duyet(d.nodes)) if (n.loai === "chu" && VAI_CHU.includes(n.vai)) can.push(taiFont(chuoiFont(giaiFont(n), 40)));
+  if (opt.khung.bat){ can.push(taiFont(chuoiFont({family: opt.khung.font, weight: 700}, 40)), taiFont(chuoiFont({family: opt.khung.font, weight: 900}, 40))); }
+  if (opt.dau) can.push(taiFont('800 40px "Be Vietnam Pro"'));
+  await Promise.all(can);
+  const cv = taoCv(Math.round(d.width*s), Math.round(d.height*s)), goc = {cv, ctx: cv.getContext("2d"), x: 0, y: 0, s};
+  if (d.kind === "anh") veAnh(goc, {cv: d.anh, x: 0, y: 0, w: d.width, h: d.height});
+  else veDs(goc, d.nodes, R);
+  if (opt.khung.bat) veKhung(goc, R, opt.khung);
+  if (opt.dau) veDau(goc, R);
+  if (R.dieuChinh) R.notes.push("File có lớp điều chỉnh màu (Adjustment) — bản xem chưa áp các lớp này");
+  return {cv: goc.cv, notes: [...new Set(R.notes)]};
+}
+
+/* ================= Mở file ================= */
+function loiPsd(e){
+  const m = String(e && e.message || e);
+  if (/Color mode not supported: ?(\w+)/.test(m)) return `File đang ở hệ màu ${RegExp.$1}. Trong Photoshop chọn Image → Mode → RGB Color rồi lưu lại.`;
+  if (/bitsPerChannel|Not supproted/i.test(m)) return "File đang để 16/32 bit. Trong Photoshop chọn Image → Mode → 8 Bits/Channel rồi lưu lại.";
+  if (/signature/i.test(m)) return "Không phải file PSD hợp lệ.";
+  if (/version/i.test(m)) return "File dạng PSB (file lớn) chưa đọc được. Lưu lại dạng .psd rồi mở lại.";
+  if (/memory|Invalid array length|allocation/i.test(m)) return "File quá nặng so với bộ nhớ trình duyệt. Thử gộp bớt lớp nền hoặc giảm kích thước.";
+  return "Không đọc được file: " + m;
+}
+async function moTep(file){
+  const ten = file.name, duoi = khongDau(ten).split(".").pop();
+  baoTrangThai(`Đang đọc ${ten}…`);
+  try {
+    if (duoi === "psd" || duoi === "psb"){
+      const buf = await file.arrayBuffer();
+      await new Promise(r => setTimeout(r, 30));
+      const psd = agPsd.readPsd(buf, {skipThumbnail: true});
+      napPsd(psd, ten, file.size);
+    } else {
+      const bm = await taiAnh(file, 12000);
+      napAnh(bm, ten, file.size);
+    }
+  } catch (e){
+    console.error(e);
+    $("#mau-canh").innerHTML = `<li class="loi">${esc(loiPsd(e))}</li>`;
+    baoTrangThai("");
+  }
+}
+function taiAnh(file, toiDa = 2400){
+  return new Promise((ok, loi) => {
+    const url = URL.createObjectURL(file), im = new Image();
+    im.onload = () => {
+      const k = Math.min(1, toiDa / Math.max(im.naturalWidth, im.naturalHeight));
+      const cv = taoCv(im.naturalWidth*k, im.naturalHeight*k); cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
+      URL.revokeObjectURL(url); ok(cv);
+    };
+    im.onerror = () => { URL.revokeObjectURL(url); loi(new Error("Không mở được ảnh " + file.name)); };
+    im.src = url;
+  });
+}
+const MODE = {0: "Bitmap", 1: "Grayscale", 2: "Indexed", 3: "RGB", 4: "CMYK"};
+function napPsd(psd, ten, size, viDu = false){
+  uid = 0;
+  const nodes = (psd.children || []).map(taoNut);
+  const doc = {kind: "psd", ten, size, width: psd.width, height: psd.height, psd, nodes, goc: psd.canvas || null, mode: psd.colorMode ?? 3, viDu};
+  if (!nodes.length && psd.canvas){ // PSD chỉ có 1 lớp phẳng
+    napAnh(psd.canvas, ten, size); S.doc.psd = psd; return;
+  }
+  tuGanVai(doc);
+  S.doc = doc;
+  const coChu = [...duyet(nodes)].some(n => VAI_CHU.includes(n.vai));
+  $("#h-bat").checked = !coChu;
+  sauKhiNap();
+}
+function napAnh(cv, ten, size){
+  S.doc = {kind: "anh", ten, size, width: cv.width, height: cv.height, anh: cv, goc: cv, nodes: null, mode: 3};
+  $("#h-bat").checked = true;
+  sauKhiNap();
+}
+function sauKhiNap(){
+  baoTrangThai("");
+  const d = S.doc, tatCa = d.nodes ? [...duyet(d.nodes)] : [];
+  $("#mau-ten").textContent = d.ten + (d.viDu ? " (file ví dụ)" : "");
+  const kb = d.size ? ` · ${(d.size/1048576).toFixed(1)} MB` : "";
+  $("#mau-info").textContent = `${d.width} × ${d.height} px · ${d.kind === "psd" ? tatCa.filter(n => n.loai !== "nhom").length + " lớp · " + (MODE[d.mode] || "") : "ảnh phẳng"}${kb}`;
+  const canh = [];
+  if (d.kind === "psd"){
+    const gan = tatCa.filter(n => n.vai);
+    if (gan.length) canh.push(["tot", "Đã nhận: " + gan.map(n => VAI.find(v => v[0] === n.vai)[1]).join(", ")]);
+    else canh.push(["", "Chưa tìm thấy lớp chữ thông tin. Chọn lớp ở mục 3, hoặc dùng mục 4 để vẽ khung thông tin."]);
+    if (d.mode === 4) canh.push(["", "File CMYK: màu trên màn hình là quy đổi gần đúng. Maket để duyệt thì được, in thì dùng file PSD gốc."]);
+    if (tatCa.some(n => n.loai === "dieuchinh")) canh.push(["", "Có lớp điều chỉnh màu (Adjustment Layer) — bản xem chưa áp các lớp này. Bấm “Bản gốc” để so."]);
+    if (tatCa.some(n => n.layer.text && n.layer.text.warp && n.layer.text.warp.style && n.layer.text.warp.style !== "none" && n.vai)) canh.push(["", "Có lớp chữ uốn cong (Warp) — chữ thay mới sẽ vẽ thẳng."]);
+  } else canh.push(["", "File ảnh phẳng: bật mục 4 để vẽ khung thông tin lên ảnh."]);
+  $("#mau-canh").innerHTML = canh.map(([k, t]) => `<li class="${k}">${esc(t)}</li>`).join("");
+  // điền thông tin sẵn có trong file vào ô (chỉ ô trống hoặc ô chưa sửa tay)
+  for (const [vai] of VAI){
+    if (vai === "logo") continue;
+    const o = $(`#i-${vai}`), n = tatCa.find(q => q.vai === vai && q.loai === "chu");
+    if (!o.value.trim() || o.dataset.tuFile === "1"){ o.value = n ? (n.gtGoc ?? n.goc) : ""; o.dataset.tuFile = "1"; }
+  }
+  veDsLop(); veDsFont(); veLai();
+  if (S.tab === "loat") capNhatNutLoat();
+}
+
+/* ================= Giao diện danh sách lớp ================= */
+function veDsLop(){
+  const hop = $("#ds-lop"), d = S.doc;
+  if (!d || d.kind !== "psd"){ hop.innerHTML = `<div class="trong">${d ? "File ảnh không có lớp. Dùng mục 4 để vẽ khung thông tin." : "Chưa mở file"}</div>`; return; }
+  const tatCa = $("#lop-tatca").checked, dong = [];
+  const them = (ds, cap) => {
+    for (let i = ds.length - 1; i >= 0; i--){
+      const n = ds[i];
+      const hien = tatCa || n.loai === "chu" || n.vai || (n.loai === "anh" && /logo/i.test(n.ten));
+      if (hien) dong.push(dongLop(n, tatCa ? cap : 0));
+      if (n.children) them(n.children, cap + 1);
+    }
+  };
+  them(d.nodes, 0);
+  hop.innerHTML = dong.join("") || `<div class="trong">File không có lớp chữ nào. Bật “Hiện mọi lớp” để chọn lớp logo, hoặc dùng mục 4.</div>`;
+}
+const TEN_LOAI = {chu: "Chữ", anh: "Ảnh", nhom: "Nhóm", dieuchinh: "Chỉnh màu", rong: "Trống"};
+function dongLop(n, cap){
+  const coVai = !!n.vai, laChu = n.loai === "chu";
+  const opts = [`<option value="">— Giữ nguyên —</option>`].concat(
+    VAI.filter(([v]) => laChu ? v !== "logo" : v === "logo").map(([v, t]) => `<option value="${v}"${n.vai === v ? " selected" : ""}>${t}</option>`));
+  const cothe = laChu || n.loai === "anh";
+  let ct = "";
+  if (coVai && laChu && S.doc){
+    const f = giaiFont(n), st = kieuGoc(n), ps = (st.font && st.font.name) || "?";
+    const W = S.doc.width, pct = Math.round((n.maxW / W) * 100);
+    const tt = n.font ? `Đang dùng phông tự chọn “${esc(n.font)}”` : f.thieu ? `Máy thiếu phông “${esc(ps)}” → tạm dùng ${esc(f.family)}` : `Phông ${esc(ps)} ✓`;
+    ct = `<div class="lop-ct">
+      <div class="truong"><label for="k-${n.id}">Khuôn chữ</label><input class="o" id="k-${n.id}" data-k="khuon" value="${esc(n.khuon)}"></div>
+      <div class="truong"><label for="p-${n.id}">Phông</label><select class="o" id="p-${n.id}" data-k="font">
+        <option value="">Tự động</option>${dsPhong().map(p => `<option${n.font === p ? " selected" : ""}>${esc(p)}</option>`).join("")}</select></div>
+      <label class="rong" for="r-${n.id}">Rộng tối đa <input type="range" id="r-${n.id}" data-k="maxW" min="10" max="100" value="${Math.min(100, pct)}"><span class="mono">${pct}%</span></label>
+      <span class="font-tt ${f.thieu && !n.font ? "thieu" : "du"}">${tt}</span>
+    </div>`;
+  }
+  const phu = laChu ? esc(n.goc.replace(/\n/g, " ⏎ ").slice(0, 60)) : TEN_LOAI[n.loai];
+  return `<div class="lop${coVai ? " co-vai" : ""}" data-id="${n.id}" style="padding-left:${10 + cap*14}px">
+    <input type="checkbox" data-k="hien" aria-label="Hiện lớp ${esc(n.ten)}"${n.hien ? " checked" : ""}>
+    <span class="lop-ten"><b><span class="loai">${TEN_LOAI[n.loai]}</span>${esc(n.ten)}</b><small>${phu}</small></span>
+    ${cothe ? `<select data-k="vai" aria-label="Vai trò của lớp ${esc(n.ten)}">${opts.join("")}</select>` : "<span></span>"}
+    ${ct}
+  </div>`;
+}
+function timNut(id){ for (const n of duyet(S.doc.nodes)) if (n.id === id) return n; return null; }
+function dsPhong(){ return [...S.fonts.map(f => f.family), ...GOOGLE]; }
+function suaLop(e){
+  const row = e.target.closest(".lop"); if (!row || !S.doc) return;
+  const n = timNut(+row.dataset.id), k = e.target.dataset.k; if (!n || !k) return;
+  if (k === "hien") n.hien = e.target.checked;
+  else if (k === "vai"){
+    n.vai = e.target.value;
+    if (n.loai === "chu"){
+      const t = tachKhuon(n.goc); n.khuon = n.vai === "ten" ? "{}" : t.khuon;
+      const o = VAI_CHU.includes(n.vai) && $(`#i-${n.vai}`);
+      if (o && (!o.value.trim() || o.dataset.tuFile === "1")){ o.value = n.vai === "ten" ? n.goc : t.gt; o.dataset.tuFile = "1"; }
+    }
+    veDsLop();
+  }
+  else if (k === "khuon") n.khuon = e.target.value;
+  else if (k === "font"){ n.font = e.target.value; veDsLop(); }
+  else if (k === "maxW"){ n.maxW = S.doc.width * e.target.value / 100; e.target.nextElementSibling.textContent = e.target.value + "%"; }
+  veLai();
+}
+$("#ds-lop").addEventListener("input", suaLop);
+$("#ds-lop").addEventListener("change", e => { if (e.target.dataset.k === "vai" || e.target.dataset.k === "font") return; suaLop(e); });
+$("#lop-tatca").addEventListener("change", veDsLop);
+
+function veDsFont(){
+  const ul = $("#ds-font"), dong = [];
+  for (const f of S.fonts) dong.push(`<li class="tot">Đã thêm: ${esc(f.ten)} → ${esc(f.family)}</li>`);
+  if (S.doc && S.doc.nodes){
+    const thieu = new Set();
+    for (const n of duyet(S.doc.nodes)) if (n.loai === "chu" && VAI_CHU.includes(n.vai) && !n.font){ const f = giaiFont(n); if (f.thieu) thieu.add(f.ps); }
+    for (const t of thieu) dong.push(`<li>Thiếu phông ${esc(t)} — đang vẽ bằng ${esc(fontThayThe(t))}</li>`);
+  }
+  ul.innerHTML = dong.join("");
+}
+
+/* ================= Thông tin khách, logo ================= */
+function layInfo(){
+  const info = {};
+  for (const v of VAI_CHU) info[v] = $(`#i-${v}`).value;
+  info.logo = S.logo;
+  return info;
+}
+function tuyChonKhung(){
+  return {bat: $("#h-bat").checked, mau: $("#h-mau").value, font: $("#h-font").value, vitri: $("#h-vitri").value, nen: $("#h-nen").value, nhan: $("#h-nhan").value, co: +$("#h-co").value};
+}
+function xoaNenTrang(src){
+  const w = src.width, h = src.height, cv = taoCv(w, h), c = cv.getContext("2d");
+  c.drawImage(src, 0, 0);
+  const im = c.getImageData(0, 0, w, h), d = im.data, da = new Uint8Array(w*h), q = new Int32Array(w*h);
+  const trang = i => { const r = d[i*4], g = d[i*4+1], b = d[i*4+2]; return d[i*4+3] > 0 && r > 232 && g > 232 && b > 232 && Math.max(r,g,b) - Math.min(r,g,b) < 18; };
+  let dau = 0, cuoi = 0;
+  const day = i => { if (!da[i] && trang(i)){ da[i] = 1; q[cuoi++] = i; } };
+  for (let x = 0; x < w; x++){ day(x); day((h-1)*w + x); }
+  for (let y = 0; y < h; y++){ day(y*w); day(y*w + w - 1); }
+  while (dau < cuoi){ const i = q[dau++], x = i % w, y = (i / w) | 0;
+    if (x > 0) day(i-1); if (x < w-1) day(i+1); if (y > 0) day(i-w); if (y < h-1) day(i+w); }
+  if (cuoi < w*h*0.02) return src;          // gần như không có nền trắng
+  for (let i = 0; i < w*h; i++) if (da[i]) d[i*4+3] = 0;
+  // làm mềm mép: điểm sáng sát vùng đã xoá thì giảm độ đục
+  for (let i = 0; i < w*h; i++){
+    if (da[i]) continue; const x = i % w, y = (i / w) | 0;
+    const ke = (x > 0 && da[i-1]) || (x < w-1 && da[i+1]) || (y > 0 && da[i-w]) || (y < h-1 && da[i+w]);
+    if (ke){ const l = (d[i*4] + d[i*4+1] + d[i*4+2]) / 3; if (l > 180) d[i*4+3] = Math.round(d[i*4+3] * (255 - l) / 75); }
+  }
+  c.putImageData(im, 0, 0);
+  // cắt sát phần có hình
+  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (d[(y*w + x)*4 + 3] > 8){ if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 < x0) return src;
+  const out = taoCv(x1 - x0 + 1, y1 - y0 + 1); out.getContext("2d").drawImage(cv, -x0, -y0);
+  return out;
+}
+async function datLogo(file){
+  const goc = await taiAnh(file, 2000);
+  S.logo = {goc, ten: file.name, cv: $("#logo-nen").checked ? xoaNenTrang(goc) : goc};
+  veLogo(); veLai();
+}
+function veLogo(){
+  const hop = $("#logo-xem");
+  if (!S.logo){ hop.textContent = "Chưa có logo"; $("#b-bo-logo").hidden = true; return; }
+  const c = taoCv(160, 160), g = c.getContext("2d"), lg = S.logo.cv, k = Math.min(160/lg.width, 160/lg.height);
+  g.drawImage(lg, (160 - lg.width*k)/2, (160 - lg.height*k)/2, lg.width*k, lg.height*k);
+  hop.replaceChildren(c); $("#b-bo-logo").hidden = false;
+}
+$("#f-logo").addEventListener("change", e => { const f = e.target.files[0]; if (f) datLogo(f).catch(er => baoLoi(er.message)); e.target.value = ""; });
+$("#logo-nen").addEventListener("change", () => { if (!S.logo) return; S.logo.cv = $("#logo-nen").checked ? xoaNenTrang(S.logo.goc) : S.logo.goc; veLogo(); veLai(); });
+$("#b-bo-logo").addEventListener("click", () => { S.logo = null; veLogo(); veLai(); });
+for (const v of VAI_CHU) $(`#i-${v}`).addEventListener("input", e => { e.target.dataset.tuFile = "0"; veLai(); });
+for (const id of ["h-bat","h-mau","h-font","h-vitri","h-nen","h-nhan","h-co","wm"]) $("#" + id).addEventListener("input", () => { $("#h-co-so").textContent = $("#h-co").value + "%"; veLai(); });
+$("#h-font").innerHTML = GOOGLE.map(f => `<option${f === "Noto Serif" ? " selected" : ""}>${f}</option>`).join("");
+
+$("#f-font").addEventListener("change", async e => {
+  for (const file of e.target.files){
+    try {
+      const family = "Tải lên · " + file.name.replace(/\.[^.]+$/, "");
+      const ff = new FontFace(family, await file.arrayBuffer()); await ff.load(); document.fonts.add(ff);
+      S.fonts.push({family, ten: file.name, gon: gon(file.name)});
+    } catch { baoLoi(`Không đọc được phông ${file.name}`); }
+  }
+  e.target.value = ""; coSanCache.clear();
+  $("#h-font").innerHTML = dsPhong().map(f => `<option${f === $("#h-font").value ? " selected" : ""}>${esc(f)}</option>`).join("");
+  veDsLop(); veDsFont(); veLai();
+});
+
+/* ================= Xem trước ================= */
+let luotVe = 0, henVe = 0;
+function veLai(){ cancelAnimationFrame(henVe); henVe = requestAnimationFrame(() => veXemTruoc()); }
+async function veXemTruoc(){
+  if (!S.doc || S.tab !== "don") return;
+  const ma = ++luotVe, d = S.doc, cv = $("#cv");
+  $("#dang-ve").hidden = false;
+  const s = Math.min(1, 1700 / Math.max(d.width, d.height));
+  let kq;
+  try {
+    if (S.xem === "goc" && d.goc){ kq = {cv: d.goc, notes: []}; }
+    else kq = await veMaket({s, info: layInfo(), khung: tuyChonKhung(), dau: $("#wm").checked});
+  } catch (e){ console.error(e); baoLoi("Lỗi khi vẽ: " + e.message); $("#dang-ve").hidden = true; return; }
+  if (ma !== luotVe) return;
+  const w = Math.round(d.width*s), h = Math.round(d.height*s);
+  if (cv.width !== w || cv.height !== h){ cv.width = w; cv.height = h; }
+  const c = cv.getContext("2d"); c.clearRect(0, 0, w, h); c.imageSmoothingQuality = "high"; c.drawImage(kq.cv, 0, 0, w, h);
+  $("#dang-ve").hidden = true;
+  const tt = [`<span class="mono">${d.width} × ${d.height} px</span>`];
+  if (S.xem === "goc") tt.push(d.goc ? "Đang xem ảnh gộp lưu sẵn trong file" : "File không lưu ảnh gộp");
+  tt.push(...kq.notes.map(esc));
+  $("#tt").innerHTML = tt.map(t => `<span>${t}</span>`).join("");
+}
+function datXem(x){ S.xem = x; $("#v-maket").setAttribute("aria-pressed", x === "maket"); $("#v-goc").setAttribute("aria-pressed", x === "goc"); veLai(); }
+$("#v-maket").addEventListener("click", () => datXem("maket"));
+$("#v-goc").addEventListener("click", () => datXem("goc"));
+
+/* ================= Lưu file ================= */
+function baoTrangThai(t){ const b = $("#thong-bao"); b.textContent = t; b.hidden = !t; }
+let henBao = 0;
+function baoLoi(t){ baoTrangThai(t); clearTimeout(henBao); henBao = setTimeout(() => baoTrangThai(""), 4200); }
+const tenTep = s => (String(s || "").replace(/[\\/:*?"<>|\n\r\t]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 90) || "khach");
+async function luuFile(ten, blob){
+  if (DL){
+    try { await DL.save({filename: ten, data: blob}); baoLoi(`Đã gửi ${ten} để tải về`); }
+    catch (e){ if (e && e.code === "rejected_extension") baoLoi("Chế độ xem này không cho tải loại file này"); else if (!e || e.code !== "declined") baoLoi("Chưa tải được, thử lại"); }
+    return;
+  }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = ten;
+  document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 5000);
+  if (window.claude && !DL) baoLoi("Nếu không thấy file tải về, hãy mở phần mềm bằng file maket-lich.html trên máy");
+}
+const thanhBlob = (cv, type, q) => new Promise(ok => cv.toBlob(ok, type, q));
+function nenTrang(cv){ const o = taoCv(cv.width, cv.height), c = o.getContext("2d"); c.fillStyle = "#fff"; c.fillRect(0, 0, o.width, o.height); c.drawImage(cv, 0, 0); return o; }
+async function xuat(kieu, nut){
+  if (!S.doc) return;
+  const cu = nut.textContent; nut.disabled = true; nut.textContent = "Đang xuất…";
+  try {
+    const d = S.doc, info = layInfo(), ten = "Maket - " + tenTep(info.ten || d.ten.replace(/\.[^.]+$/, ""));
+    if (kieu === "psd"){ await xuatPsd(ten); return; }
+    const s = kieu === "nhe" ? Math.min(1, 1600 / Math.max(d.width, d.height)) : 1;
+    const kq = await veMaket({s, info, khung: tuyChonKhung(), dau: $("#wm").checked});
+    const blob = kieu === "png" ? await thanhBlob(kq.cv, "image/png") : await thanhBlob(nenTrang(kq.cv), "image/jpeg", kieu === "nhe" ? 0.85 : 0.95);
+    await luuFile(`${ten}${kieu === "nhe" ? " (xem nhanh)" : ""}.${kieu === "png" ? "png" : "jpg"}`, blob);
+  } catch (e){ console.error(e); baoLoi("Xuất lỗi: " + e.message); }
+  finally { nut.disabled = false; nut.textContent = cu; }
+}
+$("#x-jpg").addEventListener("click", e => xuat("jpg", e.currentTarget));
+$("#x-png").addEventListener("click", e => xuat("png", e.currentTarget));
+$("#x-nhe").addEventListener("click", e => xuat("nhe", e.currentTarget));
+$("#x-psd").addEventListener("click", e => xuat("psd", e.currentTarget));
+
+/* Xuất PSD: giữ các lớp, thay chữ + ảnh của lớp đã gán, thêm lớp khung thông tin nếu có */
+async function xuatPsd(ten){
+  const d = S.doc, info = layInfo(), khung = tuyChonKhung();
+  const R = {s: 1, info, opt: {}, W: d.width, H: d.height, prep: new Map(), bien: new Map(), notes: []};
+  const full = await veMaket({s: 1, info, khung, dau: false});
+  let psd, hoan = [];
+  const giu = (o, k) => { const cu = o[k], co = k in o; hoan.push(() => { if (co) o[k] = cu; else delete o[k]; }); };
+  if (d.kind === "psd"){
+    psd = d.psd;
+    for (const n of duyet(d.nodes)){
+      const L = n.layer;
+      giu(L, "hidden"); L.hidden = !hienThi(n, R);
+      if (L.hidden) continue;
+      if (VAI_CHU.includes(n.vai) && n.loai === "chu"){
+        const p = chuanBi(n, R), gt = giaTri(R, n.vai);
+        const nd = n.khuon.includes("{}") ? n.khuon.split("{}").join(gt) : n.khuon;
+        for (const k of ["canvas","left","top","right","bottom","text","imageData"]) giu(L, k);
+        const t = Object.assign({}, L.text);
+        t.style = Object.assign({}, kieuGoc(n)); delete t.styleRuns;
+        if (t.paragraphStyleRuns && t.paragraphStyleRuns[0]) t.paragraphStyle = Object.assign({}, t.paragraphStyle, t.paragraphStyleRuns[0].style);
+        delete t.paragraphStyleRuns;
+        if (p.co < 0.995 && t.style.fontSize) t.style.fontSize *= p.co;
+        t.text = nd.replace(/\n/g, "\r");
+        L.text = t; delete L.imageData;
+        L.canvas = p.cv; L.left = Math.round(p.x); L.top = Math.round(p.y); L.right = L.left + p.cv.width; L.bottom = L.top + p.cv.height;
+      } else if (n.vai === "logo" && info.logo){
+        const p = chuanBi(n, R);
+        for (const k of ["canvas","left","top","right","bottom","placedLayer","imageData","vectorMask"]) giu(L, k);
+        const cv = taoCv(p.w, p.h); cv.getContext("2d").drawImage(p.cv, 0, 0, cv.width, cv.height);
+        L.canvas = cv; L.left = Math.round(p.x); L.top = Math.round(p.y); L.right = L.left + cv.width; L.bottom = L.top + cv.height;
+        delete L.placedLayer; delete L.imageData; delete L.vectorMask;
+      }
+    }
+  } else {
+    psd = {width: d.width, height: d.height, children: [{name: "Nền", canvas: d.anh, left: 0, top: 0}]};
+  }
+  if (khung.bat){
+    const k = beMat(0, 0, d.width, d.height, 1);
+    veKhung(k, {...R, notes: []}, khung);
+    psd.children = psd.children || [];
+    const lop = {name: "Khung thông tin (Maket Lịch)", canvas: k.cv, left: 0, top: 0};
+    psd.children.push(lop); hoan.push(() => { const i = psd.children.indexOf(lop); if (i >= 0) psd.children.splice(i, 1); });
+  }
+  for (const k of ["canvas","imageData","colorMode","imageResources"]) giu(psd, k);
+  psd.canvas = nenTrang(full.cv); delete psd.imageData;
+  if (psd.colorMode === 4){ psd.colorMode = 3; if (psd.imageResources){ psd.imageResources = Object.assign({}, psd.imageResources); delete psd.imageResources.iccProfile; delete psd.imageResources.iccUntaggedProfile; } }
+  let buf;
+  try { buf = agPsd.writePsd(psd, {invalidateTextLayers: true, noBackground: false}); }
+  finally { hoan.reverse().forEach(f => f()); }
+  const blob = new Blob([buf], {type: "application/octet-stream"});
+  if (DL && window.JSZip){           // khung xem trên web chỉ cho tải .zip, nên gói PSD vào zip
+    const z = new JSZip(); z.file(ten + ".psd", blob);
+    await luuFile(ten + " (PSD).zip", await z.generateAsync({type: "blob", compression: "STORE"}));
+  } else await luuFile(ten + ".psd", blob);
+}
+
+/* ================= Làm hàng loạt ================= */
+const COT = [["logo", /(logo|hinh anh|file anh|^anh\b)/], ["email", /mail/], ["web", /(web|site)/], ["dienThoai", /(dien thoai|sdt|so dt|phone|tel|hotline|\bdt\b|di dong|mobile)/],
+  ["diaChi", /(dia chi|address|\bdc\b)/], ["ten", /(ten|cong ty|khach|don vi|company|name|doanh nghiep)/]];
+function nhanCot(h){ const s = khongDau(h); for (const [k, re] of COT) if (re.test(s)) return k; return ""; }
+function docBang(rows){
+  rows = rows.map(r => (r || []).map(v => v == null ? "" : String(v).trim())).filter(r => r.some(Boolean));
+  if (!rows.length) return [];
+  let hdr = -1, map = null;
+  for (let i = 0; i < Math.min(10, rows.length); i++){
+    const m = rows[i].map(nhanCot);
+    if (m.filter(Boolean).length >= 2 && m.includes("ten")){ hdr = i; map = m; break; }
+  }
+  if (!map){ map = ["ten","diaChi","dienThoai","email","web","logo"]; hdr = -1; }
+  return rows.slice(hdr + 1).map(r => { const o = {}; map.forEach((k, i) => { if (k && !o[k] && r[i]) o[k] = r[i].replace(/\\n/g, "\n"); }); return o; }).filter(o => o.ten);
+}
+function tachDan(txt){
+  const dong = txt.split(/\r?\n/).filter(l => l.trim());
+  const tab = dong.some(l => l.includes("\t"));
+  return dong.map(l => tab ? l.split("\t") : l.split(/;|,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(v => v.replace(/^"|"$/g, "")));
+}
+function napDs(ds, nguon){
+  S.ds = ds; S.ketQua = []; veLuoi();
+  $("#ds-tom").innerHTML = ds.length ? `<strong>${ds.length} khách</strong><span class="mono">${esc(nguon)}</span>` : `<span class="phu">Không tìm thấy dòng nào có tên công ty.</span>`;
+  const b = $("#ds-bang");
+  if (ds.length){
+    const cot = VAI.filter(([v]) => ds.some(r => r[v]));
+    b.innerHTML = `<tr>${cot.map(c => `<th>${c[1]}</th>`).join("")}</tr>` + ds.slice(0, 6).map(r => `<tr>${cot.map(([v]) => r[v] ? `<td title="${esc(r[v])}">${esc(r[v])}</td>` : `<td class="khong">trống</td>`).join("")}</tr>`).join("")
+      + (ds.length > 6 ? `<tr><td class="khong" colspan="${cot.length}">… và ${ds.length - 6} khách nữa</td></tr>` : "");
+  }
+  $("#ds-bang-o").hidden = !ds.length;
+  veLogosTom(); capNhatNutLoat();
+}
+$("#f-ds").addEventListener("change", async e => {
+  const f = e.target.files[0]; if (!f) return; e.target.value = "";
+  try {
+    let rows;
+    if (/\.(csv|txt)$/i.test(f.name)) rows = tachDan(await f.text());
+    else { const wb = XLSX.read(await f.arrayBuffer(), {type: "array"}); rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1, raw: false}); }
+    napDs(docBang(rows), f.name);
+  } catch (er){ baoLoi("Không đọc được file danh sách: " + er.message); }
+});
+$("#ds-dan").addEventListener("input", e => napDs(docBang(tachDan(e.target.value)), "dán từ bảng tính"));
+$("#f-logos").addEventListener("change", async e => {
+  for (const f of e.target.files){ try { S.logos.set(gon(f.name), {ten: f.name, file: f}); } catch {} }
+  e.target.value = ""; veLogosTom();
+});
+function timLogoKhach(r){
+  if (!S.logos.size) return null;
+  const thu = [r.logo && gon(r.logo), gon(r.ten)].filter(Boolean);
+  for (const t of thu) if (S.logos.has(t)) return S.logos.get(t);
+  for (const t of thu) for (const [k, v] of S.logos) if (k.length > 3 && (t.includes(k) || k.includes(t))) return v;
+  return null;
+}
+function veLogosTom(){
+  const n = S.logos.size, khop = S.ds.filter(timLogoKhach).length;
+  $("#logos-tom").textContent = n ? `${n} file logo · ghép được ${khop}/${S.ds.length || 0} khách` : "Tên file logo trùng tên công ty hoặc trùng cột Logo thì tự ghép.";
+}
+function capNhatNutLoat(){ const b = $("#b-tao"); b.disabled = !S.doc || !S.ds.length; b.textContent = S.ds.length ? `Tạo ${S.ds.length} maket` : "Tạo maket"; $("#b-zip").disabled = !S.ketQua.length; }
+let dangTao = false;
+$("#b-tao").addEventListener("click", async () => {
+  if (dangTao || !S.doc) return; dangTao = true;
+  const nut = $("#b-tao"); nut.disabled = true;
+  const dang = $("#b-dang").value, tien = $("#b-tien"), tt = $("#b-tt");
+  tien.hidden = false; tt.hidden = false; S.ketQua = []; veLuoi();
+  const daDung = new Map(), khung = tuyChonKhung(), dau = $("#wm2").checked, an = $("#bl-khong-logo").value === "an";
+  try {
+    for (let i = 0; i < S.ds.length; i++){
+      const r = S.ds[i];
+      tt.textContent = `Đang làm ${i + 1}/${S.ds.length}: ${r.ten}`;
+      const lf = timLogoKhach(r); let logo = null;
+      if (lf){ if (!lf.cv){ const g = await taiAnh(lf.file, 2000); lf.cv = $("#logo-nen").checked ? xoaNenTrang(g) : g; } logo = {cv: lf.cv, ten: lf.ten}; }
+      const kq = await veMaket({s: 1, info: {...r, logo}, khung, dau, anLogoMau: an});
+      const blob = dang === "png" ? await thanhBlob(kq.cv, "image/png") : await thanhBlob(nenTrang(kq.cv), "image/jpeg", 0.93);
+      let ten = tenTep(r.ten); const lap = daDung.get(ten) || 0; daDung.set(ten, lap + 1); if (lap) ten += ` (${lap + 1})`;
+      const nho = taoCv(300, 300 * kq.cv.height / kq.cv.width); nho.getContext("2d").drawImage(kq.cv, 0, 0, nho.width, nho.height);
+      const ghi = [...kq.notes]; if (!logo) ghi.unshift("Không có logo");
+      S.ketQua.push({ten: `Maket - ${ten}.${dang}`, khach: r.ten, blob, anh: nho.toDataURL("image/jpeg", 0.8), ghi});
+      $("#b-tien i").style.width = `${(i + 1) / S.ds.length * 100}%`;
+      veLuoi(); await new Promise(ok => setTimeout(ok, 0));
+    }
+    tt.textContent = `Xong ${S.ketQua.length} maket. Bấm vào từng ảnh để xem lớn.`;
+  } catch (e){ console.error(e); tt.textContent = "Dừng vì lỗi: " + e.message; }
+  finally { dangTao = false; capNhatNutLoat(); }
+});
+$("#b-zip").addEventListener("click", async e => {
+  if (!S.ketQua.length) return;
+  const nut = e.currentTarget, cu = nut.textContent; nut.disabled = true; nut.textContent = "Đang nén…";
+  try {
+    const z = new JSZip(); for (const k of S.ketQua) z.file(k.ten, k.blob);
+    await luuFile(`Maket lich - ${S.ketQua.length} khach.zip`, await z.generateAsync({type: "blob", compression: "STORE"}));
+  } finally { nut.disabled = false; nut.textContent = cu; }
+});
+function veLuoi(){
+  $("#luoi-trong").hidden = !!S.ketQua.length;
+  $("#luoi").innerHTML = S.ketQua.map((k, i) => `<button class="the" type="button" data-i="${i}"><img src="${k.anh}" alt="Maket ${esc(k.khach)}"><div><b>${esc(k.khach)}</b>
+    ${k.ghi.length ? [...new Set(k.ghi.map(g => /thu nhỏ/.test(g) ? "Có dòng chữ bị thu nhỏ" : g))].map(g => `<span class="chip" title="${esc(k.ghi.join("\n"))}">${esc(g)}</span>`).join("") : `<span class="chip tot">Đủ thông tin</span>`}</div></button>`).join("");
+}
+let dangXem = null;
+$("#luoi").addEventListener("click", e => {
+  const t = e.target.closest(".the"); if (!t) return;
+  const k = S.ketQua[+t.dataset.i]; dangXem = k;
+  const im = $("#hop-anh"); if (im.src.startsWith("blob:")) URL.revokeObjectURL(im.src);
+  im.src = URL.createObjectURL(k.blob); $("#hop-ten").textContent = k.khach;
+  $("#hop").showModal();
+});
+$("#hop-dong").addEventListener("click", () => $("#hop").close());
+$("#hop-tai").addEventListener("click", () => dangXem && luuFile(dangXem.ten, dangXem.blob));
+
+/* ================= Tab, kéo thả ================= */
+function datTab(t){
+  S.tab = t;
+  $$(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === t));
+  $$("[data-tab]:not(.tab)").forEach(el => el.hidden = el.dataset.tab !== t);
+  if (t === "don") veLai(); else capNhatNutLoat();
+  try { localStorage.setItem("maket-tab", t); } catch {}
+}
+$$(".tab").forEach(b => b.addEventListener("click", () => datTab(b.dataset.tab)));
+$("#f-mau").addEventListener("change", e => { const f = e.target.files[0]; if (f) moTep(f); e.target.value = ""; });
+for (const [id, fn] of [["tha-mau", f => moTep(f)], ["tha-ds", f => { const dt = new DataTransfer(); dt.items.add(f); $("#f-ds").files = dt.files; $("#f-ds").dispatchEvent(new Event("change")); }]]){
+  const el = $("#" + id);
+  el.addEventListener("dragover", e => { e.preventDefault(); el.classList.add("keo"); });
+  el.addEventListener("dragleave", () => el.classList.remove("keo"));
+  el.addEventListener("drop", e => { e.preventDefault(); el.classList.remove("keo"); const f = e.dataTransfer.files[0]; if (f) fn(f); });
+}
+$("#b-vi-du").addEventListener("click", () => taoViDu());
+
+/* ================= File ví dụ (vẽ bằng code, cấu trúc như một file PSD thật) ================= */
+function ngauNhien(seed){ return () => (seed = (seed * 16807) % 2147483647) / 2147483647; }
+function lopChu(ten, noiDung, ps, size, mau, align, ax, ay, hieuUng){
+  const L = {name: ten, left: 0, top: 0, right: 0, bottom: 0, effects: hieuUng,
+    text: {text: noiDung, transform: [1,0,0,1,ax,ay], style: {font: {name: ps}, fontSize: size, fillColor: mau}, paragraphStyle: {justification: align}}};
+  const n = {layer: L, font: ""}, k = thongSoChu(n), f = giaiFont(n);
+  const p = veKhoiChu(noiDung, k, f, 1, {ax, ay}, 0);
+  L.canvas = p.cv; L.left = Math.round(p.x); L.top = Math.round(p.y); L.right = L.left + p.cv.width; L.bottom = L.top + p.cv.height;
+  return L;
+}
+function lopVe(ten, w, h, ve, hieuUng){ const cv = taoCv(w, h); ve(cv.getContext("2d")); return {name: ten, canvas: cv, left: 0, top: 0, right: w, bottom: h, effects: hieuUng}; }
+async function taoViDu(){
+  await Promise.all(['900 60px "Noto Serif"','700 60px "Noto Serif"','700 60px "Dancing Script"','400 60px "Be Vietnam Pro"'].map(taiFont));
+  const W = 1200, H = 1800, rnd = ngauNhien(2027);
+  const vang = {r:244,g:196,b:66};
+  const nen = lopVe("Nền sơn mài", W, H, c => {
+    const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#150807"); g.addColorStop(.5, "#2e0a09"); g.addColorStop(1, "#6a0f0e");
+    c.fillStyle = g; c.fillRect(0, 0, W, H);
+    const r = c.createRadialGradient(W/2, H*0.42, 20, W/2, H*0.42, W*0.75); r.addColorStop(0, "rgba(255,190,90,.20)"); r.addColorStop(1, "rgba(255,190,90,0)");
+    c.fillStyle = r; c.fillRect(0, 0, W, H);
+    c.strokeStyle = "rgba(214,160,62,.38)"; c.lineWidth = 2;
+    for (let i = 0; i < 26; i++){ // mây tường vân
+      const x = rnd()*W, y = H*0.3 + rnd()*H*0.35, s = 18 + rnd()*26;
+      c.beginPath(); c.arc(x, y, s, Math.PI, 0); c.arc(x + s*1.5, y, s*0.5, Math.PI, 0); c.arc(x + s*2.4, y + s*0.1, s*0.35, Math.PI*1.1, Math.PI*0.1); c.stroke();
+    }
+    const mt = c.createRadialGradient(W/2, 700, 30, W/2, 700, 260); mt.addColorStop(0, "rgba(255,226,140,.95)"); mt.addColorStop(.55, "rgba(240,170,60,.75)"); mt.addColorStop(.62, "rgba(240,170,60,.18)"); mt.addColorStop(1, "rgba(240,170,60,0)");
+    c.fillStyle = mt; c.beginPath(); c.arc(W/2, 700, 260, 0, 7); c.fill();
+    [["61,13,11", 820, 150], ["82,18,16", 870, 110], ["106,23,18", 915, 80]].forEach(([m, y0, bien], k) => {
+      const nui = c.createLinearGradient(0, y0 - bien, 0, y0 + 300); nui.addColorStop(0, `rgba(${m},1)`); nui.addColorStop(.6, `rgba(${m},.85)`); nui.addColorStop(1, `rgba(${m},0)`);
+      c.fillStyle = nui; c.beginPath(); c.moveTo(0, y0 + 300);
+      for (let x = 0; x <= W; x += 10) c.lineTo(x, y0 - Math.abs(Math.sin(x/(170 + k*40) + k*1.7))*bien - Math.sin(x/37 + k)*6);
+      c.lineTo(W, y0 + 300); c.closePath(); c.fill();
+      c.beginPath(); for (let x = 0; x <= W; x += 10) c.lineTo(x, y0 - Math.abs(Math.sin(x/(170 + k*40) + k*1.7))*bien - Math.sin(x/37 + k)*6);
+      c.strokeStyle = "rgba(230,176,70,.45)"; c.lineWidth = 1.5; c.stroke();
+    });
+    c.fillStyle = "rgba(255,215,120,.7)";
+    for (let i = 0; i < 160; i++){ c.globalAlpha = rnd()*0.7; c.beginPath(); c.arc(rnd()*W, rnd()*H, rnd()*1.8 + .3, 0, 7); c.fill(); }
+    c.globalAlpha = 1;
+    c.strokeStyle = "rgba(214,160,62,.55)"; c.lineWidth = 1.5;
+    for (let k = 0; k < 3; k++){ c.beginPath(); for (let x = 0; x <= W; x += 20) c.lineTo(x, H*0.56 + k*16 + Math.sin(x/70 + k)*9); c.stroke(); }
+  });
+  const hoa = (ten, trai, mauHoa, tam) => lopVe(ten, W, H, c => {
+    const dx = trai ? 1 : -1, x0 = trai ? -10 : W + 10;
+    c.strokeStyle = "#4a2c16"; c.lineCap = "round";
+    const canh = [[x0, 640, x0 + dx*260, 520, x0 + dx*420, 470], [x0 + dx*150, 560, x0 + dx*230, 450, x0 + dx*260, 390], [x0 + dx*260, 520, x0 + dx*340, 560, x0 + dx*400, 600]];
+    canh.forEach(([a, b, c1, d1, e, f], i) => { c.lineWidth = 9 - i*2.5; c.beginPath(); c.moveTo(a, b); c.quadraticCurveTo(c1, d1, e, f); c.stroke(); });
+    const diem = [[x0 + dx*420, 470], [x0 + dx*260, 392], [x0 + dx*330, 500], [x0 + dx*200, 505], [x0 + dx*400, 598], [x0 + dx*120, 590], [x0 + dx*300, 440], [x0 + dx*360, 555], [x0 + dx*60, 615]];
+    for (const [x, y] of diem){ const r = 13 + rnd()*7;
+      c.fillStyle = mauHoa; for (let i = 0; i < 5; i++){ const a = i/5*Math.PI*2 + rnd(); c.beginPath(); c.ellipse(x + Math.cos(a)*r*0.7, y + Math.sin(a)*r*0.7, r*0.62, r*0.48, a, 0, 7); c.fill(); }
+      c.fillStyle = tam; c.beginPath(); c.arc(x, y, r*0.28, 0, 7); c.fill(); }
+  }, {dropShadow: [{enabled: true, color: {r:0,g:0,b:0}, opacity: .5, angle: 120, distance: {units: "Pixels", value: 5}, size: {units: "Pixels", value: 10}}]});
+  const bx = 330, by = 930, bw = 540, bh = 760;
+  const khungBloc = lopVe("Khung bloc", W, H, c => {
+    c.fillStyle = "#f6efe2"; c.fillRect(bx + 12, by + 14, bw, bh);
+    c.fillStyle = "#e9dcc4"; for (let i = 0; i < 5; i++) c.fillRect(bx + bw + 2 + i*2, by + 16 + i*2, 2, bh - 4);
+    const g = c.createLinearGradient(0, by, 0, by + bh); g.addColorStop(0, "#e2342a"); g.addColorStop(1, "#b3140f");
+    c.fillStyle = g; c.fillRect(bx, by, bw, bh);
+    c.strokeStyle = "#f0c24d"; c.lineWidth = 4; c.strokeRect(bx + 16, by + 16, bw - 32, bh - 32);
+    c.fillStyle = "#3a0806"; for (const x of [bx + 70, bx + bw - 70]){ c.beginPath(); c.arc(x, by + 34, 9, 0, 7); c.fill(); }
+  }, {dropShadow: [{enabled: true, color: {r:0,g:0,b:0}, opacity: .7, angle: 120, distance: {units: "Pixels", value: 12}, size: {units: "Pixels", value: 30}}]});
+  const noiDungBloc = lopVe("Nội dung bloc", W, H, c => {
+    c.textAlign = "center"; c.fillStyle = "#ffd766";
+    c.font = '900 40px "Noto Serif", serif'; c.fillText("XUÂN ĐINH MÙI", W/2, by + 105);
+    c.font = '900 64px "Noto Serif", serif'; c.fillText("2027", W/2, by + 175);
+    const cy = by + 400, g = c.createRadialGradient(W/2 - 40, cy - 50, 20, W/2, cy, 170); g.addColorStop(0, "#fff0a8"); g.addColorStop(.6, "#f1b832"); g.addColorStop(1, "#b77910");
+    c.fillStyle = g; c.beginPath(); c.arc(W/2, cy, 160, 0, 7); c.fill();
+    c.fillStyle = "#c01a14"; c.beginPath(); c.arc(W/2, cy, 128, 0, 7); c.fill();
+    c.fillStyle = "#ffd766"; c.font = '700 130px "Dancing Script", cursive'; c.fillText("Lộc", W/2, cy + 42);
+    c.font = '700 54px "Dancing Script", cursive'; c.fillText("Chúc Mừng Năm Mới", W/2, by + 650);
+  });
+  const doi = (ten, dong, x) => lopVe(ten, W, H, c => {
+    c.textAlign = "center"; c.fillStyle = "#f7f1e6"; c.font = '700 92px "Dancing Script", cursive';
+    dong.forEach((d, i) => c.fillText(d, x, 1030 + i*150));
+  }, {stroke: [{enabled: true, position: "outside", fillType: "color", size: {units: "Pixels", value: 3}, color: {r:201,g:150,b:43}, opacity: 1}],
+      dropShadow: [{enabled: true, color: {r:0,g:0,b:0}, opacity: .6, angle: 120, distance: {units: "Pixels", value: 4}, size: {units: "Pixels", value: 8}}]});
+  const logo = lopVe("Logo", 180, 180, c => {
+    const g = c.createLinearGradient(0, 0, 180, 180); g.addColorStop(0, "#fff0a8"); g.addColorStop(.5, "#e3a92a"); g.addColorStop(1, "#9c6a0e");
+    c.fillStyle = g; c.beginPath(); c.arc(90, 90, 86, 0, 7); c.fill();
+    c.fillStyle = "#a3160f"; c.beginPath(); c.arc(90, 90, 72, 0, 7); c.fill();
+    c.fillStyle = "#ffd766"; c.textAlign = "center"; c.font = '900 64px "Noto Serif", serif'; c.fillText("MP", 90, 112);
+  });
+  Object.assign(logo, {left: 56, top: 40, right: 236, bottom: 220});
+  const chuVang = {gradientOverlay: [{enabled: true, opacity: 1, angle: 90, type: "linear", gradient: {name: "Vàng kim", type: "solid",
+      colorStops: [{color: {r:190,g:128,b:22}, location: 0, midpoint: .5}, {color: {r:246,g:204,b:74}, location: .5, midpoint: .5}, {color: {r:255,g:244,b:184}, location: 1, midpoint: .5}],
+      opacityStops: [{opacity: 1, location: 0, midpoint: .5}, {opacity: 1, location: 1, midpoint: .5}]}}],
+    dropShadow: [{enabled: true, color: {r:0,g:0,b:0}, opacity: .75, angle: 120, distance: {units: "Pixels", value: 3}, size: {units: "Pixels", value: 6}}]};
+  const bongNhe = {dropShadow: [{enabled: true, color: {r:0,g:0,b:0}, opacity: .7, angle: 120, distance: {units: "Pixels", value: 2}, size: {units: "Pixels", value: 4}}]};
+  const psd = {width: W, height: H, colorMode: 3, children: [
+    nen, hoa("Hoa mai", true, "#f7c531", "#e0761a"), hoa("Hoa đào", false, "#f5a3b8", "#c2385e"),
+    {name: "Bloc lịch", children: [khungBloc, noiDungBloc]},
+    doi("Câu đối trái", ["An", "Khang", "Thịnh", "Vượng"], 165), doi("Câu đối phải", ["Vạn", "Sự", "Cát", "Tường"], W - 165),
+    logo,
+    lopChu("Tên công ty", "CÔNG TY TNHH IN ẤN MINH PHÁT", "NotoSerif-Black", 50, vang, "center", 715, 118, chuVang),
+    lopChu("Địa chỉ", "Số 12 Hàng Mã, Hoàn Kiếm, Hà Nội", "NotoSerif-Bold", 31, vang, "center", 715, 178, bongNhe),
+    lopChu("Điện thoại", "Điện thoại: 0912 345 678", "NotoSerif-Bold", 29, vang, "left", 64, 282, bongNhe),
+    lopChu("Email", "Email: inanminhphat@gmail.com", "NotoSerif-Bold", 29, vang, "right", 1136, 282, bongNhe),
+  ]};
+  napPsd(psd, "lich-tet-2027-mau.psd", 0, true);
+  // ảnh gộp cho nút “Bản gốc”
+  const kq = await veMaket({s: 1, info: {ten: "CÔNG TY TNHH IN ẤN MINH PHÁT", diaChi: "Số 12 Hàng Mã, Hoàn Kiếm, Hà Nội", dienThoai: "0912 345 678", email: "inanminhphat@gmail.com"}, khung: {bat: false}, dau: false});
+  S.doc.goc = kq.cv;
+}
+
+/* ================= Khởi động ================= */
+(async () => {
+  let tab = "don"; try { tab = localStorage.getItem("maket-tab") || "don"; } catch {}
+  datTab(tab === "loat" ? "loat" : "don");
+  if (!window.agPsd){ $("#mau-canh").innerHTML = `<li class="loi">Chưa nạp được thư viện đọc PSD (thu-vien/ag-psd.js). Hãy để file maket-lich.html cùng thư mục thu-vien.</li>`; return; }
+  try { await taoViDu(); } catch (e){ console.error(e); }
+  if (!S.ds.length){
+    $("#ds-dan").value = "Tên công ty\tĐịa chỉ\tĐiện thoại\tEmail\nCông ty TNHH Hoa Sen Vàng\t45 Lê Lợi, Quận 1, TP.HCM\t0283 822 1234\tlienhe@hoasenvang.vn\nNhà hàng Phố Cổ\t8 Tạ Hiện, Hoàn Kiếm, Hà Nội\t0904 111 222\t\nCửa hàng Điện máy An Phát\tKm5 Quốc lộ 1A, Biên Hòa\t0251 3888 999\tanphat@gmail.com";
+    napDs(docBang(tachDan($("#ds-dan").value)), "ví dụ — thay bằng danh sách của bạn");
+  }
+})();
+</script>
