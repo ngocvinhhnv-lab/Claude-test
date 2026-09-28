@@ -129,7 +129,24 @@ aside p.hint{color:var(--muted);font-size:13px;margin:0 0 14px}
 .pup.big i{font-size:18px}
 .pup:hover{filter:brightness(1.05)}
 .prods .pwarn{font-size:12px;color:var(--warn);margin:0}
-.panel .prods{margin:-4px 0 12px}
+.panel .prods{margin:-4px 0 10px}
+.prods .pbusy{font-size:12px;color:var(--cyan);margin:0;font-weight:600}
+.sug{border:1px solid var(--cyan);border-radius:6px;background:var(--sheet);padding:10px 12px;margin:0 0 14px;font-size:13px;display:flex;flex-direction:column;gap:8px}
+.sug-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.sug-head b{font-family:var(--ff-d);font-size:15px}
+.sug-head span{font-size:11.5px;color:var(--muted)}
+.sug-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;align-items:start;padding-top:6px;border-top:1px dashed var(--line)}
+.sug-row small{grid-column:1/-1;font-size:11.5px;font-weight:600;color:var(--muted);letter-spacing:.03em;text-transform:uppercase}
+.sug-row p{margin:0;line-height:1.45}
+.sug-row .btn,.sug .btn{font-size:12px;padding:3px 9px}
+.sug-row .on{font-size:12px;color:var(--ok);font-weight:600;white-space:nowrap}
+.sug-chips{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}
+.sug-chip{border:1px solid var(--cyan);background:var(--cyan-soft);color:var(--ink);border-radius:999px;padding:3px 10px;font-size:12.5px;cursor:pointer;text-align:left}
+.sug-chip[aria-pressed="true"]{background:var(--cyan);color:#fff}
+.sug-note{margin:0;font-size:12px;color:var(--muted)}
+.sug-err{margin:0;font-size:12.5px;color:var(--mag)}
+.sug-load{margin:0;font-size:12.5px;color:var(--cyan);font-weight:600}
+.sug .btn.primary{align-self:flex-start}
 .s-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .s-actions .btn.go{padding:10px 18px;font-size:14px}
 .s-msg{font-size:13px;color:var(--muted);margin:0}
@@ -307,6 +324,7 @@ dl.ana dd{margin:0;color:var(--muted)}
       <div class="field"><label for="f-thuong_hieu">Thương hiệu</label><input id="f-thuong_hieu" data-key="thuong_hieu" placeholder="VD: AURA"></div>
       <div class="field"><label for="f-san_pham">Sản phẩm (mô tả ngoại hình)</label><textarea id="f-san_pham" data-key="san_pham" placeholder="VD: chai nước 500ml thân trong suốt, nắp xanh ngọc, nhãn tối giản"></textarea></div>
       <div class="prods" data-prods aria-label="Ảnh sản phẩm thật"></div>
+      <div class="sug hidden" id="sug" aria-live="polite"></div>
       <div class="field"><label for="f-mau_chu_dao">Màu chủ đạo</label><input id="f-mau_chu_dao" data-key="mau_chu_dao" placeholder="VD: xanh ngọc #1FB5A8 và cam san hô"></div>
       <div class="field"><label for="f-phong_cach">Phong cách</label><input id="f-phong_cach" data-key="phong_cach" placeholder="VD: hiện đại, tươi sáng"></div>
       <div class="field"><label for="f-thong_diep">Thông điệp / tiêu đề</label><input id="f-thong_diep" data-key="thong_diep" placeholder="VD: Nạp năng lượng mỗi ngày"></div>
@@ -545,7 +563,7 @@ function card(t){
   stage.appendChild(buildFrame(t));
   const body=document.createElement("div"); body.className="body";
   body.innerHTML=`
-    <div><span class="flag">Phù hợp với ảnh tham chiếu</span><h4>${esc(t.name)}</h4><div class="meta">Tỉ lệ ${t.ratio}</div></div>
+    <div><span class="flag">Được gợi ý cho bạn</span><h4>${esc(t.name)}</h4><div class="meta">Tỉ lệ ${t.ratio}</div></div>
     <p class="use">${esc(t.use)}</p>
     <ul class="check">${t.check.map((x,i)=>`<li><input type="checkbox" id="c-${t.id}-${i}"><label for="c-${t.id}-${i}">${esc(x)}</label></li>`).join("")}</ul>
     <details class="prompt"><summary>Prompt mẫu</summary><div class="ptext"></div></details>
@@ -737,6 +755,8 @@ function sMsg(t,kind){const m=$("s-msg");m.className="s-msg"+(kind?" "+kind:"");
 
 // ---------- ảnh sản phẩm thật (nhiều ảnh, lưu trong trình duyệt) ----------
 const MAX_PROD=4;
+const SUG={status:"idle",data:null,msg:"",via:""};
+try{const d=JSON.parse(store.get("xa-sug")||"null"); if(d&&d.data){SUG.status="done";SUG.data=d.data;SUG.via=d.via||""}}catch(e){}
 const prodFile=$("prod-file");
 function renderProducts(){
   const canva=S.engine==="canva", n=S.products.length, full=n>=MAX_PROD;
@@ -745,8 +765,10 @@ function renderProducts(){
              :`<button type="button" class="pup big" data-up><i>⤒</i>Tải ảnh sản phẩm lên</button>`;
   const html=`<div class="prods-top"><b>Ảnh sản phẩm thật${n?` (${n}/${MAX_PROD})`:""}</b><span>${n?"Gửi kèm mỗi lần tạo để giữ đúng nhãn":"Kéo thả hoặc bấm tải, tối đa "+MAX_PROD+" ảnh (nhiều góc chụp)"}</span></div>
     <div class="prods-row">${thumbs}${add}</div>
+    ${SUG.status==="loading"?`<p class="pbusy">Đang đọc ảnh để gợi ý brief…</p>`:""}
     ${canva&&n?`<p class="pwarn">Canva trong Claude chưa nhận ảnh đính kèm. Chọn Gemini hoặc OpenAI để AI dùng ảnh sản phẩm này.</p>`:""}`;
   document.querySelectorAll("[data-prods]").forEach(el=>{el.innerHTML=html});
+  renderSug();
 }
 // Ảnh chụp điện thoại thường rất lớn: thu về cạnh dài tối đa 2048 px để gửi nhanh, đỡ tốn
 async function shrink(f){
@@ -775,6 +797,7 @@ async function addProducts(files){
   const extra=files.length>room?` Chỉ nhận ${room} ảnh vì tối đa ${MAX_PROD}.`:"";
   if(bad) sMsg(`Có ${bad} file không đọc được. Dùng ảnh JPG, PNG hoặc WebP.`+extra,"err");
   else if(added) sMsg(`Đã thêm ${added} ảnh sản phẩm.`+(S.engine==="canva"?" Canva chưa nhận ảnh đính kèm, chọn Gemini hoặc OpenAI để dùng ảnh này.":" Ảnh sẽ được gửi kèm mỗi lần tạo.")+extra,S.engine==="canva"?"":"ok");
+  if(added) suggestFromProducts();
 }
 function removeProduct(id){
   const p=S.products.find(x=>x.id===id); if(!p) return;
@@ -1158,7 +1181,7 @@ $("s-stop").onclick=()=>S.ctl&&S.ctl.abort();
 /* ---------- reference image ---------- */
 const refEls={empty:$("ref-empty"),loaded:$("ref-loaded"),file:$("ref-file"),img:$("ref-preview"),name:$("ref-name"),ratio:$("ref-ratio"),
   analyze:$("ref-analyze"),stop:$("ref-stop"),out:$("ref-out"),box:$("ref")};
-let refURL=null, sampleFn=null, ctl=null;
+let refURL=null, sampleFn=null, sampleLim=null, ctl=null;
 function nearestRatio(w,h){const r=w/h;let best=RATIOS[0],d=9;RATIOS.forEach(x=>{const dd=Math.abs(Math.log(ratioNum(x)/r));if(dd<d){d=dd;best=x}});return best}
 function setStatus(txt,err){refEls.out.innerHTML=`<p class="status${err?" err":""}">${esc(txt)}</p>`}
 function syncRefSlot(){
@@ -1198,7 +1221,7 @@ document.addEventListener("paste",e=>{const it=[...(e.clipboardData?.items||[])]
   try{
     const s=await use("sample"); if(!s) return;
     const lim=await s.limits().catch(()=>null); if(!lim||!lim.images) return;
-    sampleFn=s; refEls.analyze.classList.remove("hidden");
+    sampleFn=s; sampleLim=lim; refEls.analyze.classList.remove("hidden"); renderProducts();
     if(refBlob) setStatus("Ảnh này sẽ được gửi kèm khi tạo ảnh bằng Gemini hoặc OpenAI. Bấm \"Phân tích và viết prompt\" để Claude đọc ảnh và viết prompt riêng cho brand của bạn.");
   }catch(e){}
 })();
@@ -1272,6 +1295,7 @@ const inputs=document.querySelectorAll("[data-key]");
 function afterBrief(){
   store.set("brief-vals",JSON.stringify(vals)); cards.forEach(c=>c._refresh());
   if(S.src&&!S.dirty&&!S.base) $("s-prompt").value=fillBody(S.src);
+  if(SUG.data) renderSug();
 }
 inputs.forEach(i=>{
   i.value=vals[i.dataset.key]||"";
@@ -1283,6 +1307,155 @@ tool=store.get("brief-tool")||"gemini"; if(!TOOLS[tool]) tool="gemini"; sel.valu
 sel.addEventListener("change",()=>{tool=sel.value;store.set("brief-tool",tool);renderTips();cards.forEach(c=>c._refresh())});
 $("fill-demo").onclick=()=>setAll(DEMO);
 $("clear").onclick=()=>setAll({});
+
+/* ---------- gợi ý brief từ ảnh sản phẩm ---------- */
+const SUG_FIELDS=[["thuong_hieu","Thương hiệu"],["san_pham","Sản phẩm"],["mau_chu_dao","Màu chủ đạo"],["phong_cach","Phong cách"]];
+const VISION={gemini:["gemini-3.5-flash","gemini-3-flash-preview","gemini-2.5-flash"],openai:["gpt-5-mini","gpt-4.1-mini","gpt-4o-mini"]};
+let sugCtl=null;
+function sugVia(){
+  if(sampleFn) return "claude";
+  for(const k of [S.engine,"gemini","openai"]) if((k==="gemini"||k==="openai")&&avail[k].st==="ok"&&keyOf(k)) return k;
+  return null;
+}
+const VIA_NAME={claude:"Claude",gemini:"Gemini",openai:"OpenAI"};
+function setField(k,v){
+  const el=document.querySelector(`[data-key="${k}"]`); if(!el) return;
+  el.value=v; vals[k]=v; afterBrief();
+}
+function sugAsk(){
+  const v=k=>(vals[k]||"").trim();
+  return `Bạn là art director và chuyên gia marketing tại Việt Nam. Các ảnh đính kèm là ảnh chụp thật của MỘT sản phẩm (có thể nhiều góc). Đọc kỹ ảnh rồi gợi ý thông tin brief để tạo ảnh quảng cáo cho đúng sản phẩm này.
+
+Brief hiện tại (chỉ để tham khảo, có thể đang ghi cho sản phẩm khác):
+- Thương hiệu: ${v("thuong_hieu")||"trống"}
+- Sản phẩm: ${v("san_pham")||"trống"}
+- Màu chủ đạo: ${v("mau_chu_dao")||"trống"}
+- Phong cách: ${v("phong_cach")||"trống"}
+- Thông điệp: ${v("thong_diep")||"trống"}
+
+Danh sách mẫu ấn phẩm (id | tên | tỉ lệ):
+${TYPES.map(t=>`${t.id} | ${t.name} | ${t.ratio}`).join("\n")}
+
+Chỉ trả về JSON đúng dạng, tất cả bằng tiếng Việt:
+{"thuong_hieu":"tên thương hiệu đọc được trên sản phẩm/bao bì; không đọc được thì để rỗng",
+"san_pham":"mô tả ngoại hình để model tạo ảnh vẽ lại đúng: loại sản phẩm, chất liệu, hình dáng, kích thước ước lượng, màu, nhãn và hoạ tiết nổi bật; 1–2 câu",
+"mau_chu_dao":"2–3 màu nên dùng cho ảnh quảng cáo, hợp với sản phẩm, kèm mã HEX",
+"phong_cach":"3–6 từ",
+"thong_diep":["3 tiêu đề ngắn, tối đa 7 chữ, hấp dẫn, không hứa hẹn sai sự thật"],
+"chu_can_giu":"chữ in trên sản phẩm cần giữ nguyên khi tạo ảnh, ghi chính xác; không có thì rỗng",
+"mau_phu_hop":[{"id":"id trong danh sách","ly_do":"1 câu"}],
+"nhan_xet":"1 câu: ảnh đã đủ tốt làm ảnh sản phẩm tham chiếu chưa (nét, sáng, nền gọn) và nên chụp thêm góc nào"}
+"mau_phu_hop" chọn đúng 3 mẫu phù hợp nhất.`;
+}
+function parseJSONLoose(t){
+  if(t&&typeof t==="object") return t;
+  t=String(t||"").trim().replace(/^```(?:json)?/i,"").replace(/```$/,"").trim();
+  try{return JSON.parse(t)}catch(_){const m=t.match(/\{[\s\S]*\}/); if(m) return JSON.parse(m[0]); throw new GenError("Kết quả gợi ý chưa đúng định dạng. Bấm Gợi ý lại.","json")}
+}
+async function visionGemini(ask,blobs,signal){
+  const key=keyOf("gemini"); const parts=[{text:ask}];
+  for(const b of blobs) parts.push({inline_data:{mime_type:b.type||"image/jpeg",data:await blobToB64(b)}});
+  const body=JSON.stringify({contents:[{role:"user",parts}],generationConfig:{responseMimeType:"application/json"}});
+  const saved=store.get("xa-vision-gemini"); const list=saved?[saved,...VISION.gemini.filter(x=>x!==saved)]:VISION.gemini;
+  let last="";
+  for(const m of list){
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body,signal});
+    const j=await r.json().catch(()=>({})); const msg=j.error&&j.error.message||("HTTP "+r.status);
+    if(r.status===404){last=msg;continue}
+    if(!r.ok) throw new GenError(r.status===429?"Gemini báo hết hạn mức, đợi một lúc rồi bấm Gợi ý lại.":"Gemini báo lỗi khi đọc ảnh: "+msg,"api");
+    store.set("xa-vision-gemini",m);
+    const txt=((j.candidates||[])[0]?.content?.parts||[]).map(p=>p.text).filter(Boolean).join("");
+    return parseJSONLoose(txt);
+  }
+  throw new GenError("Key Gemini chưa dùng được model đọc ảnh nào. "+last,"model");
+}
+async function visionOpenAI(ask,blobs,signal){
+  const key=keyOf("openai"); const content=[{type:"text",text:ask}];
+  for(const b of blobs) content.push({type:"image_url",image_url:{url:`data:${b.type||"image/jpeg"};base64,${await blobToB64(b)}`}});
+  const saved=store.get("xa-vision-openai"); const list=saved?[saved,...VISION.openai.filter(x=>x!==saved)]:VISION.openai;
+  let last="";
+  for(const m of list){
+    const r=await fetch("https://api.openai.com/v1/chat/completions",{method:"POST",headers:{Authorization:"Bearer "+key,"Content-Type":"application/json"},
+      body:JSON.stringify({model:m,messages:[{role:"user",content}],response_format:{type:"json_object"}}),signal});
+    const j=await r.json().catch(()=>({})); const msg=j.error&&j.error.message||("HTTP "+r.status);
+    if(r.status===404||(j.error&&j.error.code==="model_not_found")){last=msg;continue}
+    if(!r.ok) throw new GenError(r.status===401?"OpenAI API key không hợp lệ.":r.status===429?"OpenAI báo hết hạn mức, đợi một lúc rồi bấm Gợi ý lại.":"OpenAI báo lỗi khi đọc ảnh: "+msg,"api");
+    store.set("xa-vision-openai",m);
+    return parseJSONLoose(j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content);
+  }
+  throw new GenError("Key OpenAI chưa dùng được model đọc ảnh nào. "+last,"model");
+}
+async function suggestFromProducts(){
+  if(!S.products.length) return;
+  const via=sugVia();
+  if(!via){SUG.status="need";renderProducts();return}
+  if(sugCtl) sugCtl.abort();
+  sugCtl=new AbortController(); const signal=sugCtl.signal;
+  SUG.status="loading"; SUG.msg=""; SUG.via=via; renderProducts();
+  try{
+    const blobs=S.products.map(p=>p.blob);
+    let data;
+    if(via==="claude"){
+      const max=(sampleLim&&sampleLim.images&&sampleLim.images.maxCount)||4;
+      data=parseJSONLoose(await sampleFn.json(sugAsk(),{images:blobs.slice(0,max),signal}));
+    }else if(via==="gemini") data=await visionGemini(sugAsk(),blobs,signal);
+    else data=await visionOpenAI(sugAsk(),blobs,signal);
+    if(!data||typeof data!=="object") throw new GenError("Chưa đọc được ảnh. Bấm Gợi ý lại.","empty");
+    SUG.status="done"; SUG.data=data; store.set("xa-sug",JSON.stringify({data,via}));
+    const ids=(data.mau_phu_hop||[]).map(x=>String(x&&x.id||x));
+    clearSuggest(); ids.forEach(id=>{const c=document.querySelector(`.card[data-id="${id}"]`); if(c) c.classList.add("suggested")});
+  }catch(e){
+    if(e&&e.code==="cancelled"||signal.aborted){return}
+    SUG.status="error";
+    SUG.msg=e instanceof GenError?e.message:(e&&ERR[e.code])||("Chưa gợi ý được"+(e&&e.message?": "+e.message:"")+". Bấm Gợi ý lại.");
+    if(e&&HIDE.includes(e.code)){sampleFn=null; SUG.msg="Claude không đọc ảnh được ở đây. Dán API key Gemini hoặc OpenAI ở Xưởng tạo ảnh rồi bấm Gợi ý lại."}
+  }finally{ if(sugCtl&&sugCtl.signal===signal) sugCtl=null; renderProducts() }
+}
+function renderSug(){
+  const box=$("sug"); if(!box) return;
+  const has=S.products.length>0;
+  box.classList.toggle("hidden",!has);
+  if(!has) return;
+  const via=sugVia(), again=`<button class="btn" type="button" data-sug="run" ${via&&SUG.status!=="loading"?"":"disabled"}>${SUG.data?"Gợi ý lại":"Gợi ý từ ảnh"}</button>`;
+  const head=`<div class="sug-head"><b>Gợi ý từ ảnh sản phẩm</b>${again}</div>`;
+  if(SUG.status==="loading"){box.innerHTML=head+`<p class="sug-load">${esc(VIA_NAME[SUG.via]||"AI")} đang đọc ảnh và viết gợi ý, thường mất 5–30 giây…</p>`;return}
+  if(!via&&!SUG.data){box.innerHTML=head+`<p class="sug-note">Để AI tự đọc ảnh và gợi ý brief: dán API key Gemini hoặc OpenAI ở khung Xưởng tạo ảnh${IN_CLAUDE?"":", hoặc mở trang trong Claude"}, rồi bấm Gợi ý từ ảnh.</p>`;return}
+  if(SUG.status==="error"&&!SUG.data){box.innerHTML=head+`<p class="sug-err">${esc(SUG.msg)}</p>`;return}
+  if(!SUG.data){box.innerHTML=head;return}
+  const d=SUG.data, cur=k=>(vals[k]||"").trim();
+  const rows=SUG_FIELDS.filter(([k])=>String(d[k]||"").trim()).map(([k,l])=>{
+    const v=String(d[k]).trim(), same=cur(k)===v;
+    return `<div class="sug-row"><small>${l}</small><p>${esc(v)}</p>${same?`<span class="on">✓ Đang dùng</span>`:`<button class="btn" type="button" data-use="${k}">Dùng</button>`}</div>`;
+  }).join("");
+  const msgs=(Array.isArray(d.thong_diep)?d.thong_diep:[d.thong_diep]).map(x=>String(x||"").trim()).filter(Boolean).slice(0,4);
+  const msgRow=msgs.length?`<div class="sug-row"><small>Thông điệp · bấm để dùng</small><div class="sug-chips">${msgs.map((m,i)=>`<button type="button" class="sug-chip" data-msg="${i}" aria-pressed="${cur("thong_diep")===m}">${esc(m)}</button>`).join("")}</div></div>`:"";
+  const keep=String(d.chu_can_giu||"").trim(), keepLine=keep?`Giữ nguyên chữ in trên sản phẩm: "${keep}".`:"";
+  const keepRow=keep?`<div class="sug-row"><small>Chữ trên sản phẩm cần giữ</small><p>"${esc(keep)}"</p>${cur("them").includes(keep)?`<span class="on">✓ Đã thêm</span>`:`<button class="btn" type="button" data-keep>Thêm vào yêu cầu</button>`}</div>`:"";
+  const tpl=(d.mau_phu_hop||[]).map(x=>({id:String(x&&x.id||x),why:String(x&&x.ly_do||"")})).map(x=>({...x,t:TYPES.find(t=>t.id===x.id)})).filter(x=>x.t).slice(0,3);
+  const tplRow=tpl.length?`<div class="sug-row"><small>Mẫu hợp với sản phẩm · bấm để tạo ảnh</small><div class="sug-chips">${tpl.map(x=>`<button type="button" class="sug-chip" data-tpl="${x.id}" title="${esc(x.why)}">${esc(x.t.name)} · ${x.t.ratio}</button>`).join("")}</div></div>`:"";
+  const note=String(d.nhan_xet||"").trim();
+  box.innerHTML=head+rows+msgRow+keepRow+tplRow+
+    `<button class="btn primary" type="button" data-sug="all">Điền tất cả vào brief</button>`+
+    (note?`<p class="sug-note">Nhận xét ảnh: ${esc(note)}</p>`:"")+
+    (SUG.status==="error"?`<p class="sug-err">${esc(SUG.msg)}</p>`:"")+
+    `<p class="sug-note">Gợi ý bởi ${esc(VIA_NAME[SUG.via]||"AI")}. Luôn soát lại tên thương hiệu và chữ trước khi dùng.</p>`;
+  box._keepLine=keepLine; box._msgs=msgs;
+}
+$("sug").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return; const box=$("sug"), d=SUG.data||{};
+  if(b.dataset.sug==="run"){suggestFromProducts();return}
+  if(b.dataset.use){setField(b.dataset.use,String(d[b.dataset.use]).trim())}
+  if(b.dataset.msg!=null){setField("thong_diep",box._msgs[+b.dataset.msg])}
+  if(b.hasAttribute("data-keep")){const t=(vals.them||"").trim(); setField("them",(t?t+" ":"")+box._keepLine)}
+  if(b.dataset.tpl){const t=TYPES.find(x=>x.id===b.dataset.tpl); if(t){loadIntoStudio({src:t,text:fillBody(t),ratio:t.ratio}); sMsg("Đã đưa mẫu "+t.name+" lên xưởng. Bấm Tạo ảnh khi sẵn sàng.")}return}
+  if(b.dataset.sug==="all"){
+    SUG_FIELDS.forEach(([k])=>{const v=String(d[k]||"").trim(); if(v){const el=document.querySelector(`[data-key="${k}"]`); el.value=v; vals[k]=v}});
+    if(box._msgs&&box._msgs[0]){$("f-thong_diep").value=box._msgs[0]; vals.thong_diep=box._msgs[0]}
+    if(box._keepLine&&!(vals.them||"").includes(String(d.chu_can_giu).trim())){vals.them=((vals.them||"").trim()+" "+box._keepLine).trim(); $("f-them").value=vals.them}
+    afterBrief(); sMsg("Đã điền gợi ý vào brief. Mọi prompt đã cập nhật theo sản phẩm mới.","ok");
+  }
+  renderSug();
+});
 
 /* ---------- boot ---------- */
 (function boot(){
