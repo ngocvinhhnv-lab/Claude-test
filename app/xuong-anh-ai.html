@@ -74,10 +74,14 @@ aside p.hint{color:var(--muted);font-size:13px;margin:0 0 14px}
 .eng .dot.ok{background:var(--ok)}
 .eng .dot.no{background:var(--mag)}
 .eng .dot.wait{background:var(--warn)}
-.eng-cfg{padding:12px 18px;border-bottom:1px solid var(--line);background:var(--paper);display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.3fr) auto;gap:10px 14px;align-items:end}
-.eng-cfg .field{margin:0}
-.eng-cfg .field input{background:var(--sheet)}
-.eng-cfg .note{grid-column:1/-1;margin:0;font-size:12.5px;color:var(--muted)}
+.eng-cfg{padding:12px 18px;border-bottom:1px solid var(--line);background:var(--paper);display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end}
+.eng-cfg .field{margin:0;flex:1 1 150px;min-width:0}
+.eng-cfg .f-key{flex:2 1 220px}
+.eng-cfg .f-model{flex:2 1 240px}
+.eng-cfg .f-small{flex:0 1 130px}
+.eng-cfg .field input,.eng-cfg .field select{background:var(--sheet)}
+.eng-cfg .note{flex:1 1 100%;margin:0;font-size:12.5px;color:var(--muted)}
+.eng-cfg .note b{color:var(--ink);font-weight:600}
 .eng-cfg .note a{color:var(--cyan)}
 .eng-msg{margin:0;padding:10px 18px;font-size:13px;border-bottom:1px solid var(--line)}
 .eng-msg.no{background:var(--mag-soft);color:var(--mag)}
@@ -253,7 +257,6 @@ dl.ana dd{margin:0;color:var(--muted)}
   aside.panel{position:static}
   header.top{grid-template-columns:1fr}
   .toolbar input{margin-left:0;flex:1;min-width:0}
-  .eng-cfg{grid-template-columns:1fr}
   .engines{width:100%}
   .eng{min-width:0;flex:1 1 150px}
 }
@@ -310,8 +313,10 @@ dl.ana dd{margin:0;color:var(--muted)}
         </div>
         <div class="eng-msg hidden" id="eng-msg"></div>
         <div class="eng-cfg hidden" id="eng-cfg">
-          <div class="field"><label for="k-key" id="k-key-label">API key</label><input id="k-key" type="password" autocomplete="off" spellcheck="false" placeholder="Dán API key vào đây"></div>
-          <div class="field"><label for="k-model">Model</label><input id="k-model" list="k-models" spellcheck="false"><datalist id="k-models"></datalist></div>
+          <div class="field f-key"><label for="k-key" id="k-key-label">API key</label><input id="k-key" type="password" autocomplete="off" spellcheck="false" placeholder="Dán API key vào đây"></div>
+          <div class="field f-model"><label for="k-model">Model</label><select id="k-model"></select><input id="k-model-custom" class="hidden" spellcheck="false" placeholder="Gõ tên model, VD: gpt-image-2" style="margin-top:6px"></div>
+          <div class="field f-small"><label for="k-res">Độ nét</label><select id="k-res"><option value="1K">1K · nhanh</option><option value="2K">2K · nét</option><option value="4K">4K · nét nhất</option></select></div>
+          <div class="field f-small" id="k-q-wrap"><label for="k-q">Chất lượng</label><select id="k-q"><option value="high">Cao</option><option value="medium">Vừa</option><option value="low">Nhanh, rẻ</option><option value="auto">Tự động</option></select></div>
           <button class="btn" type="button" id="k-forget">Xoá key</button>
           <p class="note" id="k-note"></p>
         </div>
@@ -590,9 +595,19 @@ const RATIOS=["1:1","4:5","9:16","16:9","2:3","4:3","21:9"];
 const CANVA_AR={"1:1":"SQUARE_1_1","4:5":"PORTRAIT_4_5","9:16":"PORTRAIT_9_16","16:9":"LANDSCAPE_16_9","2:3":"PORTRAIT_2_3","4:3":"LANDSCAPE_4_3","21:9":"LANDSCAPE_2_1"};
 const ENGINES={
   canva:{name:"Canva AI",sub:"Qua kết nối Canva trong Claude",short:"Canva"},
-  gemini:{name:"Gemini · Nano Banana",sub:"API key Google AI Studio",short:"Gemini",models:["gemini-2.5-flash-image","gemini-3-pro-image-preview"],
+  gemini:{name:"Gemini · Nano Banana",sub:"API key Google AI Studio",short:"Gemini",models:[
+    {id:"gemini-3-pro-image-preview",label:"Nano Banana Pro · đẹp nhất",hint:"Chất lượng cao nhất của Google, chữ trên ảnh đẹp, tới 4K. Giá cao nhất."},
+    {id:"gemini-3.1-flash-image",label:"Nano Banana 2 · nhanh, tới 4K",hint:"Cân bằng tốc độ và chất lượng, chữ trên ảnh tốt, tới 4K."},
+    {id:"gemini-3.1-flash-lite-image",label:"Nano Banana 2 Lite · rẻ nhất",hint:"Nhanh và rẻ nhất, hợp để thử nhiều ý tưởng."},
+    {id:"gemini-2.5-flash-image",label:"Nano Banana (đời đầu)",hint:"Model cũ, chỉ ra ảnh khoảng 1K."}],
     keyLabel:"Gemini API key",keyUrl:"https://aistudio.google.com/apikey",host:"Google"},
-  openai:{name:"OpenAI · GPT Image",sub:"API key OpenAI",short:"OpenAI",models:["gpt-image-1","gpt-image-1-mini"],
+  openai:{name:"OpenAI · GPT Image",sub:"API key OpenAI",short:"OpenAI",models:[
+    {id:"gpt-image-2.5-sunburst",label:"GPT Image 2.5 Sunburst · đẹp nhất",hint:"Ra ngày 8/9/2026. Chi tiết nhất, chậm hơn Flare, cùng giá. Mọi tỉ lệ, tới 4K."},
+    {id:"gpt-image-2.5-flare",label:"GPT Image 2.5 Flare · nhanh",hint:"Ra ngày 8/9/2026. Nhanh gấp đôi GPT Image 2, cùng giá với Sunburst. Mọi tỉ lệ, tới 4K."},
+    {id:"gpt-image-2",label:"GPT Image 2",hint:"Mọi tỉ lệ, chữ trên ảnh tốt, tới 4K."},
+    {id:"gpt-image-1.5",label:"GPT Image 1.5",hint:"Đời trước, chỉ 3 khổ: vuông, ngang 3:2, dọc 2:3."},
+    {id:"gpt-image-1-mini",label:"GPT Image 1 Mini · rẻ nhất",hint:"Rẻ nhất, chỉ 3 khổ: vuông, ngang 3:2, dọc 2:3."},
+    {id:"gpt-image-1",label:"GPT Image 1 (cũ)",hint:"Model cũ, chỉ 3 khổ: vuông, ngang 3:2, dọc 2:3."}],
     keyLabel:"OpenAI API key",keyUrl:"https://platform.openai.com/api-keys",host:"OpenAI"}
 };
 const S={engine:null,ratio:"1:1",src:null,dirty:false,base:null,product:null,busy:false,ctl:null};
@@ -626,9 +641,17 @@ function renderEngines(){
   if(e.models){
     $("k-key-label").textContent=e.keyLabel;
     $("k-key").value=keyOf(S.engine);
-    $("k-model").value=store.get("xa-model-"+S.engine)||e.models[0];
-    $("k-models").innerHTML=e.models.map(m=>`<option value="${m}">`).join("");
-    $("k-note").innerHTML=`Chưa có key? Lấy tại <a href="${e.keyUrl}" target="_blank" rel="noopener">${e.keyUrl.replace("https://","")}</a>. Key chỉ lưu trong trình duyệt này và gửi thẳng tới ${e.host}, chi phí tính vào tài khoản của bạn.`;
+    const cur=modelOf(S.engine), known=e.models.find(m=>m.id===cur);
+    $("k-model").innerHTML=e.models.map(m=>`<option value="${m.id}">${esc(m.label)}</option>`).join("")+`<option value="__custom">Model khác…</option>`;
+    $("k-model").value=known?cur:"__custom";
+    $("k-model-custom").classList.toggle("hidden",!!known); if(!known) $("k-model-custom").value=cur;
+    $("k-res").value=resOf(S.engine);
+    const fixed=S.engine==="openai"&&openaiLegacy(cur), noSize=S.engine==="gemini"&&!/gemini-3/.test(cur);
+    $("k-res").disabled=fixed||noSize;
+    $("k-q-wrap").classList.toggle("hidden",S.engine!=="openai");
+    $("k-q").value=store.get("xa-q-openai")||"high";
+    const hint=known?known.hint:"Model tự nhập, trang gửi đúng tên này tới "+e.host+".";
+    $("k-note").innerHTML=`<b>${esc(known?known.label.split(" · ")[0]:cur)}:</b> ${esc(hint)}${fixed||noSize?" Model này không chọn được độ nét.":""} Chưa có key? Lấy tại <a href="${e.keyUrl}" target="_blank" rel="noopener">${e.keyUrl.replace("https://","")}</a>. Key chỉ lưu trong trình duyệt này và gửi thẳng tới ${e.host}, chi phí tính vào tài khoản của bạn.`;
   }
   $("s-go").disabled=S.busy||a.st==="no";
   renderAuto();
@@ -636,7 +659,17 @@ function renderEngines(){
 function keyOf(k){return store.get("xa-key-"+k)||""}
 function setEngine(k){S.engine=k;store.set("xa-engine",k);renderEngines()}
 $("k-key").addEventListener("input",e=>{const v=e.target.value.trim(); v?store.set("xa-key-"+S.engine,v):store.del("xa-key-"+S.engine); renderEngines(); $("k-key").focus()});
-$("k-model").addEventListener("change",e=>{const v=e.target.value.trim(); v?store.set("xa-model-"+S.engine,v):store.del("xa-model-"+S.engine)});
+function modelOf(k){const e=ENGINES[k]; if(!e||!e.models) return ""; return (store.get("xa-model2-"+k)||e.models[0].id).trim()}
+function resOf(k){return store.get("xa-res-"+k)||"2K"}
+function openaiLegacy(m){return /^(gpt-image-1|dall-e)/.test(m)}
+$("k-model").addEventListener("change",e=>{
+  const v=e.target.value;
+  if(v==="__custom"){$("k-model-custom").classList.remove("hidden");$("k-model-custom").focus();return}
+  store.set("xa-model2-"+S.engine,v); renderEngines();
+});
+$("k-model-custom").addEventListener("change",e=>{const v=e.target.value.trim(); if(v){store.set("xa-model2-"+S.engine,v);renderEngines()}});
+$("k-res").addEventListener("change",e=>{store.set("xa-res-"+S.engine,e.target.value)});
+$("k-q").addEventListener("change",e=>{store.set("xa-q-openai",e.target.value)});
 $("k-forget").onclick=()=>{store.del("xa-key-"+S.engine);renderEngines();sMsg("Đã xoá key khỏi trình duyệt này.")};
 
 // ratio chips
@@ -669,7 +702,7 @@ function autoLines(){
   if(S.base){ if(imgs){n++; L.push(`Chỉnh sửa ảnh đính kèm số ${n} theo yêu cầu trên, giữ nguyên bố cục, sản phẩm, chữ và mọi chi tiết không được nhắc tới.`)} else L.push("Chỉnh sửa ảnh gốc theo yêu cầu trên, giữ nguyên mọi chi tiết không được nhắc tới."); }
   if(imgs&&S.product){n++; L.push(`Ảnh đính kèm số ${n} là sản phẩm thật: giữ đúng hình dáng, màu, nhãn và logo của sản phẩm.`)}
   if(imgs&&refBlob&&!S.base){n++; L.push(`Ảnh đính kèm số ${n} là ảnh tham chiếu: bám theo bố cục, màu sắc, ánh sáng và phong cách; không sao chép chữ, logo hay thương hiệu trong ảnh đó.`)}
-  if(E==="openai") L.push(`Tỉ lệ khung ${S.ratio}.`);
+  if(E==="openai"&&openaiLegacy(modelOf("openai"))) L.push(`Tỉ lệ khung ${S.ratio}.`);
   return L;
 }
 function renderAuto(){
@@ -745,20 +778,29 @@ async function settleAll(n,fn){
 /* ---------- Gemini ---------- */
 async function runGemini(prompt,imgs,ratio,n,signal){
   const key=keyOf("gemini"); if(!key) throw new GenError("Dán Gemini API key vào ô phía trên trước đã.","nokey");
-  const model=(store.get("xa-model-gemini")||ENGINES.gemini.models[0]).trim();
+  const chosen=modelOf("gemini");
   const parts=[{text:prompt}];
   for(const b of imgs) parts.push({inline_data:{mime_type:b.type||"image/png",data:await blobToB64(b)}});
-  const body=JSON.stringify({contents:[{role:"user",parts}],generationConfig:{responseModalities:["TEXT","IMAGE"],imageConfig:{aspectRatio:ratio}}});
+  const imageConfig={aspectRatio:ratio}; if(/gemini-3/.test(chosen)) imageConfig.imageSize=resOf("gemini");
+  const body=JSON.stringify({contents:[{role:"user",parts}],generationConfig:{responseModalities:["TEXT","IMAGE"],imageConfig}});
+  // Google đổi tên khi model hết giai đoạn thử (bỏ/thêm "-preview"): thử tên còn lại nếu gặp 404
+  const alt=chosen.endsWith("-preview")?chosen.slice(0,-8):chosen+"-preview";
+  const call=m=>fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body,signal});
+  let model=store.get("xa-gemini-alias-"+chosen)||chosen;
   return settleAll(n,async()=>{
     let r;
-    try{r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body,signal})}
+    try{
+      r=await call(model);
+      if(r.status===404&&model===chosen){const r2=await call(alt); if(r2.status!==404){r=r2;model=alt;store.set("xa-gemini-alias-"+chosen,alt)}}
+    }
     catch(e){if(signal.aborted) throw {code:"cancelled"}; throw new GenError("Không kết nối được tới Google. Kiểm tra mạng, hoặc trình duyệt đang chặn kết nối.","net")}
     const j=await r.json().catch(()=>({}));
     if(!r.ok){
       const m=j.error&&j.error.message||("HTTP "+r.status);
       if(r.status===400&&/API key/i.test(m)) throw new GenError("Gemini API key không hợp lệ. Kiểm tra lại key.","key");
       if(r.status===403) throw new GenError("Key này chưa được phép dùng Gemini API: "+m,"key");
-      if(r.status===404) throw new GenError(`Không có model "${model}". Chọn model khác trong ô Model.`,"model");
+      if(r.status===404) throw new GenError(`Key của bạn chưa dùng được model "${chosen}" (Google báo không tìm thấy). Chọn model khác trong ô Model.`,"model");
+      if(r.status===400&&/imageSize|image_size/i.test(m)) throw new GenError(`Model này không nhận độ nét ${resOf("gemini")}. Chọn độ nét 1K rồi tạo lại.`,"api");
       if(r.status===429) throw new GenError("Gemini báo hết hạn mức hoặc gửi quá nhanh. Đợi một lúc hoặc kiểm tra gói trả phí của key.","quota");
       throw new GenError("Gemini báo lỗi: "+m,"api");
     }
@@ -775,18 +817,27 @@ async function runGemini(prompt,imgs,ratio,n,signal){
 }
 
 /* ---------- OpenAI ---------- */
-function openaiSize(r){const x=ratioNum(r);return x>1.2?"1536x1024":x<0.84?"1024x1536":"1024x1024"}
+const PIX={"1K":1048576,"2K":3686400,"4K":8294400};
+function openaiSize(r,model,res){
+  const x=ratioNum(r);
+  if(openaiLegacy(model)) return x>1.2?"1536x1024":x<0.84?"1024x1536":"1024x1024";
+  // GPT Image 2 trở lên: kích thước tuỳ ý, cạnh chia hết cho 16, tỉ lệ 1:3–3:1, tối đa 3840 px
+  let w=Math.sqrt((PIX[res]||PIX["2K"])*x), h=w/x;
+  const k=Math.min(1,3840/Math.max(w,h)); w*=k; h*=k;
+  const f=v=>Math.max(256,Math.floor(v/16)*16);
+  return f(w)+"x"+f(h);
+}
 async function runOpenAI(prompt,imgs,ratio,n,signal){
   const key=keyOf("openai"); if(!key) throw new GenError("Dán OpenAI API key vào ô phía trên trước đã.","nokey");
-  const model=(store.get("xa-model-openai")||ENGINES.openai.models[0]).trim();
+  const model=modelOf("openai"), size=openaiSize(ratio,model,resOf("openai")), quality=store.get("xa-q-openai")||"high";
   let r;
   try{
     if(imgs.length){
-      const fd=new FormData(); fd.append("model",model); fd.append("prompt",prompt); fd.append("n",String(n)); fd.append("size",openaiSize(ratio));
+      const fd=new FormData(); fd.append("model",model); fd.append("prompt",prompt); fd.append("n",String(n)); fd.append("size",size); if(quality!=="auto") fd.append("quality",quality);
       imgs.forEach((b,i)=>fd.append("image[]",b,`anh-${i+1}.${(b.type.split("/")[1]||"png").replace("jpeg","jpg")}`));
       r=await fetch("https://api.openai.com/v1/images/edits",{method:"POST",headers:{Authorization:"Bearer "+key},body:fd,signal});
     }else{
-      r=await fetch("https://api.openai.com/v1/images/generations",{method:"POST",headers:{Authorization:"Bearer "+key,"Content-Type":"application/json"},body:JSON.stringify({model,prompt,n,size:openaiSize(ratio)}),signal});
+      r=await fetch("https://api.openai.com/v1/images/generations",{method:"POST",headers:{Authorization:"Bearer "+key,"Content-Type":"application/json"},body:JSON.stringify(Object.assign({model,prompt,n,size},quality!=="auto"?{quality}:{})),signal});
     }
   }catch(e){if(signal.aborted) throw {code:"cancelled"}; throw new GenError("Không kết nối được tới OpenAI. Kiểm tra mạng, hoặc trình duyệt đang chặn kết nối.","net")}
   const j=await r.json().catch(()=>({}));
@@ -795,6 +846,9 @@ async function runOpenAI(prompt,imgs,ratio,n,signal){
     if(r.status===401) throw new GenError("OpenAI API key không hợp lệ. Kiểm tra lại key.","key");
     if(r.status===403&&/verif/i.test(m)) throw new GenError("Tổ chức OpenAI của bạn cần xác minh trước khi dùng model ảnh này: "+m,"key");
     if(r.status===429) throw new GenError("OpenAI báo hết hạn mức hoặc gửi quá nhanh: "+m,"quota");
+    if(r.status===404||(j.error&&j.error.code==="model_not_found")||/does not exist|not have access to model|invalid model/i.test(m)) throw new GenError(`Tài khoản OpenAI của bạn chưa dùng được model "${model}". Chọn GPT Image 2 trong ô Model rồi tạo lại. (${m})`,"model");
+    if(/quality/i.test(m)&&quality!=="auto") throw new GenError(`Model này không nhận mức chất lượng "${quality}". Chọn Chất lượng: Tự động rồi tạo lại.`,"api");
+    if(/size/i.test(m)) throw new GenError(`Model này không nhận khổ ${size}. Chọn độ nét thấp hơn rồi tạo lại. (${m})`,"api");
     if(j.error&&/safety|moderation/i.test(j.error.code||m)) throw new GenError("OpenAI từ chối prompt này vì bộ lọc an toàn. Thử diễn đạt khác.","refused");
     throw new GenError("OpenAI báo lỗi: "+m,"api");
   }
@@ -1025,7 +1079,7 @@ async function generate(){
     else res=await runCanva(prompt,ratio,n,S.ctl.signal);
     const now=Date.now();
     const recs=res.items.map((it,i)=>({id:now.toString(36)+"-"+i+"-"+Math.random().toString(36).slice(2,6),created:now-i,blob:it.blob||null,prompt,userPrompt,ratio,engine:eng,
-      model:eng==="canva"?"":(store.get("xa-model-"+eng)||ENGINES[eng].models[0]),label,mediaId:it.mediaId||null,link:it.link||null,parent:baseRef?baseRef.id:null}));
+      model:eng==="canva"?"":modelOf(eng),label,mediaId:it.mediaId||null,link:it.link||null,parent:baseRef?baseRef.id:null}));
     fresh.clear(); recs.forEach(r=>fresh.add(r.id));
     pending.splice(0,pending.length,...pending.filter(p=>!ps.includes(p)));
     await addRecords(recs);

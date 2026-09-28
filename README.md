@@ -69,6 +69,7 @@ Nâng cấp từ "Bảng mẫu brief ảnh AI": 20 mẫu ấn phẩm (post, stor
 | OpenAI (GPT Image) | Mở file trên máy bằng trình duyệt | API key OpenAI |
 
 - Chọn tỉ lệ (1:1, 4:5, 9:16, 16:9, 2:3, 4:3, 21:9) và số ảnh (1–4) mỗi lượt.
+- Chọn model: OpenAI mặc định GPT Image 2.5 Sunburst (có Flare, GPT Image 2, 1.5, 1 Mini); Gemini mặc định Nano Banana Pro (có Nano Banana 2, 2 Lite). Chọn độ nét 1K/2K/4K và chất lượng (OpenAI).
 - Đính kèm ảnh sản phẩm thật và ảnh tham chiếu (Gemini/OpenAI) để giữ đúng nhãn và phong cách.
 - **Sửa tiếp** một ảnh đã tạo: chỉ cần ghi điều muốn đổi.
 - Ảnh đã tạo lưu trong trình duyệt (tối đa 60 ảnh), tải về, dùng lại prompt.
