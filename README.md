@@ -72,30 +72,24 @@ Mở file Photoshop (.psd) hoặc ảnh (.jpg, .png) của tờ lịch, thay log
 
 Cách dùng: mở `app/maket-lich.html` bằng Chrome/Edge (để nguyên thư mục `app/thu-vien/` bên cạnh).
 
-Phần mềm có 4 tab: **Maket từng khách**, **Làm hàng loạt**, **Thiết kế mẫu**, **Demo lịch**.
-
 1. **File thiết kế**: kéo file PSD vào. Phần mềm đọc từng lớp (layer), gồm cả hiệu ứng thường dùng: đổ bóng, viền chữ, phủ màu, phủ chuyển màu vàng kim, mặt nạ, clipping.
 2. **Khổ in & thông số file**: chọn khổ thành phẩm (A4, A3, 35×50, 40×60, A2, 50×70, 60×90 cm hoặc tự nhập), tràn lề, vùng an toàn. Ảnh lệch tỉ lệ khổ thì chọn “Cắt cho vừa khổ” hoặc “Thu vào khổ, thêm nền”. Bảng thông số cho biết kích thước px/cm, **DPI thực khi in** (đạt/tạm được/thấp), hệ màu, số lớp, phông chữ; bản xem có đường xén (đỏ) và vùng an toàn (xanh), chữ/logo sát mép được cảnh báo. File PSD xuất ra ghi đúng DPI theo khổ.
 3. **Thông tin khách**: mỗi dòng có nhãn (ví dụ “Hotline: ”) và nội dung; kéo ⠿ (hoặc phím mũi tên trên nút kéo) để **đổi thứ tự**, maket tự xếp lại. **+ Thêm dòng** / “Thêm nhanh” (Hotline, Zalo, Fanpage, MST, Chi nhánh, Slogan): với PSD, dòng thêm tự lấy kiểu chữ của file và xếp bên dưới; có thể kéo lại vị trí trên maket. Logo nền trắng được tự xoá nền. Ô trống thì dòng đó ẩn.
 4. **Lớp trong file**: phần mềm tự đoán lớp chữ nào là chỗ ghi thông tin theo tên lớp và nội dung. Các chỗ ghi được điền lần lượt theo thứ tự dòng (trên xuống, trái sang phải). Chữ mới giữ nguyên phông, cỡ, màu, căn lề, hiệu ứng; dài quá thì tự thu nhỏ.
-5. **Khung thông tin như mẫu**: với file ảnh JPG/PNG hoặc PSD không có lớp chữ, vẽ khung logo trái, dòng đầu là tên chữ to, dòng đánh dấu “Cùng hàng dòng trên” xếp ngang trái – phải. Nền “Che kín thông tin cũ” phủ header cũ có sẵn trong ảnh.
+5. **Khung thông tin doanh nghiệp**: với file ảnh JPG/PNG hoặc PSD không có lớp chữ, vẽ khung logo, tên, địa chỉ, liên hệ. **AI thiết kế** tự chọn bố cục (6 kiểu), phông, phối màu hợp với tranh và ngành nghề; **Chọn lại** ra phương án khác, các phương án được giữ để quay lại. Mở file trên máy (không có AI) thì phần mềm tự phối theo màu tranh. **Làm theo maket mẫu**: file PSD mẫu thì chép đúng vị trí, cỡ, phông, màu, hiệu ứng của các dòng thông tin và logo; ảnh mẫu thì AI đọc bố cục (không có AI thì lấy màu). “Chỉnh tay” để sửa từng thứ; “Che kín thông tin cũ” + chiều cao dải để phủ header cũ trong ảnh.
 6. **Phông chữ**: máy thiếu phông của file PSD thì tải file .ttf/.otf lên.
 7. **Bảng quy cách trên maket duyệt**: thêm dải dưới maket gồm khách hàng, sản phẩm, khổ, chất liệu, gia công, số lượng, ngày giao, đơn vị thực hiện và ô “Khách hàng duyệt” để ký.
 
-Tab **Thiết kế mẫu**: 8 phong cách vẽ sẵn (Sơn mài đỏ vàng, Thủy mặc, Mai đào rực rỡ, Hiện đại tối giản, Doanh nghiệp xanh, Đèn lồng phố cổ, Vàng kim sang trọng, Đồng quê bình yên), đổi năm (tự tính can chi, ngày Tết trên bloc), câu chúc, màu nhấn; dựng đúng khổ đã chọn ở 100/150/300 DPI. **Nhờ AI gợi ý**: gõ mô tả khách, Claude chọn phong cách, màu, câu chúc, slogan (mở file trên máy thì dùng gợi ý theo từ khoá). **Mẫu tương tự từ ảnh**: lấy bảng màu của ảnh mẫu, chọn phong cách gần nhất. “Dùng mẫu này” tạo file nhiều lớp như PSD thật, chữ và câu đối sửa được.
-
-Tab **Demo lịch**: ghép maket lên tường (sơn kem, xám, ốp gỗ, gạch) với nẹp thiếc vàng/bạc/đỏ, dây treo, bóng đổ, đúng tỉ lệ khổ thành phẩm (đã bỏ tràn lề); có thể vẽ thêm bloc lịch và chỉnh vị trí, cỡ; tải ảnh demo gửi khách.
+**Bloc lịch · xem cân đối**: tải ảnh bloc, nhập kích thước (cm), bloc hiện đúng tỉ lệ trên maket, kéo để thử vị trí (tự hút vào tâm), báo khoảng cách tới các mép, độ lệch tâm, bloc có đè lên chữ thông tin hay không. Bloc chỉ để xem, không in vào file xuất.
 
 **Sửa chi tiết trên maket** (thanh công cụ trên khung xem trước):
 
 - **Chọn & kéo**: bấm vào chi tiết bất kỳ (chữ, hoa, câu đối, bloc lịch…) để chọn, kéo để di chuyển; phím mũi tên dịch từng px (giữ Shift: 10 px), Delete để ẩn. Cũng chọn được bằng cách bấm tên lớp ở mục 3.
 - Bảng sửa của chi tiết đang chọn: ẩn, sửa nội dung chữ (ví dụ đổi “2027” thành “2028”), đổi màu chữ, thay ảnh của lớp, đổi cỡ (20–300%), độ đậm, dịch ngang/dọc, đặt lại.
 - **Xoá vùng**: kéo khung quanh chỗ cần bỏ. “Lấp bằng màu xung quanh” dùng được cả cho ảnh JPG phẳng (ví dụ xoá header cũ in sẵn trong ảnh); “Xoá trong suốt” khoét trống trên lớp PSD.
-- **Hoàn tác** từng bước. Mọi chỉnh sửa được áp cho cả xuất JPG/PNG, file PSD và chế độ làm hàng loạt.
+- **Hoàn tác** từng bước. Mọi chỉnh sửa được áp cho cả xuất JPG/PNG và file PSD.
 
 Xuất: **JPG/PNG** đủ độ phân giải, **Ảnh nhẹ gửi Zalo** (1600 px), **PSD** giữ nguyên các lớp với chữ và logo đã thay, có thể bật chữ chìm “MAKET CHỜ DUYỆT”.
-
-Tab **Làm hàng loạt**: nạp file Excel/CSV (cột Tên công ty, Địa chỉ, Điện thoại, Email, Website, Logo) hoặc dán từ Excel, chọn nhiều file logo (tên file trùng tên công ty hoặc cột Logo thì tự ghép), bấm “Tạo maket” rồi tải cả loạt về một file .zip.
 
 Giới hạn: file PSB (file lớn), 16-bit, và lớp điều chỉnh màu (Adjustment Layer) chưa hỗ trợ; hiệu ứng Bevel, Inner Shadow, Pattern chưa vẽ; file CMYK đọc được nhưng màu trên màn hình là quy đổi gần đúng. Nút “Bản gốc” hiện ảnh gộp Photoshop lưu trong file để so. Safari/iPhone giới hạn kích thước canvas nên file quá lớn nên xuất trên máy tính.
 
