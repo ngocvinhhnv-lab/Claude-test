@@ -26,8 +26,21 @@ def process_source(source_id, log=print):
     return store.sources.save(item)
 
 
-def download_url(url, out_dir):
-    """Tải video từ link (TikTok, Facebook, YouTube...) bằng thư viện yt-dlp."""
+ANSI = re.compile(r"\x1b\[[0-9;]*m")
+BROWSERS = ("edge", "chrome", "firefox")  # nơi lấy cookie TikTok khi bị chặn
+
+
+def _clean_error(err):
+    msg = ANSI.sub("", str(err)).replace("ERROR:", "").strip()
+    return re.sub(r";? ?please report this issue.*", "", msg, flags=re.I | re.S).strip()
+
+
+def download_url(url, out_dir, log=print):
+    """Tải video từ link (TikTok, Facebook, YouTube...) bằng thư viện yt-dlp.
+
+    TikTok chặn yêu cầu không giống trình duyệt, nên cần curl_cffi để yt-dlp giả lập Chrome.
+    Nếu vẫn bị chặn, thử lại với cookie của trình duyệt đã đăng nhập TikTok trên máy.
+    """
     try:
         import yt_dlp
     except ImportError:
@@ -35,27 +48,43 @@ def download_url(url, out_dir):
                            "hoặc tải video về máy rồi upload.") from None
     from make_videos import FFMPEG
 
-    opts = {
+    url = url.strip()
+    if "tiktok.com" in url:
+        url = url.split("?", 1)[0]  # bỏ tham số chia sẻ (?is_from_webapp=...) gây lỗi
+    base = {
         "outtmpl": os.path.join(out_dir, "video.%(ext)s"),
         # Ưu tiên mp4 H.264 một file (xem được trên trình duyệt, không cần ghép hình và tiếng)
-        "format": "best[ext=mp4][vcodec^=avc]/best[ext=mp4]/best",
+        "format": "best[ext=mp4][vcodec^=avc]/best[ext=mp4][vcodec^=h264]/best[ext=mp4]/best",
         "ffmpeg_location": FFMPEG,
         "noplaylist": True,
         "quiet": True,
+        "noprogress": True,
         "no_warnings": True,
         "retries": 3,
     }
-    try:
-        with yt_dlp.YoutubeDL(opts) as ydl:
-            ydl.download([url])
-    except Exception as err:  # yt-dlp báo lỗi bằng nhiều loại ngoại lệ khác nhau
-        msg = str(err).replace("ERROR: ", "").strip()
-        raise RuntimeError(
-            f"Không tải được video từ link ({msg[:200]}). Kiểm tra link mở được trên trình duyệt; "
-            "video riêng tư hoặc cần đăng nhập thì phải tải về máy rồi upload.") from err
+    attempts = [("", {})] + [(b, {"cookiesfrombrowser": (b,)}) for b in BROWSERS]
+    first_error = None
+    for browser, extra in attempts:
+        if browser:
+            log(f"Bị chặn, thử lại bằng cookie trình duyệt {browser.title()}")
+        try:
+            with yt_dlp.YoutubeDL({**base, **extra}) as ydl:
+                ydl.download([url])
+            break
+        except Exception as err:  # yt-dlp báo lỗi bằng nhiều loại ngoại lệ khác nhau
+            first_error = first_error or _clean_error(err)
+            if "404" in str(err) or "Unsupported URL" in str(err):
+                break  # link sai, thử cookie cũng vô ích
     files = [f for f in os.listdir(out_dir) if f.startswith("video.") and not f.endswith(".part")]
     if not files:
-        raise RuntimeError("Không tải được video từ link. Hãy tải video về máy rồi upload.")
+        try:
+            import curl_cffi  # noqa: F401
+            hint = ""
+        except ImportError:
+            hint = " Máy chưa có curl_cffi: tắt app rồi mở lại bằng chay_app.bat để tự cài."
+        raise RuntimeError(
+            f"Không tải được video từ link ({(first_error or 'không rõ lỗi')[:180]}).{hint} "
+            "Cách chắc chắn nhất: trên TikTok bấm Chia sẻ, chọn Lưu video, rồi upload file.")
     return os.path.join(out_dir, files[0])
 
 
@@ -65,7 +94,7 @@ def analyze_competitor(script_id, log=print):
     try:
         if not script.get("video"):
             log("Tải video từ link")
-            script["video"] = download_url(script["url"], folder)
+            script["video"] = download_url(script["url"], folder, log=log)
         path = script["video"]
         info = probe(path)
         script["poster"] = media.grab_frame(path, info, min(1.0, info["duration"] / 2),
