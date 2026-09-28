@@ -374,7 +374,8 @@ input[type=color]{width:42px;height:32px;padding:2px;border:1px solid var(--line
         <button class="nut chinh" id="x-jpg" type="button">Tải JPG</button>
         <button class="nut" id="x-png" type="button">PNG</button>
         <button class="nut" id="x-khoi" type="button" title="Chỉ phần thông tin doanh nghiệp, nền trong suốt, để ghép vào file khác">PNG thông tin</button>
-        <button class="nut" id="x-psd" type="button" title="File PSD giữ nguyên các lớp, chữ đã thay">PSD</button>
+        <select class="o" id="x-psd-kieu" style="width:auto" aria-label="Kiểu file PSD" title="Kiểu file PSD"><option value="chu">PSD: chữ thông tin sửa được</option><option value="anh">PSD: toàn bộ là ảnh</option></select>
+        <button class="nut" id="x-psd" type="button" title="File PSD mới, mỗi chi tiết một lớp">PSD</button>
         <button class="nut" id="x-nhe" type="button" title="Ảnh 1600 px, nhẹ để gửi Zalo">Ảnh nhẹ gửi Zalo</button>
       </div>
       <div class="thanh">
@@ -589,7 +590,7 @@ function neoChu(n, W){
   } else { ax = tr[4]; ay = tr[5]; }
   // Kiểm tra neo có khớp vùng ảnh của lớp không; không khớp thì lấy theo vùng ảnh
   const khop = r > l && ax >= l - k.size*2 && ax <= r + k.size*2 && ay >= t - k.size*0.5 && ay <= b + k.size*2;
-  if (!khop && r > l){
+  if (!khop && r - l > k.size*0.8){        // ảnh của lớp quá nhỏ (không khớp chữ) thì tin điểm neo của chữ
     ax = k.align === "center" ? (l + r)/2 : k.align === "right" ? r : l;
     ay = t + (b - t) * 0.5 + k.size * 0.35;
   }
@@ -699,7 +700,7 @@ function taoVien(C, r, to){
   g.globalCompositeOperation = "source-in"; g.fillStyle = to; g.fillRect(0, 0, V.width, V.height);
   return V;
 }
-function veHieuUng(T, p, L, h, fo){
+function veHieuUng(T, p, L, h, fo, boNoiDung){
   const s = T.s, C = taoCv(T.cv.width, T.cv.height), c = C.getContext("2d");
   c.drawImage(p.cv, (p.x - T.x)*s, (p.y - T.y)*s, p.w*s, p.h*s);
   const hinh = taoCv(C.width, C.height); hinh.getContext("2d").drawImage(C, 0, 0);
@@ -717,7 +718,7 @@ function veHieuUng(T, p, L, h, fo){
     if (e.fillType === "gradient" && e.gradient) to = taoChuyen(t, e.gradient, {x: p.x - dv(e.size), y: p.y - dv(e.size), w: p.w + 2*dv(e.size), h: p.h + 2*dv(e.size)}, T, e);
     t.save(); t.globalAlpha = e.opacity ?? 1; t.drawImage(taoVien(hinh, r, to), 0, 0); t.restore();
   }
-  t.save(); t.globalAlpha = fo; t.drawImage(C, 0, 0); t.restore();
+  if (!boNoiDung){ t.save(); t.globalAlpha = fo; t.drawImage(C, 0, 0); t.restore(); }
 }
 
 /* ================= Mặt nạ lớp ================= */
@@ -2381,81 +2382,95 @@ $("#x-nhe").addEventListener("click", e => xuat("nhe", e.currentTarget));
 $("#x-psd").addEventListener("click", e => xuat("psd", e.currentTarget));
 $("#x-khoi").addEventListener("click", e => xuat("khoi", e.currentTarget));
 
-/* Xuất PSD: giữ các lớp, thay chữ + ảnh của lớp đã gán, thêm lớp khung thông tin nếu có */
+/* Xuất PSD: dựng file mới hoàn toàn, chỉ dùng lớp ảnh, nhóm, clipping và lớp chữ đơn giản.
+   Không ghi lại dữ liệu gốc (smart object, shape, hiệu ứng, profile màu…) vì Photoshop từ chối cả file nếu một khối bị ghi sai. */
 async function xuatPsd(ten){
-  const d = S.doc, info = layInfo(), khung = tuyChonKhung();
-  const full = await veMaket({s: 1, info, khung, dau: false}), cat = full.cat, K = layKho(d);
-  const R = {s: 1, info, opt: {}, W: d.width, H: d.height, KW: cat.w, KH: cat.h, cat, gan: ganSlot(d, info), prep: new Map(), bien: new Map(), notes: []};
-  const hoan = [];
-  const giu = (o, k) => { const cu = o[k], co = k in o; hoan.push(() => { if (co) o[k] = cu; else delete o[k]; }); };
-  const psd = d.kind === "psd" ? d.psd : {width: d.width, height: d.height, children: d.nodes.map(n => n.layer)};
-  for (const n of duyet(d.nodes)){
-    const L = n.layer;
-    giu(L, "hidden"); L.hidden = !hienThi(n, R);
-    if (L.effects){ giu(L, "effects"); L.effects = chuanHoaHU(L.effects); }
-    if (L.hidden) continue;
-    if (n.doMo != null){ giu(L, "opacity"); L.opacity = doDuc(n); }
-    if (n.loai === "nhom") continue;
-    const laLogo = n.vai === "logo" && info.logo;
-    if (!(canVeChu(n) || laLogo || n.nguon || n.cvSua || coBienDoi(n))) continue;
-    const p = chuanBi(n, R); if (!p) continue;
-    for (const k of ["canvas","left","top","right","bottom","text","imageData","placedLayer","vectorMask","vectorFill","vectorStroke","vectorOrigination","mask","effects"]) giu(L, k);
-    let cv = p.cv;
-    if (cv.width !== Math.round(p.w) || cv.height !== Math.round(p.h)){ cv = taoCv(p.w, p.h); cv.getContext("2d").drawImage(p.cv, 0, 0, cv.width, cv.height); }
-    L.canvas = cv; L.left = Math.round(p.x); L.top = Math.round(p.y); L.right = L.left + cv.width; L.bottom = L.top + cv.height;
-    // lớp đã đổi hình thì thành lớp ảnh thường: bỏ hết dữ liệu shape / smart object, nếu không Photoshop báo lỗi đọc lớp
-    delete L.imageData; delete L.placedLayer; delete L.vectorMask; delete L.vectorFill; delete L.vectorStroke; delete L.vectorOrigination;
-    if (coMask(L) && p.tf){
-      const m = L.mask, t = p.tf, mc = taoCv((m.right - m.left)*t.k, (m.bottom - m.top)*t.k);
-      mc.getContext("2d").drawImage(m.canvas, 0, 0, mc.width, mc.height);
-      const ml = Math.round(t.cx + (m.left - t.cx)*t.k + t.dx), mt = Math.round(t.cy + (m.top - t.cy)*t.k + t.dy);
-      L.mask = Object.assign({}, m, {canvas: mc, left: ml, top: mt, right: ml + mc.width, bottom: mt + mc.height, _alpha: undefined});
+  const d = S.doc, info = layInfo(), chuSua = $("#x-psd-kieu").value === "chu";
+  const full = await veMaket({s: 1, info, dau: false}), cat = full.cat, K = layKho(d);
+  const R = {s: 1, info, opt: {}, W: d.width, H: d.height, KW: cat.w, KH: cat.h, cat, gan: ganSlot(d, info), prep: new Map(), bien: new Map(), notes: [], hit: [],
+    coKhoi: d.nodes.some(n => n.khoi)};
+  const lop = (name, T) => {            // cắt viền trong suốt, giữ đúng toạ độ trên trang
+    const L = catSat({name, canvas: T.cv, left: 0, top: 0, right: T.cv.width, bottom: T.cv.height}); if (!L) return null;
+    L.left += T.x; L.right += T.x; L.top += T.y; L.bottom += T.y; return L;
+  };
+  const raster = n => { const b = bien(n, R); if (!b || b.w < 1 || b.h < 1) return null; const T = beMat(b.x, b.y, b.w, b.h, 1); veNut(T, n, R, {tho: true}); return lop(n.ten, T); };
+  const rasterChuoi = (n, kep) => {
+    const b = bien(n, R); if (!b || b.w < 1 || b.h < 1) return null;
+    const T = beMat(b.x, b.y, b.w, b.h, 1); veNut(T, n, R, {tho: true});
+    for (const c of kep) if (hienThi(c, R)) veNut(T, c, R, {op: "source-atop"});
+    return lop(n.ten, T);
+  };
+  const cheDoPsd = n => n.loai === "nhom" ? "pass through" : (n.layer.blendMode && n.layer.blendMode !== "pass through" && BLEND[n.layer.blendMode] ? n.layer.blendMode : "normal");
+  let soChu = 0;
+  // một dòng chữ sửa được: [bóng/viền (ảnh)] + [lớp chữ] + [màu vàng kim/chuyển màu (ảnh, clipping vào chữ)]
+  function lopChuSuaDuoc(n, a){
+    const L = n.layer, k = thongSoChu(n), f = giaiFont(n), neo = neoChu(n, R.W), p = chuanBi(n, R);
+    if (!p || Math.abs(k.goc) > 0.001) return null;
+    const nd = noiDungChu(n, R); if (!nd.trim()) return null;
+    let h = dsHU(L); if (h && n.mau) h = {...h, to: [], chuyen: []};
+    const mauTo = n.mau || (h && h.to.length ? rgbHex(h.to[0].color) : h && h.chuyen.length && h.chuyen[0].gradient && h.chuyen[0].gradient.colorStops
+      ? rgbHex(h.chuyen[0].gradient.colorStops[Math.floor(h.chuyen[0].gradient.colorStops.length/2)].color) : rgbHex(k.mau));
+    const tf = p.tf, kk = tf ? tf.k : 1, co = p.co || 1;
+    let tho = veKhoiChu(nd, k, f, 1, neo, n.maxW || neo.maxW, mauTo);
+    if (tf){ const cv = taoCv(tho.w*kk, tho.h*kk); cv.getContext("2d").drawImage(tho.cv, 0, 0, cv.width, cv.height); tho = {...tho, cv, x: p.x, y: p.y, w: cv.width, h: cv.height}; }
+    const ax = tf ? tf.cx + (neo.ax - tf.cx)*kk + tf.dx : neo.ax, ay = tf ? tf.cy + (neo.ay - tf.cy)*kk + tf.dy : neo.ay;
+    const ps = S.psMay.has(f.ps) && S.psMay.get(f.ps).family === f.family ? f.ps : psCua(f.family, f.weight);
+    const style = {font: {name: ps}, fontSize: +(k.size*co*kk).toFixed(2), fillColor: hexRgb(mauTo), autoLeading: false, leading: +(k.leading*co*kk).toFixed(2),
+      tracking: Math.round(k.tracking/k.size*1000) || 0};
+    if (Math.abs(k.hs - 1) > 0.005) style.horizontalScale = +k.hs.toFixed(3);
+    if (k.caps) style.fontCaps = 2;
+    const lopChu = {name: n.ten, canvas: tho.cv, left: Math.round(tho.x), top: Math.round(tho.y), right: Math.round(tho.x) + tho.cv.width, bottom: Math.round(tho.y) + tho.cv.height,
+      text: {text: nd.replace(/\n/g, "\r"), transform: [1, 0, 0, 1, +ax.toFixed(2), +ay.toFixed(2)], style, paragraphStyle: {justification: k.align}}};
+    const ra = [];
+    if (h && (h.bong.length || h.sang.length || h.vien.length)){
+      const pad = lePad(h), T = beMat(p.x - pad, p.y - pad, p.w + 2*pad, p.h + 2*pad, 1);
+      veHieuUng(T, p, L, {...h, to: [], chuyen: []}, 1, true);
+      const x = lop(n.ten + " · bóng, viền", T); if (x) ra.push(x);
     }
-    if (n.loai === "chu" && L.text){
-      const t = Object.assign({}, L.text);
-      if (canVeChu(n)){
-        t.style = Object.assign({}, kieuGoc(n)); delete t.styleRuns;
-        if (t.paragraphStyleRuns && t.paragraphStyleRuns[0]) t.paragraphStyle = Object.assign({}, t.paragraphStyle, t.paragraphStyleRuns[0].style);
-        delete t.paragraphStyleRuns;
-        if (p.co < 0.995 && t.style.fontSize) t.style.fontSize *= p.co;
-        if (n.mau) t.style.fillColor = hexRgb(n.mau);
-        t.text = noiDungChu(n, R).replace(/\n/g, "\r");
+    ra.push(lopChu);
+    const phu = h && (h.chuyen[0] || h.to[0]);
+    if (phu && !n.mau){
+      const pad = p.h*0.1, G = beMat(p.x - pad, p.y - pad, p.w + 2*pad, p.h + 2*pad, 1), c = G.ctx;
+      c.globalAlpha = phu.opacity ?? 1;
+      c.fillStyle = h.chuyen[0] ? taoChuyen(c, h.chuyen[0].gradient, p, G, h.chuyen[0]) : css(h.to[0].color);
+      c.fillRect(0, 0, G.cv.width, G.cv.height);
+      ra.push({name: n.ten + " · màu chữ", canvas: G.cv, left: G.x, top: G.y, right: G.x + G.cv.width, bottom: G.y + G.cv.height, clipping: true});
+    }
+    soChu++;
+    return ra.length === 1 ? Object.assign(ra[0], {opacity: a}) : {name: n.ten, opened: true, opacity: a, children: ra};
+  }
+  function dsLop(nodes){
+    const out = [];
+    for (let i = 0; i < nodes.length; i++){
+      const n = nodes[i];
+      let j = i + 1; const kep = [];
+      if (!n.layer.clipping){ while (j < nodes.length && nodes[j].layer.clipping){ kep.push(nodes[j]); j++; } i = j - 1; }
+      if (!hienThi(n, R) || n.loai === "dieuchinh" || n.loai === "rong") continue;
+      const a = doDuc(n), bm = cheDoPsd(n);
+      if (kep.length){ const L = rasterChuoi(n, kep); if (L) out.push(Object.assign(L, {opacity: a, blendMode: bm})); continue; }
+      if (n.loai === "nhom"){
+        if (!coMask(n.layer) && bm === "pass through"){ const con = dsLop(n.children); if (con.length) out.push({name: n.ten, opened: true, opacity: a, children: con}); }
+        else { const L = raster(n); if (L) out.push(Object.assign(L, {opacity: a, blendMode: bm})); }
+        continue;
       }
-      if (p.tf){
-        const tr = (t.transform || [1,0,0,1,0,0]).slice(), {k, dx, dy, cx, cy} = p.tf;
-        for (let i = 0; i < 4; i++) tr[i] *= k;
-        tr[4] = cx + (tr[4] - cx)*k + dx; tr[5] = cy + (tr[5] - cy)*k + dy; t.transform = tr;
-      }
-      L.text = t;
-      if (n.mau && L.effects){ L.effects = Object.assign({}, L.effects); delete L.effects.solidFill; delete L.effects.gradientOverlay; }
+      if (chuSua && n.loai === "chu" && canVeChu(n)){ const x = lopChuSuaDuoc(n, a); if (x){ out.push(x); continue; } }
+      const L = raster(n); if (L) out.push(Object.assign(L, {opacity: a, blendMode: bm}));
     }
+    return out;
   }
-  // cắt / thêm nền theo khổ in: dời mọi lớp theo khung cắt
-  if (cat.x || cat.y || cat.w !== d.width || cat.h !== d.height){
-    const dich = L => {
-      if (L.children){ L.children.forEach(dich); return; }
-      if (L.canvas || L.right > L.left){ for (const k of ["left","right","top","bottom"]) giu(L, k); L.left -= cat.x; L.right -= cat.x; L.top -= cat.y; L.bottom -= cat.y; }
-      if (L.text && L.text.transform){ giu(L, "text"); const tr = L.text.transform.slice(); tr[4] -= cat.x; tr[5] -= cat.y; L.text = Object.assign({}, L.text, {transform: tr}); }
-      if (L.mask && L.mask.canvas){ giu(L, "mask"); L.mask = Object.assign({}, L.mask, {left: L.mask.left - cat.x, right: L.mask.right - cat.x, top: L.mask.top - cat.y, bottom: L.mask.bottom - cat.y}); }
-    };
-    psd.children.forEach(dich);
-    giu(psd, "width"); giu(psd, "height"); psd.width = cat.w; psd.height = cat.h;
-    if (cat.nen){
-      const nc = taoCv(cat.w, cat.h), g = nc.getContext("2d"); g.fillStyle = cat.nen; g.fillRect(0, 0, cat.w, cat.h);
-      const lop = {name: "Nền thêm theo khổ", canvas: nc, left: 0, top: 0, right: cat.w, bottom: cat.h};
-      psd.children.unshift(lop); hoan.push(() => { const i = psd.children.indexOf(lop); if (i >= 0) psd.children.splice(i, 1); });
-    }
-  }
-  for (const k of ["canvas","imageData","colorMode","imageResources"]) giu(psd, k);
-  psd.canvas = nenTrang(full.cv); delete psd.imageData;
-  if (K && K.v !== "file"){
-    const dpi = cat.w / ((K.rong + 2*K.tran)/25.4);
-    psd.imageResources = Object.assign({}, psd.imageResources, {resolutionInfo: {horizontalResolution: dpi, horizontalResolutionUnit: "PPI", widthUnit: "Centimeters", verticalResolution: dpi, verticalResolutionUnit: "PPI", heightUnit: "Centimeters"}});
-  }
-  if (psd.colorMode === 4){ psd.colorMode = 3; if (psd.imageResources){ psd.imageResources = Object.assign({}, psd.imageResources); delete psd.imageResources.iccProfile; delete psd.imageResources.iccUntaggedProfile; } }
-  let buf;
-  try { buf = agPsd.writePsd(psd, {invalidateTextLayers: true, noBackground: false}); }
-  finally { hoan.reverse().forEach(f => f()); }
+  const children = dsLop(d.nodes);
+  if (cat.nen){ const nc = taoCv(cat.w, cat.h), g = nc.getContext("2d"); g.fillStyle = cat.nen; g.fillRect(0, 0, cat.w, cat.h);
+    children.unshift({name: "Nền thêm theo khổ", canvas: nc, left: cat.x, top: cat.y, right: cat.x + cat.w, bottom: cat.y + cat.h}); }
+  const dich = L => {
+    if (L.children) L.children.forEach(dich);
+    if ("left" in L){ L.left -= cat.x; L.right -= cat.x; L.top -= cat.y; L.bottom -= cat.y; }
+    if (L.text){ L.text.transform[4] = +(L.text.transform[4] - cat.x).toFixed(2); L.text.transform[5] = +(L.text.transform[5] - cat.y).toFixed(2); }
+  };
+  children.forEach(dich);
+  const dpi = K && K.v !== "file" ? cat.w / ((K.rong + 2*K.tran)/25.4) : dpiFile(d);
+  const psd = {width: cat.w, height: cat.h, channels: 3, bitsPerChannel: 8, colorMode: 3, children, canvas: nenTrang(full.cv),
+    imageResources: {resolutionInfo: {horizontalResolution: +dpi.toFixed(2), horizontalResolutionUnit: "PPI", widthUnit: "Centimeters", verticalResolution: +dpi.toFixed(2), verticalResolutionUnit: "PPI", heightUnit: "Centimeters"}}};
+  const buf = agPsd.writePsd(psd, {invalidateTextLayers: soChu > 0, generateThumbnail: false});
   const blob = new Blob([buf], {type: "application/octet-stream"});
   if (DL && window.JSZip){           // khung xem trên web chỉ cho tải .zip, nên gói PSD vào zip
     const z = new JSZip(); z.file(ten + ".psd", blob);

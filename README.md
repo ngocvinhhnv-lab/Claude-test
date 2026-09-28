@@ -95,7 +95,7 @@ Xuất: **JPG/PNG** đủ độ phân giải, **Ảnh nhẹ gửi Zalo** (1600 p
 
 Giới hạn: file PSB (file lớn), 16-bit, và lớp điều chỉnh màu (Adjustment Layer) chưa hỗ trợ; hiệu ứng Bevel, Inner Shadow, Pattern chưa vẽ; file CMYK đọc được nhưng màu trên màn hình là quy đổi gần đúng. Nút “Bản gốc” hiện ảnh gộp Photoshop lưu trong file để so. Safari/iPhone giới hạn kích thước canvas nên file quá lớn nên xuất trên máy tính.
 
-Khi xuất PSD, hiệu ứng lớp (bóng, viền, chuyển màu, quầng sáng) được điền đủ các trường Photoshop yêu cầu, và lớp đã đổi hình được chuyển hẳn thành lớp ảnh thường (bỏ dữ liệu shape/smart object) để Photoshop không báo “Problems were encountered reading layers”.
+**Xuất PSD** dựng một file mới hoàn toàn (RGB 8-bit, đúng khổ và DPI), không ghi lại dữ liệu gốc như smart object, shape, hiệu ứng, profile màu — vì chỉ một khối ghi sai là Photoshop từ chối cả file. Mỗi chi tiết là một lớp ảnh (đã gộp hiệu ứng, mặt nạ, clipping), giữ tên lớp, nhóm, độ mờ, chế độ hoà trộn. Chọn “PSD: chữ thông tin sửa được” thì mỗi dòng thông tin (và chữ đã sửa) thành nhóm gồm lớp bóng/viền (ảnh), lớp chữ thật, và lớp màu vàng kim/chuyển màu clipping vào chữ, sửa chữ trong Photoshop vẫn giữ màu. “PSD: toàn bộ là ảnh” chỉ có lớp ảnh và nhóm. Lớp điều chỉnh màu (Adjustment) không được xuất.
 
 Thư viện đọc PSD: [ag-psd](https://github.com/Agamnentzar/ag-psd) 31.0.2 (MIT), bản trong `app/thu-vien/ag-psd.js` được sửa một dòng để mở được file CMYK.
 
