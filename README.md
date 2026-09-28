@@ -78,6 +78,13 @@ Cách dùng: mở `app/maket-lich.html` bằng Chrome/Edge (để nguyên thư m
 4. **Khung thông tin như mẫu**: với file ảnh JPG/PNG hoặc PSD không có lớp chữ, bật mục này để vẽ khung logo trái, tên to ở giữa, địa chỉ, dòng ĐT trái và Email phải. Chọn nền “Che kín thông tin cũ” để phủ header cũ có sẵn trong ảnh.
 5. **Phông chữ**: máy thiếu phông của file PSD thì tải file .ttf/.otf lên.
 
+**Sửa chi tiết trên maket** (thanh công cụ trên khung xem trước):
+
+- **Chọn & kéo**: bấm vào chi tiết bất kỳ (chữ, hoa, câu đối, bloc lịch…) để chọn, kéo để di chuyển; phím mũi tên dịch từng px (giữ Shift: 10 px), Delete để ẩn. Cũng chọn được bằng cách bấm tên lớp ở mục 3.
+- Bảng sửa của chi tiết đang chọn: ẩn, sửa nội dung chữ (ví dụ đổi “2027” thành “2028”), đổi màu chữ, thay ảnh của lớp, đổi cỡ (20–300%), độ đậm, dịch ngang/dọc, đặt lại.
+- **Xoá vùng**: kéo khung quanh chỗ cần bỏ. “Lấp bằng màu xung quanh” dùng được cả cho ảnh JPG phẳng (ví dụ xoá header cũ in sẵn trong ảnh); “Xoá trong suốt” khoét trống trên lớp PSD.
+- **Hoàn tác** từng bước. Mọi chỉnh sửa được áp cho cả xuất JPG/PNG, file PSD và chế độ làm hàng loạt.
+
 Xuất: **JPG/PNG** đủ độ phân giải, **Ảnh nhẹ gửi Zalo** (1600 px), **PSD** giữ nguyên các lớp với chữ và logo đã thay, có thể bật chữ chìm “MAKET CHỜ DUYỆT”.
 
 Tab **Làm hàng loạt**: nạp file Excel/CSV (cột Tên công ty, Địa chỉ, Điện thoại, Email, Website, Logo) hoặc dán từ Excel, chọn nhiều file logo (tên file trùng tên công ty hoặc cột Logo thì tự ghép), bấm “Tạo maket” rồi tải cả loạt về một file .zip.
