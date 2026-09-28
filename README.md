@@ -70,7 +70,7 @@ Nâng cấp từ "Bảng mẫu brief ảnh AI": 20 mẫu ấn phẩm (post, stor
 
 - Chọn tỉ lệ (1:1, 4:5, 9:16, 16:9, 2:3, 4:3, 21:9) và số ảnh (1–4) mỗi lượt.
 - Chọn model: OpenAI mặc định GPT Image 2.5 Sunburst (có Flare, GPT Image 2, 1.5, 1 Mini); Gemini mặc định Nano Banana Pro (có Nano Banana 2, 2 Lite). Chọn độ nét 1K/2K/4K và chất lượng (OpenAI).
-- Đính kèm ảnh sản phẩm thật và ảnh tham chiếu (Gemini/OpenAI) để giữ đúng nhãn và phong cách.
+- Tải lên tối đa 4 ảnh sản phẩm thật (nhiều góc, tự thu nhỏ về 2048 px, nhớ cho lần sau) và ảnh tham chiếu; Gemini/OpenAI nhận các ảnh này để giữ đúng nhãn và phong cách.
 - **Sửa tiếp** một ảnh đã tạo: chỉ cần ghi điều muốn đổi.
 - Ảnh đã tạo lưu trong trình duyệt (tối đa 60 ảnh), tải về, dùng lại prompt.
 - Trong Claude: nút "Phân tích và viết prompt" cho Claude đọc ảnh tham chiếu và viết prompt theo brief.

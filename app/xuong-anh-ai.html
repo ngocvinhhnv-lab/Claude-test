@@ -109,10 +109,27 @@ aside p.hint{color:var(--muted);font-size:13px;margin:0 0 14px}
 .slot .th img{width:100%;height:100%;object-fit:cover}
 .slot .tx{display:flex;flex-direction:column;min-width:0}
 .slot .tx b{font-size:12.5px}
-.slot .tx span{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.slot .tx span{color:var(--muted);max-width:240px}
 .slot .x{border:0;background:none;cursor:pointer;color:var(--muted);font-size:18px;line-height:1;padding:4px}
 .slot .x:hover{color:var(--mag)}
 .slot.edit{border-color:var(--mag);border-style:solid;background:var(--mag-soft)}
+.prods{border:1.5px dashed var(--cyan);border-radius:6px;background:var(--cyan-soft);padding:10px;display:flex;flex-direction:column;gap:8px;max-width:100%}
+.prods.drag{box-shadow:0 0 0 3px var(--cyan);background:var(--sheet)}
+.prods-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.prods-top b{font-size:13px}
+.prods-top span{font-size:12px;color:var(--muted)}
+.prods-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pthumb{position:relative;width:64px;height:64px;border-radius:4px;overflow:hidden;background:var(--sheet);box-shadow:0 0 0 1px var(--line);flex:none}
+.pthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.pthumb button{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;border:0;background:var(--ink);color:var(--sheet);font-size:13px;line-height:20px;padding:0;cursor:pointer;opacity:.85}
+.pthumb button:hover{opacity:1;background:var(--mag)}
+.pup{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:64px;height:64px;border-radius:4px;border:1.5px dashed var(--cyan);background:var(--sheet);color:var(--cyan);font-size:11px;font-weight:600;cursor:pointer;text-align:center;line-height:1.2;padding:4px}
+.pup i{font-style:normal;font-size:20px;line-height:1}
+.pup.big{width:auto;height:auto;flex-direction:row;gap:8px;padding:9px 14px;font-size:13.5px;border-style:solid;background:var(--cyan);color:#fff;border-color:var(--cyan)}
+.pup.big i{font-size:18px}
+.pup:hover{filter:brightness(1.05)}
+.prods .pwarn{font-size:12px;color:var(--warn);margin:0}
+.panel .prods{margin:-4px 0 12px}
 .s-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .s-actions .btn.go{padding:10px 18px;font-size:14px}
 .s-msg{font-size:13px;color:var(--muted);margin:0}
@@ -289,6 +306,7 @@ dl.ana dd{margin:0;color:var(--muted)}
       <p class="hint">Để trống ô nào, prompt sẽ giữ chỗ trống màu hồng để bạn tự thay.</p>
       <div class="field"><label for="f-thuong_hieu">Thương hiệu</label><input id="f-thuong_hieu" data-key="thuong_hieu" placeholder="VD: AURA"></div>
       <div class="field"><label for="f-san_pham">Sản phẩm (mô tả ngoại hình)</label><textarea id="f-san_pham" data-key="san_pham" placeholder="VD: chai nước 500ml thân trong suốt, nắp xanh ngọc, nhãn tối giản"></textarea></div>
+      <div class="prods" data-prods aria-label="Ảnh sản phẩm thật"></div>
       <div class="field"><label for="f-mau_chu_dao">Màu chủ đạo</label><input id="f-mau_chu_dao" data-key="mau_chu_dao" placeholder="VD: xanh ngọc #1FB5A8 và cam san hô"></div>
       <div class="field"><label for="f-phong_cach">Phong cách</label><input id="f-phong_cach" data-key="phong_cach" placeholder="VD: hiện đại, tươi sáng"></div>
       <div class="field"><label for="f-thong_diep">Thông điệp / tiêu đề</label><input id="f-thong_diep" data-key="thong_diep" placeholder="VD: Nạp năng lượng mỗi ngày"></div>
@@ -334,12 +352,8 @@ dl.ana dd{margin:0;color:var(--muted)}
               <div class="tx"><b>Đang sửa tiếp ảnh này</b><span>Prompt chỉ cần ghi điều muốn đổi</span></div>
               <button class="x" type="button" id="base-x" aria-label="Thôi sửa, tạo ảnh mới">×</button>
             </div>
-            <div class="slot" id="slot-prod">
-              <div class="th" id="prod-th">+</div>
-              <div class="tx"><b>Ảnh sản phẩm thật</b><span id="prod-tx">Giữ đúng nhãn và hình dáng · <button class="btn" type="button" id="prod-pick" style="padding:0 6px;font-size:12px">Chọn ảnh</button></span></div>
-              <button class="x hidden" type="button" id="prod-x" aria-label="Bỏ ảnh sản phẩm">×</button>
-              <input type="file" id="prod-file" accept="image/jpeg,image/png,image/webp" hidden>
-            </div>
+            <div class="prods" data-prods aria-label="Ảnh sản phẩm thật" style="flex:1 1 320px"></div>
+            <input type="file" id="prod-file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple hidden>
             <div class="slot" id="slot-ref">
               <div class="th" id="refs-th">+</div>
               <div class="tx"><b>Ảnh tham chiếu</b><span id="refs-tx">Chưa có · import ở khung bên dưới</span></div>
@@ -393,7 +407,7 @@ dl.ana dd{margin:0;color:var(--muted)}
       </div>
       <div id="groups"></div>
       <div id="none" class="empty-state hidden">Không có loại hình nào khớp. Thử từ khoá khác hoặc chọn "Tất cả".</div>
-      <footer>Thông tin brief, API key và ảnh đã tạo chỉ lưu trong trình duyệt này. Prompt và ảnh đính kèm chỉ được gửi đi khi bạn bấm Tạo ảnh (tới Canva, Google hoặc OpenAI tuỳ công cụ đang chọn) hoặc Phân tích và viết prompt (tới Claude).</footer>
+      <footer>Thông tin brief, API key, ảnh sản phẩm và ảnh đã tạo chỉ lưu trong trình duyệt này. Prompt và ảnh đính kèm chỉ được gửi đi khi bạn bấm Tạo ảnh (tới Canva, Google hoặc OpenAI tuỳ công cụ đang chọn) hoặc Phân tích và viết prompt (tới Claude).</footer>
     </main>
   </div>
 </div>
@@ -610,7 +624,7 @@ const ENGINES={
     {id:"gpt-image-1",label:"GPT Image 1 (cũ)",hint:"Model cũ, chỉ 3 khổ: vuông, ngang 3:2, dọc 2:3."}],
     keyLabel:"OpenAI API key",keyUrl:"https://platform.openai.com/api-keys",host:"OpenAI"}
 };
-const S={engine:null,ratio:"1:1",src:null,dirty:false,base:null,product:null,busy:false,ctl:null};
+const S={engine:null,ratio:"1:1",src:null,dirty:false,base:null,products:[],busy:false,ctl:null};
 const avail={canva:{st:"wait",msg:"Đang kiểm tra kết nối Canva…"},gemini:{st:"ok"},openai:{st:"ok"}};
 let mcp=null, dl=null;
 
@@ -700,7 +714,9 @@ function autoLines(){
   const L=[], E=S.engine, imgs=E!=="canva";
   let n=0;
   if(S.base){ if(imgs){n++; L.push(`Chỉnh sửa ảnh đính kèm số ${n} theo yêu cầu trên, giữ nguyên bố cục, sản phẩm, chữ và mọi chi tiết không được nhắc tới.`)} else L.push("Chỉnh sửa ảnh gốc theo yêu cầu trên, giữ nguyên mọi chi tiết không được nhắc tới."); }
-  if(imgs&&S.product){n++; L.push(`Ảnh đính kèm số ${n} là sản phẩm thật: giữ đúng hình dáng, màu, nhãn và logo của sản phẩm.`)}
+  if(imgs&&S.products.length){const a=n+1; n+=S.products.length;
+    L.push(S.products.length===1?`Ảnh đính kèm số ${a} là sản phẩm thật: giữ đúng hình dáng, màu, nhãn và logo của sản phẩm.`
+      :`Ảnh đính kèm số ${a} đến ${n} là cùng một sản phẩm thật chụp ở nhiều góc: giữ đúng hình dáng, màu, nhãn và logo của sản phẩm.`)}
   if(imgs&&refBlob&&!S.base){n++; L.push(`Ảnh đính kèm số ${n} là ảnh tham chiếu: bám theo bố cục, màu sắc, ánh sáng và phong cách; không sao chép chữ, logo hay thương hiệu trong ảnh đó.`)}
   if(E==="openai"&&openaiLegacy(modelOf("openai"))) L.push(`Tỉ lệ khung ${S.ratio}.`);
   return L;
@@ -711,7 +727,7 @@ function renderAuto(){
   el.innerHTML=L.length?"Trang tự thêm khi gửi: "+L.map(x=>`<mark>${esc(x)}</mark>`).join(" "):"";
   // attachment hints per engine
   const canva=S.engine==="canva";
-  $("slot-prod").title=canva?"Canva trong trang này chỉ nhận prompt chữ, ảnh sản phẩm sẽ không được gửi kèm.":"";
+  renderProducts();
   $("refs-tx").textContent=refBlob?(canva?"Có · Canva không nhận ảnh đính kèm, chỉ dùng để phân tích":(S.base?"Có · tạm bỏ qua khi sửa tiếp":"Có · sẽ gửi kèm khi tạo")):"Chưa có · import ở khung bên dưới";
 }
 function fullPrompt(){return [$("s-prompt").value.trim(),...autoLines()].filter(Boolean).join(" ")}
@@ -719,29 +735,66 @@ $("s-copy").onclick=e=>copyText(fullPrompt(),e.currentTarget,"Copy prompt");
 
 function sMsg(t,kind){const m=$("s-msg");m.className="s-msg"+(kind?" "+kind:"");m.textContent=t}
 
-// product image slot
-const prod={file:$("prod-file")};
-$("prod-pick").onclick=()=>prod.file.click();
-prod.file.addEventListener("change",()=>{setProduct(prod.file.files[0]);prod.file.value=""});
-function setProduct(f){
-  if(!f||!/^image\/(jpeg|png|webp)$/.test(f.type)){sMsg("Ảnh sản phẩm cần là JPG, PNG hoặc WebP.","err");return}
-  if(S.product) URL.revokeObjectURL(S.product.url);
-  S.product={blob:f,url:URL.createObjectURL(f),name:f.name||"ảnh sản phẩm"};
-  $("prod-th").innerHTML=`<img src="${S.product.url}" alt="">`;
-  $("prod-tx").textContent=S.product.name;
-  $("slot-prod").classList.add("on"); $("prod-x").classList.remove("hidden");
+// ---------- ảnh sản phẩm thật (nhiều ảnh, lưu trong trình duyệt) ----------
+const MAX_PROD=4;
+const prodFile=$("prod-file");
+function renderProducts(){
+  const canva=S.engine==="canva", n=S.products.length, full=n>=MAX_PROD;
+  const thumbs=S.products.map(p=>`<div class="pthumb"><img src="${p.url}" alt="${esc(p.name)}" title="${esc(p.name)}"><button type="button" data-rm="${p.id}" aria-label="Bỏ ảnh ${esc(p.name)}">×</button></div>`).join("");
+  const add=n?(full?"":`<button type="button" class="pup" data-up><i>+</i>Thêm góc</button>`)
+             :`<button type="button" class="pup big" data-up><i>⤒</i>Tải ảnh sản phẩm lên</button>`;
+  const html=`<div class="prods-top"><b>Ảnh sản phẩm thật${n?` (${n}/${MAX_PROD})`:""}</b><span>${n?"Gửi kèm mỗi lần tạo để giữ đúng nhãn":"Kéo thả hoặc bấm tải, tối đa "+MAX_PROD+" ảnh (nhiều góc chụp)"}</span></div>
+    <div class="prods-row">${thumbs}${add}</div>
+    ${canva&&n?`<p class="pwarn">Canva trong Claude chưa nhận ảnh đính kèm. Chọn Gemini hoặc OpenAI để AI dùng ảnh sản phẩm này.</p>`:""}`;
+  document.querySelectorAll("[data-prods]").forEach(el=>{el.innerHTML=html});
+}
+// Ảnh chụp điện thoại thường rất lớn: thu về cạnh dài tối đa 2048 px để gửi nhanh, đỡ tốn
+async function shrink(f){
+  try{
+    const bmp=await createImageBitmap(f); const m=Math.max(bmp.width,bmp.height);
+    if(m<=2048&&f.size<=4*1024*1024&&/^image\/(jpeg|png|webp)$/.test(f.type)){bmp.close&&bmp.close();return f}
+    const k=Math.min(1,2048/m), c=document.createElement("canvas"); c.width=Math.round(bmp.width*k); c.height=Math.round(bmp.height*k);
+    c.getContext("2d").drawImage(bmp,0,0,c.width,c.height); bmp.close&&bmp.close();
+    const type=f.type==="image/png"?"image/png":"image/jpeg";
+    const b=await new Promise(r=>c.toBlob(r,type,0.92)); return b||f;
+  }catch(e){ if(/^image\/(jpeg|png|webp)$/.test(f.type)) return f; throw new Error("unsupported") }
+}
+async function addProducts(files){
+  files=[...files].filter(Boolean); if(!files.length) return;
+  const room=MAX_PROD-S.products.length;
+  if(room<=0){sMsg(`Tối đa ${MAX_PROD} ảnh sản phẩm. Bỏ bớt ảnh cũ rồi thêm.`,"err");return}
+  let bad=0, added=0;
+  for(const f of files.slice(0,room)){
+    if(!/^image\//.test(f.type)){bad++;continue}
+    let blob; try{blob=await shrink(f)}catch(e){bad++;continue}
+    const rec={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:f.name||"ảnh sản phẩm",blob,added:Date.now()};
+    rec.url=URL.createObjectURL(blob); S.products.push(rec); added++;
+    DB.put({id:rec.id,name:rec.name,blob:rec.blob,added:rec.added},"prod");
+  }
+  renderAuto();
+  const extra=files.length>room?` Chỉ nhận ${room} ảnh vì tối đa ${MAX_PROD}.`:"";
+  if(bad) sMsg(`Có ${bad} file không đọc được. Dùng ảnh JPG, PNG hoặc WebP.`+extra,"err");
+  else if(added) sMsg(`Đã thêm ${added} ảnh sản phẩm.`+(S.engine==="canva"?" Canva chưa nhận ảnh đính kèm, chọn Gemini hoặc OpenAI để dùng ảnh này.":" Ảnh sẽ được gửi kèm mỗi lần tạo.")+extra,S.engine==="canva"?"":"ok");
+}
+function removeProduct(id){
+  const p=S.products.find(x=>x.id===id); if(!p) return;
+  URL.revokeObjectURL(p.url); S.products=S.products.filter(x=>x.id!==id); DB.del(id,"prod"); renderAuto();
+}
+async function loadProducts(){
+  const all=await DB.all("prod"); if(!all||!all.length) return;
+  S.products=all.sort((a,b)=>a.added-b.added).slice(0,MAX_PROD).map(r=>({...r,url:URL.createObjectURL(r.blob)}));
   renderAuto();
 }
-$("prod-x").onclick=()=>{
-  if(S.product) URL.revokeObjectURL(S.product.url); S.product=null;
-  $("prod-th").textContent="+";
-  $("prod-tx").innerHTML=`Giữ đúng nhãn và hình dáng · <button class="btn" type="button" id="prod-pick" style="padding:0 6px;font-size:12px">Chọn ảnh</button>`;
-  $("prod-pick").onclick=()=>prod.file.click();
-  $("slot-prod").classList.remove("on"); $("prod-x").classList.add("hidden"); renderAuto();
-};
-["dragenter","dragover"].forEach(ev=>$("slot-prod").addEventListener(ev,e=>{e.preventDefault();e.stopPropagation();$("slot-prod").classList.add("drag")}));
-["dragleave","drop"].forEach(ev=>$("slot-prod").addEventListener(ev,e=>{e.preventDefault();e.stopPropagation();$("slot-prod").classList.remove("drag")}));
-$("slot-prod").addEventListener("drop",e=>{const f=e.dataTransfer.files[0]; if(f) setProduct(f)});
+prodFile.addEventListener("change",()=>{addProducts(prodFile.files);prodFile.value=""});
+document.querySelectorAll("[data-prods]").forEach(el=>{
+  el.addEventListener("click",e=>{
+    const rm=e.target.closest("[data-rm]"); if(rm){removeProduct(rm.dataset.rm);return}
+    if(e.target.closest("[data-up]")) prodFile.click();
+  });
+  ["dragenter","dragover"].forEach(ev=>el.addEventListener(ev,e=>{e.preventDefault();e.stopPropagation();el.classList.add("drag")}));
+  ["dragleave","drop"].forEach(ev=>el.addEventListener(ev,e=>{e.preventDefault();e.stopPropagation();el.classList.remove("drag")}));
+  el.addEventListener("drop",e=>addProducts(e.dataTransfer.files));
+});
 
 // edit base
 function setBase(rec){
@@ -956,9 +1009,12 @@ function errText(e){
 
 /* ---------- history (IndexedDB) ---------- */
 const DB={p:null,
-  open(){ if(this.p) return this.p; this.p=new Promise(res=>{try{const r=indexedDB.open("xuong-anh-ai",1);r.onupgradeneeded=()=>r.result.createObjectStore("img",{keyPath:"id"});r.onsuccess=()=>res(r.result);r.onerror=()=>res(null);r.onblocked=()=>res(null)}catch(e){res(null)}}); return this.p},
-  async tx(mode,fn){const db=await this.open(); if(!db) return null; return new Promise(res=>{try{const t=db.transaction("img",mode);const st=t.objectStore("img");const r=fn(st);t.oncomplete=()=>res(r&&r.result);t.onerror=()=>res(null)}catch(e){res(null)}})},
-  all(){return this.tx("readonly",s=>s.getAll())}, put(v){return this.tx("readwrite",s=>s.put(v))}, del(id){return this.tx("readwrite",s=>s.delete(id))}, clear(){return this.tx("readwrite",s=>s.clear())}
+  open(){ if(this.p) return this.p; this.p=new Promise(res=>{try{const r=indexedDB.open("xuong-anh-ai",2);
+    r.onupgradeneeded=()=>{const db=r.result; ["img","prod"].forEach(n=>{if(!db.objectStoreNames.contains(n)) db.createObjectStore(n,{keyPath:"id"})})};
+    r.onsuccess=()=>res(r.result);r.onerror=()=>res(null);r.onblocked=()=>res(null)}catch(e){res(null)}}); return this.p},
+  async tx(store,mode,fn){const db=await this.open(); if(!db) return null; return new Promise(res=>{try{const t=db.transaction(store,mode);const st=t.objectStore(store);const r=fn(st);t.oncomplete=()=>res(r&&r.result);t.onerror=()=>res(null)}catch(e){res(null)}})},
+  all(store="img"){return this.tx(store,"readonly",s=>s.getAll())}, put(v,store="img"){return this.tx(store,"readwrite",s=>s.put(v))},
+  del(id,store="img"){return this.tx(store,"readwrite",s=>s.delete(id))}, clear(store="img"){return this.tx(store,"readwrite",s=>s.clear())}
 };
 const MAX_KEEP=60;
 let HIST=[]; const URLS=new Map(); const fresh=new Set();
@@ -1067,7 +1123,7 @@ async function generate(){
   if(/\[(Thương hiệu|Sản phẩm|Màu chủ đạo|Phong cách|Thông điệp)\]/.test(userPrompt)) sMsg("Prompt còn chỗ trống trong ngoặc vuông, AI sẽ tự đoán phần đó. Điền brief bên trái để chính xác hơn.");
   const n=Number($("s-count").value)||1, ratio=S.ratio, prompt=fullPrompt();
   const label=S.base?("Sửa từ "+S.base.label).slice(0,60):(S.src?S.src.name:(S.srcLabel||"Ảnh tự viết prompt"));
-  const imgs=[]; if(eng!=="canva"){ if(S.base&&S.base.blob) imgs.push(S.base.blob); if(S.product) imgs.push(S.product.blob); if(refBlob&&!S.base) imgs.push(refBlob); }
+  const imgs=[]; if(eng!=="canva"){ if(S.base&&S.base.blob) imgs.push(S.base.blob); S.products.forEach(p=>imgs.push(p.blob)); if(refBlob&&!S.base) imgs.push(refBlob); }
   const baseRef=S.base;
   S.busy=true; S.ctl=new AbortController(); $("s-go").disabled=true; $("s-stop").classList.remove("hidden");
   const t0=Date.now(); const ps=Array.from({length:n},()=>({ratio,label,engine:eng,t0})); pending.unshift(...ps); renderResults();
@@ -1235,7 +1291,7 @@ $("clear").onclick=()=>setAll({});
   const first=TYPES[0];
   S.src=first; S.ratio=first.ratio; $("s-prompt").value=fillBody(first);
   renderRatio(); renderSrc(); renderEngines(); renderResults(); syncRefSlot();
-  loadHistory();
+  loadHistory(); loadProducts();
 })();
 
 (async()=>{
