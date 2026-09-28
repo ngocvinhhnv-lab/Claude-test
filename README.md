@@ -73,7 +73,8 @@ Nâng cấp từ "Bảng mẫu brief ảnh AI": 20 mẫu ấn phẩm (post, stor
 - Tải lên tối đa 4 ảnh sản phẩm thật (nhiều góc, tự thu nhỏ về 2048 px, nhớ cho lần sau) và ảnh tham chiếu; Gemini/OpenAI nhận các ảnh này để giữ đúng nhãn và phong cách.
 - Tải ảnh sản phẩm lên là AI (Claude trong claude.ai, hoặc Gemini/OpenAI bằng key của bạn) tự đọc ảnh, chỉ chọn trong thư viện 3 mẫu hợp nhất, chỉnh prompt của các mẫu đó theo sản phẩm (vẫn giữ chỗ {…} để sửa brief sau), tự điền brief và đưa mẫu hợp nhất lên xưởng. Có Hoàn tác.
 - **Làm giống ảnh mẫu**: tải hoặc dán một ảnh mẫu vào xưởng, hệ thống tự phân tích, viết prompt theo ảnh (giữ chỗ {…} cho brief), đặt đúng tỉ lệ, có Hoàn tác. Chọn mức giống: gần hết, bố cục, hoặc màu và ánh sáng. Lưu ảnh mẫu thành "Mẫu của tôi" trong thư viện; khi dùng lại, ảnh mẫu được gửi kèm tự động.
-- **Sửa tiếp** một ảnh đã tạo: chỉ cần ghi điều muốn đổi.
+- **Chỉnh sửa sau khi tạo**: khoanh tròn/khung/vẽ tay vùng cần sửa kèm yêu cầu cho AI (Gemini nhận ảnh gốc + ảnh đánh dấu, OpenAI nhận thêm mask, Canva nhận mô tả vị trí), thêm lớp chữ tiếng Việt chuẩn dấu với font, màu, viền, bóng, nền và mẫu có sẵn, chèn logo, cắt ảnh, hoàn tác/làm lại, xem trước/sau. Lưu thành ảnh mới, giữ ảnh gốc; lớp chữ sửa lại được.
+- **Chuẩn bị**: phác bố cục bằng khung có nhãn (sản phẩm, tiêu đề, logo, nút mua…) gửi kèm dạng sơ đồ và mô tả vị trí; cắt ảnh sản phẩm và ảnh mẫu trước khi tạo.
 - Ảnh đã tạo lưu trong trình duyệt (tối đa 60 ảnh), tải về, dùng lại prompt.
 - Trong Claude: nút "Phân tích và viết prompt" cho Claude đọc ảnh tham chiếu và viết prompt theo brief.
 
