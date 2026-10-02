@@ -68,6 +68,7 @@ Nâng cấp từ "Bảng mẫu brief ảnh AI": 20 mẫu ấn phẩm (post, stor
 | Gemini (Nano Banana) | Mở file trên máy bằng trình duyệt | API key Google AI Studio |
 | OpenAI (GPT Image) | Mở file trên máy bằng trình duyệt | API key OpenAI |
 
+- **Tab "Ghép sản phẩm" (mở mặc định)**, 3 bước cho ảnh sàn TMĐT và banner: (1) tải ảnh sản phẩm, app tự tách nền trắng/đơn sắc; (2) chọn kiểu nền (studio trắng, màu thương hiệu, Tết, bàn gỗ, phòng khách, sale, thiên nhiên, sang trọng hoặc tự mô tả) và khổ, rồi để Gemini/OpenAI chỉ vẽ nền (chừa trống chỗ sản phẩm), copy prompt sang gói tháng, hoặc tải ảnh nền có sẵn lên để ghép miễn phí; (3) ảnh ghép có sản phẩm là lớp ảnh thật kéo, đổi cỡ được trong trình chỉnh sửa. Hai tab "Tạo ảnh mới" và "Sửa ảnh có sẵn" giữ nguyên tính năng cũ.
 - Chọn tỉ lệ (1:1, 4:5, 9:16, 16:9, 2:3, 4:3, 21:9) và số ảnh (1–4) mỗi lượt.
 - Chọn model: OpenAI mặc định GPT Image 2.5 Sunburst (có Flare, GPT Image 2, 1.5, 1 Mini); Gemini mặc định Nano Banana Pro (có Nano Banana 2, 2 Lite). Chọn độ nét 1K/2K/4K và chất lượng (OpenAI).
 - **Giữ sản phẩm 100%**: tải lên tối đa 4 ảnh sản phẩm thật; ảnh chính được tách nền trắng/đơn sắc ngay trên máy (có thanh độ nhạy) và dán nguyên vào ảnh tạo ra, AI chỉ vẽ nền và chừa trống chỗ sản phẩm (theo khung "Sản phẩm" của Bố cục phác hoặc khung bố cục của mẫu). Sản phẩm là một lớp kéo, đổi cỡ được trong trình chỉnh sửa; ảnh tạo ở ngoài thì dùng "+ Chèn sản phẩm thật".

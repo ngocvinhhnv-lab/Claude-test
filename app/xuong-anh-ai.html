@@ -181,12 +181,27 @@ table.pc input,.pc-fx input{width:72px;background:var(--sheet);border:1px solid 
 .x-file b{display:block;font-size:12.5px}
 .x-file:hover{border-color:var(--ok)}
 .ed-ext{display:flex;flex-direction:column;gap:6px;padding:10px;border-radius:6px;background:var(--ok-soft);font-size:12.5px}
+.layout.solo{grid-template-columns:minmax(0,1fr)}
+.layout.solo>aside.panel{display:none}
+.cp-steps{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:16px;align-items:start}
+.cp-step{display:flex;flex-direction:column;gap:10px;min-width:0}
+.cp-step h3,.results-head h3{display:flex;align-items:center;gap:8px}
+.cp-step h3{margin:0;font-family:var(--ff-d);font-size:17px}
+.cp-step h3 i,.cp-n{font-style:normal;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--mag);color:#fff;font-size:13px;font-family:var(--ff)}
+#cp-extra{width:100%;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:8px 10px;font-size:13.5px;resize:vertical}
+.cp-pr summary{cursor:pointer;font-size:12.5px;font-weight:600;color:var(--muted)}
+.cp-pr p{font-size:12.5px;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:8px 10px;margin:6px 0}
+.cp-or{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-top:10px;border-top:1px dashed var(--line);font-size:13px;color:var(--muted)}
+.s-msg:empty{display:none}
+@media (max-width:860px){.cp-steps{grid-template-columns:minmax(0,1fr)}}
 .tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .tabs [role=tab]{display:inline-flex;align-items:center;gap:8px;border:1px solid transparent;border-bottom:0;background:none;border-radius:6px 6px 0 0;padding:10px 16px;font-family:var(--ff-d);font-size:16px;font-weight:700;color:var(--muted);cursor:pointer;margin-bottom:-1px}
 .tabs [role=tab] i{font-style:normal;color:var(--mag)}
 .tabs [role=tab][aria-selected="true"]{background:var(--sheet);border-color:var(--line);color:var(--ink)}
 .tabs [role=tab]:hover{color:var(--ink)}
 .edit-eng{display:flex;align-items:center;gap:6px}
+.edit-eng .s-label{white-space:nowrap}
+@media (max-width:520px){.edit-eng{flex-direction:column;align-items:stretch;width:100%}}
 .edit-eng select{background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:6px 8px;font-size:13px}
 .dropzone{border:2px dashed var(--mag);border-radius:8px;background:var(--mag-soft);padding:28px 18px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
 .dropzone span{font-size:13px;color:var(--muted)}
@@ -466,9 +481,49 @@ dl.ana dd{margin:0;color:var(--muted)}
 
     <main>
       <nav class="tabs" role="tablist" aria-label="Chức năng">
-        <button type="button" role="tab" id="tab-new" data-tab="new" aria-selected="true" aria-controls="pane-new"><i>✦</i>Tạo ảnh mới</button>
+        <button type="button" role="tab" id="tab-compose" data-tab="compose" aria-selected="true" aria-controls="pane-compose"><i>◧</i>Ghép sản phẩm</button>
+        <button type="button" role="tab" id="tab-new" data-tab="new" aria-selected="false" aria-controls="pane-new"><i>✦</i>Tạo ảnh mới</button>
         <button type="button" role="tab" id="tab-edit" data-tab="edit" aria-selected="false" aria-controls="pane-edit"><i>✎</i>Sửa ảnh có sẵn</button>
       </nav>
+
+      <section class="studio cp-pane" id="pane-compose" role="tabpanel" aria-labelledby="tab-compose">
+        <div class="studio-head">
+          <div>
+            <h2>Ghép sản phẩm thật vào nền mới</h2>
+            <p>Sản phẩm giữ nguyên 100%: app tách nền và dán ảnh thật của bạn, AI chỉ vẽ nền. Dùng làm ảnh bìa sàn, banner, ảnh quảng cáo.</p>
+          </div>
+          <label class="edit-eng"><span class="s-label">Vẽ nền bằng</span><select id="cp-eng"></select></label>
+        </div>
+        <div class="studio-body">
+          <div class="cp-steps">
+            <div class="cp-step">
+              <h3><i>1</i>Ảnh sản phẩm</h3>
+              <div class="prods" data-prods aria-label="Ảnh sản phẩm thật"></div>
+            </div>
+            <div class="cp-step">
+              <h3><i>2</i>Chọn nền</h3>
+              <div class="sug-chips" id="cp-themes" role="group" aria-label="Kiểu nền"></div>
+              <textarea id="cp-extra" rows="2" aria-label="Mô tả thêm cho nền"></textarea>
+              <div class="s-row">
+                <div class="ratios" role="group" aria-label="Khổ ảnh"><span class="s-label">Khổ</span><span id="cp-ratios" style="display:contents"></span></div>
+                <label class="count"><span class="s-label">Số ảnh</span><select id="cp-count"><option>1</option><option>2</option><option>3</option><option>4</option></select></label>
+              </div>
+              <details class="cp-pr"><summary>Xem prompt gửi AI</summary><p id="cp-prompt"></p><button class="btn" type="button" id="cp-copy" style="font-size:12px;padding:3px 9px">Copy prompt</button></details>
+              <div class="s-actions">
+                <button class="btn go" type="button" id="cp-go">Vẽ nền &amp; ghép sản phẩm</button>
+                <a class="btn go hidden" id="cp-ext" role="button">Copy prompt &amp; mở ChatGPT</a>
+                <button class="btn hidden" type="button" id="cp-stop">Dừng</button>
+                <span class="s-cost" id="cp-cost"></span>
+              </div>
+              <p class="s-msg" id="cp-eng-msg"></p>
+              <div class="cp-or"><span>Đã có ảnh nền (tự chụp, tạo ở ChatGPT…)?</span><button class="btn" type="button" id="cp-bg">Tải ảnh nền lên để ghép</button><input type="file" id="cp-bg-file" accept="image/jpeg,image/png,image/webp" hidden></div>
+              <p class="s-msg" id="cp-msg" role="status" aria-live="polite"></p>
+            </div>
+          </div>
+        </div>
+        <div class="results-head"><h3><i class="cp-n">3</i>Ảnh đã ghép<span id="cp-count-lbl"></span></h3><span class="sug-note">Bấm Chỉnh sửa để kéo, đổi cỡ sản phẩm, thêm chữ, logo, rồi tải về</span></div>
+        <div class="results picklist" id="cp-list"></div>
+      </section>
 
       <section class="studio edit-pane" id="pane-edit" role="tabpanel" aria-labelledby="tab-edit" hidden>
         <div class="studio-head">
@@ -498,7 +553,7 @@ dl.ana dd{margin:0;color:var(--muted)}
         <div class="results picklist" id="edit-list"></div>
       </section>
 
-      <div id="pane-new" role="tabpanel" aria-labelledby="tab-new">
+      <div id="pane-new" role="tabpanel" aria-labelledby="tab-new" hidden>
       <!-- Studio -->
       <section class="studio" id="studio" aria-label="Xưởng tạo ảnh">
         <div class="studio-head">
@@ -870,7 +925,7 @@ function renderEngines(){
   renderAuto();
 }
 function keyOf(k){return store.get("xa-key-"+k)||""}
-function setEngine(k){S.engine=k;store.set("xa-engine",k);
+function setEngine(k){S.engine=k;store.set("xa-engine",k); if(typeof TAB!=="undefined"&&TAB==="compose") setTimeout(renderCp);
   if(k==="ext"&&!store.get("brief-tool")){tool="gpt"; store.set("brief-tool","gpt"); $("f-tool").value="gpt"; renderTips(); cards.forEach(c=>c._refresh())}
   renderEngines(); if(typeof TAB!=="undefined"&&TAB==="edit") renderEditEng()}
 $("k-key").addEventListener("input",e=>{const v=e.target.value.trim(); v?store.set("xa-key-"+S.engine,v):store.del("xa-key-"+S.engine); renderEngines(); $("k-key").focus()});
@@ -1027,13 +1082,13 @@ function pasteLine(){
   return `Không vẽ sản phẩm: chừa trống vùng ${where(b.x,b.y,b.w,b.h,1,1)} để ghép ảnh sản phẩm thật vào sau; ở chỗ đó chỉ vẽ mặt đỡ hoặc nền phù hợp, không đặt chữ hay vật khác đè lên.${refBlob?" Nếu ảnh mẫu có sản phẩm thì bỏ sản phẩm đó ra, để trống vị trí đó.":""}`;
 }
 function placeIn(box,W,H,cw,ch){const bw=box.w*W,bh=box.h*H,k=Math.min(bw/cw,bh/ch),w=cw*k,h=ch*k; return {x:box.x*W+(bw-w)/2,y:box.y*H+bh-h,w,h}}
-async function productLayer(W,H){
+async function productLayer(W,H,box){
   const p=mainProduct(); if(!p) return null; const c=await ensureCut(p), img=await blobToImg(c.blob);
-  return {type:"logo",name:"Sản phẩm (ảnh thật)",product:true,shadow:c.status!=="all",blob:c.blob,img,...placeIn(productBox(),W,H,c.w,c.h)};
+  return {type:"logo",name:"Sản phẩm (ảnh thật)",product:true,shadow:c.status!=="all",blob:c.blob,img,...placeIn(box||productBox(),W,H,c.w,c.h)};
 }
-async function compositeWithProduct(bgBlob){
+async function compositeWithProduct(bgBlob,box){
   const bg=await blobToImg(bgBlob), W=bg.naturalWidth, H=bg.naturalHeight;
-  const L=await productLayer(W,H); if(!L) return null;
+  const L=await productLayer(W,H,box); if(!L) return null;
   const c=mkCanvas(W,H), g=c.getContext("2d"); g.drawImage(bg,0,0,W,H); drawObj(g,L,Math.max(W,H)/1000,{guides:false});
   const {img,...layer}=L; return {blob:await canvasBlob(c),editBase:bgBlob,layers:[layer]};
 }
@@ -1363,7 +1418,7 @@ function renderResults(){
   if(!pending.length&&!HIST.length){
     box.innerHTML=`<div class="empty-shots"><div class="mini" aria-hidden="true">${["1:1","4:5","9:16"].map(r=>`<i data-r="${r}" style="aspect-ratio:${r.replace(":"," / ")}"></i>`).join("")}</div><div><b>Chưa có ảnh nào</b><span>Bấm Tạo ảnh ở trên, hoặc chọn một mẫu trong thư viện bên dưới. Ảnh tạo xong hiện ở đây và được giữ lại trong trình duyệt này.</span></div></div>`;
   }
-  $("r-count").textContent=HIST.length?`${HIST.length} ảnh`:""; renderSpend();
+  $("r-count").textContent=HIST.length?`${HIST.length} ảnh`:""; renderSpend(); if(typeof TAB!=="undefined"&&TAB==="compose") renderCpList();
   renderEditList();
   $("r-clear").classList.toggle("hidden",!HIST.length);
 }
@@ -1638,7 +1693,7 @@ document.addEventListener("paste",e=>{
   if(e.target&&(e.target.tagName==="TEXTAREA"||e.target.tagName==="INPUT")&&!(e.clipboardData?.items&&[...e.clipboardData.items].some(x=>x.type.startsWith("image/")))) return;
   const it=[...(e.clipboardData?.items||[])].find(x=>x.type.startsWith("image/")); if(!it) return; e.preventDefault();
   if(ED.open) return;
-  if(TAB==="edit") uploadForEdit([it.getAsFile()]); else loadRefFile(it.getAsFile());
+  if(TAB==="edit") uploadForEdit([it.getAsFile()]); else if(TAB==="compose") addProducts([it.getAsFile()]); else loadRefFile(it.getAsFile());
 });
 async function restoreRef(){
   const all=await DB.all("misc"); const r=(all||[]).find(x=>x.id==="ref"); if(!r||!r.blob) return;
@@ -2188,7 +2243,7 @@ side.addEventListener("click",async e=>{
   const a=b.dataset.ed; if(!a) return;
   if(a==="addtext"){pushUndo(); ED.objs.push(newText({x:ED.W/2,y:ED.H*.08})); ED.sel=ED.objs.length-1; setEdTool("select"); renderEdSide(); edDraw(); const ta=side.querySelector('[data-p="text"]'); if(ta){ta.focus();ta.select()}}
   if(a==="addlogo") $("ed-logo").click();
-  if(a==="addprod"){const L=await productLayer(ED.W,ED.H); if(L){pushUndo(); ED.objs.push(L); ED.sel=ED.objs.length-1; setEdTool("select"); renderEdSide(); edDraw(); edStatus("Đã chèn ảnh sản phẩm thật. Kéo để di chuyển, kéo ô vuông góc dưới để đổi cỡ.","ok")}}
+  if(a==="addprod"){const L=await productLayer(ED.W,ED.H,ED.rec&&ED.rec.compose?cpBox():null); if(L){pushUndo(); ED.objs.push(L); ED.sel=ED.objs.length-1; setEdTool("select"); renderEdSide(); edDraw(); edStatus("Đã chèn ảnh sản phẩm thật. Kéo để di chuyển, kéo ô vuông góc dưới để đổi cỡ.","ok")}}
   if(a==="dup"){const o=ED.objs[ED.sel]; if(!o) return; pushUndo(); ED.objs.push({...o,_bb:undefined,x:o.x+ED.W*.03,y:o.y+ED.H*.03}); ED.sel=ED.objs.length-1; renderEdSide(); edDraw()}
   if(a==="delobj"&&ED.sel>=0){pushUndo(); ED.objs.splice(ED.sel,1); ED.sel=-1; renderEdSide(); edDraw()}
   if(a==="nocrop"){ED.crop=null; renderEdSide(); edDraw()}
@@ -2478,6 +2533,7 @@ async function renderExt(){
   $("x-files").innerHTML=EXT_FILES.length?(mj?`<p class="sug-note">Midjourney không đọc được ảnh đính kèm theo số thứ tự như prompt. Muốn giữ sản phẩm thật, tải ảnh lên Midjourney rồi dùng làm ảnh tham chiếu.</p>`:"")+
     `<div class="x-list">${EXT_FILES.map((f,k)=>`<button type="button" class="x-file" data-xf="${k}" title="Tải ${esc(f.name)}"><img src="${URL.createObjectURL(f.blob)}" alt=""><span><b>Ảnh ${f.n}</b>${esc(f.what)}</span></button>`).join("")}</div>
     <button class="btn" type="button" id="x-all">Tải cả ${EXT_FILES.length} ảnh đính kèm</button>`
+    :pasteMode()?`<p class="sug-note">Không cần đính kèm ảnh sản phẩm: prompt chỉ nhờ vẽ nền. Tạo xong, tải ảnh nền về rồi vào tab <b>Ghép sản phẩm</b>, bấm "Tải ảnh nền lên để ghép" để dán ảnh thật vào.</p>`
     :`<p class="sug-note">Không có ảnh cần đính kèm. Muốn giữ đúng sản phẩm thật, tải ảnh sản phẩm lên ở khung bên dưới.</p>`;
 }
 $("x-target").addEventListener("change",e=>{tool=e.target.value; store.set("brief-tool",tool); $("f-tool").value=tool; renderTips(); cards.forEach(c=>c._refresh()); renderExt()});
@@ -2494,17 +2550,145 @@ $("ext-cfg").addEventListener("click",async e=>{
   if(e.target.id==="x-back"){setTab("edit"); $("edit-file").click()}
 });
 
+/* ---------- Tab: Ghép sản phẩm (ảnh thật 100% + nền AI vẽ) ---------- */
+const CP_THEMES=[
+  {id:"white",name:"Studio nền trắng",p:"nền studio trắng sạch, sàn trắng liền mạch, ánh sáng studio mềm"},
+  {id:"brand",name:"Studio màu thương hiệu",p:"nền studio trơn màu {mau_chu_dao}, bục tròn thấp ở giữa, ánh sáng mềm"},
+  {id:"tet",name:"Tết · bục đỏ hoa mai",p:"bục tròn đỏ, cành hoa mai vàng hai bên, đèn lồng đỏ mờ phía sau, không khí Tết ấm áp"},
+  {id:"wood",name:"Bàn gỗ cạnh cửa sổ",p:"mặt bàn gỗ sáng màu cạnh cửa sổ, nắng sớm chiếu xiên, cây xanh mờ phía sau"},
+  {id:"living",name:"Phòng khách ấm cúng",p:"góc phòng khách tường màu kem, kệ gỗ, ánh sáng vàng ấm, hậu cảnh xoá phông nhẹ"},
+  {id:"sale",name:"Sale nổi bật",p:"nền đỏ cam rực rỡ, khối hình học 3D, ruy băng và pháo giấy, tương phản cao"},
+  {id:"nature",name:"Thiên nhiên",p:"bệ đá phẳng giữa lá cây xanh tươi, nắng nhẹ, cảm giác trong lành"},
+  {id:"lux",name:"Sang trọng tối",p:"nền đen bóng, bục đá cẩm thạch, ánh sáng viền vàng sang trọng"},
+  {id:"custom",name:"Tự mô tả",p:""}
+];
+const CP={theme:store.get("xa-cp-theme")||"white",extra:store.get("xa-cp-extra")||"",ratio:store.get("xa-cp-ratio")||"1:1",busy:false,ctl:null,t0:0,pending:0};
+const CP_BOX={x:.22,y:.16,w:.56,h:.7};
+function cpBox(){const lay=S.layout&&S.layout.boxes.find(b=>b.label==="Sản phẩm"); return lay?{x:lay.x,y:lay.y,w:lay.w,h:lay.h}:CP_BOX}
+function cpPrompt(){
+  const t=CP_THEMES.find(x=>x.id===CP.theme)||CP_THEMES[0], b=cpBox();
+  const scene=(t.p.replace(/\{mau_chu_dao\}/g,(vals.mau_chu_dao||"").trim()||"trung tính")+(CP.extra.trim()?(t.p?", ":"")+CP.extra.trim():"")).trim()||"nền studio trơn, ánh sáng mềm";
+  return `Ảnh nền chụp sản phẩm tỉ lệ ${CP.ratio}, chất lượng ảnh thương mại điện tử: ${scene}. Không có sản phẩm, không có chữ, không có logo. Chừa trống vùng ${where(b.x,b.y,b.w,b.h,1,1)} để ghép ảnh sản phẩm thật vào sau; ở chỗ đó chỉ có mặt đỡ hoặc nền phù hợp, ánh sáng tự nhiên.`;
+}
+function renderCp(){
+  if(!$("pane-compose")) return;
+  $("cp-themes").innerHTML=CP_THEMES.map(t=>`<button type="button" class="sug-chip" data-th="${t.id}" aria-pressed="${t.id===CP.theme}">${esc(t.name)}</button>`).join("");
+  $("cp-ratios").innerHTML=["1:1","4:5","3:4","16:9","9:16"].map(r=>`<button type="button" class="rchip" data-cr="${r}" aria-pressed="${r===CP.ratio}">${r}</button>`).join("");
+  $("cp-extra").placeholder=CP.theme==="custom"?"Mô tả nền bạn muốn, VD: nền hồng pastel, mây trắng, bục tròn trắng":"Thêm chi tiết cho nền (tuỳ chọn), VD: thêm vài quả quýt, tông ấm hơn";
+  $("cp-prompt").textContent=cpPrompt();
+  // công cụ AI
+  const sel=$("cp-eng");
+  sel.innerHTML=Object.entries(ENGINES).map(([k,e])=>`<option value="${k}" ${k===S.engine?"selected":""} ${avail[k].st==="no"?"disabled":""}>${esc(e.name)}${avail[k].st==="no"?" (không dùng được ở đây)":k!=="canva"&&k!=="ext"&&!keyOf(k)?" (chưa có key)":""}</option>`).join("");
+  const n=Number($("cp-count").value)||1, ext=S.engine==="ext";
+  $("cp-cost").textContent=ext?"0 đ · tính vào gói tháng":S.engine==="canva"?"Trừ vào lượt Canva":(()=>{const one=estOne(S.engine,CP.ratio); return n>1?`≈ ${vnd(one*n)} (${n} × ${vnd(one)})`:`≈ ${vnd(one)}`})();
+  $("cp-go").classList.toggle("hidden",ext); $("cp-ext").classList.toggle("hidden",!ext);
+  const tgt=EXT_TARGETS[tool]||EXT_TARGETS.gpt;
+  if(ext){$("cp-ext").textContent=tgt.url?`Copy prompt & mở ${tgt.name}`:"Copy prompt"; if(tgt.url){$("cp-ext").href=tgt.url;$("cp-ext").target="_blank";$("cp-ext").rel="noopener"} else $("cp-ext").removeAttribute("href")}
+  const a=avail[S.engine], m=$("cp-eng-msg");
+  if(ext){m.className="s-msg"; m.textContent=`Bấm "Copy prompt & mở ${tgt.name}", dán vào để tạo ảnh nền, tải ảnh nền về rồi bấm "Tải ảnh nền lên để ghép". Không tốn tiền theo ảnh.`}
+  else if(a.st==="no"){m.className="s-msg err"; m.textContent=a.msg}
+  else if(S.engine!=="canva"&&!keyOf(S.engine)){m.className="s-msg err"; m.innerHTML=`Chưa có ${esc(ENGINES[S.engine].keyLabel)}. Dán key ở tab <button type="button" class="btn" data-goto="new" style="padding:1px 8px;font-size:12px">Tạo ảnh mới</button>, hoặc chọn "Dùng gói tháng".`}
+  else {m.className="s-msg"; m.textContent=""}
+  $("cp-go").disabled=CP.busy||a.st==="no";
+  renderCpList();
+}
+function cpMsg(t,kind){const m=$("cp-msg"); m.className="s-msg"+(kind?" "+kind:""); m.textContent=t}
+async function cpCompose(bgBlob,meta){
+  const c=await compositeWithProduct(bgBlob,cpBox()); const now=Date.now()+Math.random();
+  const t=CP_THEMES.find(x=>x.id===CP.theme)||CP_THEMES[0];
+  const ratio=meta.ratio||CP.ratio;
+  return {id:Math.floor(now).toString(36)+"-cp-"+Math.random().toString(36).slice(2,6),created:Math.floor(now),compose:true,
+    blob:c?c.blob:bgBlob,editBase:c?c.editBase:null,layers:c?c.layers:null,prompt:meta.prompt||"",userPrompt:meta.prompt||"",ratio,engine:meta.engine,model:meta.model||"",
+    label:("Ghép · "+(mainProduct()?.name||"sản phẩm").replace(/\.[a-z0-9]+$/i,"")+" · "+(meta.bgName||t.name)).slice(0,70),cost:meta.cost||null,mediaId:meta.mediaId||null,link:meta.link||null};
+}
+async function cpGenerate(){
+  if(CP.busy) return;
+  if(!mainProduct()){cpMsg("Tải ảnh sản phẩm lên ở bước 1 trước đã.","err"); return}
+  if(CP.theme==="custom"&&!CP.extra.trim()){cpMsg("Mô tả nền bạn muốn ở ô bên dưới trước đã.","err"); $("cp-extra").focus(); return}
+  const eng=S.engine, a=avail[eng];
+  if(a.st==="no"){cpMsg(a.msg,"err");return}
+  if(eng!=="canva"&&!keyOf(eng)){cpMsg(`Chưa có ${ENGINES[eng].keyLabel}. Dán key ở tab Tạo ảnh mới.`,"err");return}
+  const n=Number($("cp-count").value)||1, ratio=CP.ratio, prompt=cpPrompt();
+  CP.busy=true; CP.ctl=new AbortController(); CP.t0=Date.now(); CP.pending=n; renderCp(); $("cp-stop").classList.remove("hidden");
+  cpMsg(`Đang vẽ ${n>1?n+" nền":"nền"} và ghép sản phẩm, thường mất 10–40 giây…`);
+  try{
+    let res;
+    if(eng==="gemini") res=await runGemini(prompt,[],ratio,n,CP.ctl.signal);
+    else if(eng==="openai") res=await runOpenAI(prompt,[],ratio,n,CP.ctl.signal);
+    else res=await runCanva(prompt,ratio,n,CP.ctl.signal);
+    const recs=[]; let noPrev=0;
+    for(const it of res.items){
+      if(!it.blob){noPrev++; continue}
+      recs.push(await cpCompose(it.blob,{prompt,engine:eng,model:eng==="canva"?"":modelOf(eng),ratio,cost:eng==="canva"?null:actualOne(eng,ratio,it.usage,it.share)}));
+    }
+    const spent=recs.reduce((t,r)=>t+(r.cost||0),0); addSpend(spent,recs.length);
+    fresh.clear(); recs.forEach(r=>fresh.add(r.id)); await addRecords(recs); renderResults();
+    let m=`Xong ${recs.length} ảnh sau ${Math.round((Date.now()-CP.t0)/1000)} giây${eng==="canva"?" · trừ vào lượt Canva":` · ≈ ${vnd(spent)}`}. Sản phẩm là ảnh thật của bạn; bấm Chỉnh sửa để kéo, đổi cỡ, thêm chữ.`;
+    if(noPrev) m+=` Canva không gửi ảnh xem trước cho ${noPrev} ảnh nên chưa ghép được.`;
+    if(res.failed) m+=` ${res.failed} ảnh lỗi: ${errText(res.firstErr)}`;
+    cpMsg(m,res.failed?"err":"ok");
+  }catch(e){ cpMsg(e&&e.code==="cancelled"?"Đã dừng.":errText(e),e&&e.code==="cancelled"?"":"err") }
+  finally{CP.busy=false; CP.ctl=null; CP.pending=0; $("cp-stop").classList.add("hidden"); renderCp()}
+}
+async function cpUploadBg(files){
+  const f=[...files].find(x=>x&&/^image\//.test(x.type)); if(!f) return;
+  if(!mainProduct()){cpMsg("Tải ảnh sản phẩm lên ở bước 1 trước đã.","err"); return}
+  let blob; try{blob=await prepEditBlob(f)}catch(e){cpMsg("Không đọc được ảnh nền này. Dùng ảnh JPG, PNG hoặc WebP.","err"); return}
+  let ratio=CP.ratio; try{const b=await createImageBitmap(blob); ratio=nearestRatio(b.width,b.height); b.close&&b.close()}catch(_){}
+  const rec=await cpCompose(blob,{prompt:"",engine:"upload",ratio,bgName:"nền "+String(f.name||"tải lên").replace(/\.[a-z0-9]+$/i,"")});
+  fresh.clear(); fresh.add(rec.id); await addRecords([rec]); renderResults();
+  cpMsg("Đã ghép sản phẩm vào ảnh nền của bạn (miễn phí). Bấm Chỉnh sửa để kéo, đổi cỡ, thêm chữ.","ok");
+}
+function renderCpList(){
+  const box=$("cp-list"); if(!box||TAB!=="compose") return;
+  const list=HIST.filter(r=>r.compose&&r.blob);
+  const ph=Array.from({length:CP.pending||0},()=>`<figure class="shot pending">${phHTML(CP.ratio,`<b>Đang vẽ nền…</b><span>${esc(ENGINES[S.engine]?.short||"")}</span>`)}</figure>`).join("");
+  $("cp-count-lbl").textContent=list.length?`${list.length} ảnh`:"";
+  if(!list.length&&!ph){box.innerHTML=`<p class="sug-note" style="grid-column:1/-1">Chưa có ảnh ghép nào. Làm bước 1 và 2 ở trên, ảnh ghép xong hiện ở đây.</p>`; return}
+  box.innerHTML=ph+list.map(r=>`<figure class="shot${fresh.has(r.id)?" new":""}" data-id="${r.id}"><button class="shot-img" type="button" data-cpa="edit" data-id="${r.id}" aria-label="Chỉnh sửa ${esc(r.label)}"><img src="${urlOf(r)}" alt="" loading="lazy"></button>
+    <figcaption><div class="shot-meta"><b>${esc(r.label)}</b><span>${esc(engLabel(r.engine))} · ${r.ratio}${r.cost>0?` · <span class="shot-cost">≈ ${vnd(r.cost)}</span>`:" · 0 đ"}</span></div>
+    <div class="shot-act"><button class="btn primary" type="button" data-cpa="edit" data-id="${r.id}">Chỉnh sửa</button><button class="btn" type="button" data-cpa="dl" data-id="${r.id}">Tải về</button><button class="btn" type="button" data-cpa="del" data-id="${r.id}">Xoá</button></div></figcaption></figure>`).join("");
+}
+$("cp-themes").addEventListener("click",e=>{const b=e.target.closest("[data-th]"); if(!b) return; CP.theme=b.dataset.th; store.set("xa-cp-theme",CP.theme); renderCp(); if(CP.theme==="custom") $("cp-extra").focus()});
+$("cp-ratios").addEventListener("click",e=>{const b=e.target.closest("[data-cr]"); if(!b) return; CP.ratio=b.dataset.cr; store.set("xa-cp-ratio",CP.ratio); renderCp()});
+$("cp-extra").addEventListener("input",e=>{CP.extra=e.target.value; store.set("xa-cp-extra",CP.extra); $("cp-prompt").textContent=cpPrompt()});
+$("cp-count").addEventListener("change",renderCp);
+$("cp-eng").addEventListener("change",e=>{setEngine(e.target.value); renderCp()});
+$("cp-eng-msg").addEventListener("click",e=>{if(e.target.closest("[data-goto]")){setTab("new"); $("k-key").focus()}});
+$("cp-go").onclick=cpGenerate;
+$("cp-stop").onclick=()=>CP.ctl&&CP.ctl.abort();
+$("cp-ext").addEventListener("click",async e=>{
+  if(!mainProduct()){e.preventDefault(); cpMsg("Tải ảnh sản phẩm lên ở bước 1 trước đã.","err"); return}
+  await copyText(cpPrompt()); const t=EXT_TARGETS[tool]||EXT_TARGETS.gpt;
+  cpMsg(`Đã copy prompt vẽ nền. ${t.url?`Trong ${t.name} bấm Ctrl + V để dán`:"Dán vào công cụ bạn dùng"}, tạo ảnh, tải ảnh nền về rồi bấm "Tải ảnh nền lên để ghép".`,"ok");
+});
+$("cp-copy").onclick=e=>copyText(cpPrompt(),e.currentTarget,"Copy prompt");
+$("cp-bg").onclick=()=>$("cp-bg-file").click();
+$("cp-bg-file").addEventListener("change",e=>{cpUploadBg(e.target.files); e.target.value=""});
+$("cp-list").addEventListener("click",async e=>{
+  const b=e.target.closest("[data-cpa]"); if(!b) return; const rec=HIST.find(r=>r.id===b.dataset.id); if(!rec) return;
+  if(b.dataset.cpa==="edit") openResultEditor(rec);
+  if(b.dataset.cpa==="dl") download(rec);
+  if(b.dataset.cpa==="del"){
+    if(b.dataset.sure!=="1"){b.dataset.sure="1";b.textContent="Xoá thật?";b.classList.add("warn");setTimeout(()=>{if(b.isConnected){b.dataset.sure="";b.textContent="Xoá";b.classList.remove("warn")}},3000);return}
+    HIST=HIST.filter(x=>x.id!==rec.id); dropUrl(rec.id); await DB.del(rec.id); renderResults();
+  }
+});
+
 /* ---------- Tab: Sửa ảnh có sẵn ---------- */
-let TAB="new";
+let TAB="compose";
+const TABS=["compose","new","edit"];
 function setTab(t,focus){
-  TAB=t==="edit"?"edit":"new"; store.set("xa-tab",TAB);
+  TAB=TABS.includes(t)?t:"compose"; store.set("xa-tab",TAB);
   document.querySelectorAll(".tabs [role=tab]").forEach(b=>{const on=b.dataset.tab===TAB; b.setAttribute("aria-selected",on); b.tabIndex=on?0:-1});
-  $("pane-new").hidden=TAB!=="new"; $("pane-edit").hidden=TAB!=="edit";
+  $("pane-new").hidden=TAB!=="new"; $("pane-edit").hidden=TAB!=="edit"; $("pane-compose").hidden=TAB!=="compose";
+  document.querySelector(".layout").classList.toggle("solo",TAB!=="new");
   if(TAB==="edit"){renderEditEng(); renderEditList()}
+  if(TAB==="compose") renderCp();
   if(focus) $("tab-"+TAB).focus();
 }
 document.querySelector(".tabs").addEventListener("click",e=>{const b=e.target.closest("[data-tab]"); if(b) setTab(b.dataset.tab)});
-document.querySelector(".tabs").addEventListener("keydown",e=>{if(e.key==="ArrowRight"||e.key==="ArrowLeft"){e.preventDefault(); setTab(TAB==="new"?"edit":"new",true)}});
+document.querySelector(".tabs").addEventListener("keydown",e=>{if(e.key==="ArrowRight"||e.key==="ArrowLeft"){e.preventDefault(); const i=TABS.indexOf(TAB); setTab(TABS[(i+(e.key==="ArrowRight"?1:TABS.length-1))%TABS.length],true)}});
 function renderEditEng(){
   const sel=$("edit-eng");
   sel.innerHTML=Object.entries(ENGINES).map(([k,e])=>`<option value="${k}" ${k===S.engine?"selected":""} ${avail[k].st==="no"?"disabled":""}>${esc(e.name)}${avail[k].st==="no"?" (không dùng được ở đây)":k!=="canva"&&!keyOf(k)?" (chưa có key)":""}</option>`).join("");
@@ -2570,7 +2754,7 @@ $("edit-list").addEventListener("click",e=>{
   const first=TYPES[0];
   S.src=first; S.ratio=first.ratio; $("s-prompt").value=fillBody(first);
   renderRatio(); renderSrc(); renderEngines(); renderResults();
-  setTab(location.hash==="#sua-anh"?"edit":(store.get("xa-tab")||"new"));
+  setTab(location.hash==="#sua-anh"?"edit":location.hash==="#tao-anh"?"new":"compose");
   renderPriceCfg(); renderSpend();
   restoreSug(); loadHistory(); loadProducts(); loadMyTpl(); restoreRef();
 })();
