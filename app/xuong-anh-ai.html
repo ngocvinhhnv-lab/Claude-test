@@ -130,6 +130,15 @@ aside p.hint{color:var(--muted);font-size:13px;margin:0 0 14px}
 .pup:hover{filter:brightness(1.05)}
 .prods .pwarn{font-size:12px;color:var(--warn);margin:0}
 .panel .prods{margin:-4px 0 10px}
+.pthumb.main{box-shadow:0 0 0 2px var(--cyan)}
+.pthumb.cut{background:linear-gradient(45deg,var(--wire) 25%,transparent 25%,transparent 75%,var(--wire) 75%) 0 0/10px 10px,linear-gradient(45deg,var(--wire) 25%,transparent 25%,transparent 75%,var(--wire) 75%) 5px 5px/10px 10px,#fff}
+.pthumb.cut img{object-fit:contain}
+.pthumb em{position:absolute;left:0;right:0;bottom:0;background:var(--cyan);color:#fff;font-style:normal;font-size:9.5px;font-weight:700;text-align:center;line-height:15px}
+.pthumb .star{left:2px;right:auto;background:var(--sheet);color:var(--warn);box-shadow:0 0 0 1px var(--line)}
+.cut-row{display:flex;flex-direction:column;gap:2px;font-size:12px}
+.cut-row label{display:flex;align-items:center;gap:8px;font-weight:600}
+.cut-row input{flex:1;min-width:80px;accent-color:var(--cyan)}
+.cut-row small{color:var(--muted)}
 .refbox{border-color:var(--mag);background:var(--mag-soft)}
 .refbox .pup{border-color:var(--mag);color:var(--mag)}
 .refbox .pup.big{background:var(--mag);border-color:var(--mag);color:#fff}
@@ -675,7 +684,7 @@ try{vals = JSON.parse(store.get("brief-vals")||"{}")||{}}catch(e){vals={}}
 
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 function fillBody(t){
-  let s = t.p.replace(/\{(\w+)\}/g,(m,k)=>{const v=(vals[k]||"").trim();return v||`[${LABELS[k]||k}]`});
+  let s = t.p.replace(/\{(\w+)\}/g,(m,k)=>{ if(k==="san_pham"&&pasteMode()) return "vị trí đặt sản phẩm (để trống, không vẽ sản phẩm)"; const v=(vals[k]||"").trim();return v||`[${LABELS[k]||k}]`});
   if((vals.them||"").trim()) s += " " + vals.them.trim();
   return s;
 }
@@ -907,7 +916,8 @@ function autoLines(){
   const L=[], E=S.engine, imgs=E!=="canva";
   let n=0;
   if(S.base){ if(imgs){n++; L.push(`Chỉnh sửa ảnh đính kèm số ${n} theo yêu cầu trên, giữ nguyên bố cục, sản phẩm, chữ và mọi chi tiết không được nhắc tới.`)} else L.push("Chỉnh sửa ảnh gốc theo yêu cầu trên, giữ nguyên mọi chi tiết không được nhắc tới."); }
-  if(imgs&&S.products.length){const a=n+1; n+=S.products.length;
+  if(pasteMode()) L.push(pasteLine());
+  else if(imgs&&S.products.length){const a=n+1; n+=S.products.length;
     L.push(S.products.length===1?`Ảnh đính kèm số ${a} là sản phẩm thật: giữ đúng hình dáng, màu, nhãn và logo của sản phẩm.`
       :`Ảnh đính kèm số ${a} đến ${n} là cùng một sản phẩm thật chụp ở nhiều góc: giữ đúng hình dáng, màu, nhãn và logo của sản phẩm.`)}
   if(imgs&&refBlob&&!S.base){n++; L.push(`Ảnh đính kèm số ${n} là ảnh mẫu: ${REF_MODES[REF.mode].clause}`)}
@@ -939,16 +949,101 @@ const SUG={status:"idle",data:null,msg:"",via:"",adapt:{},prev:null,applied:fals
 const prodFile=$("prod-file");
 function renderProducts(){
   const canva=S.engine==="canva", n=S.products.length, full=n>=MAX_PROD;
-  const thumbs=S.products.map(p=>`<div class="pthumb"><img src="${p.url}" alt="${esc(p.name)}" title="Bấm để cắt ảnh · ${esc(p.name)}" data-edit="${p.id}"><button type="button" data-rm="${p.id}" aria-label="Bỏ ảnh ${esc(p.name)}">×</button></div>`).join("");
+  const thumbs=S.products.map((p,i)=>i===0
+    ?`<div class="pthumb main${p.cutUrl?" cut":""}"><img src="${p.cutUrl||p.url}" alt="${esc(p.name)}" title="Ảnh chính, bấm để cắt ảnh · ${esc(p.name)}" data-edit="${p.id}"><em>Ảnh chính</em><button type="button" data-rm="${p.id}" aria-label="Bỏ ảnh ${esc(p.name)}">×</button></div>`
+    :`<div class="pthumb"><img src="${p.url}" alt="${esc(p.name)}" title="Bấm để cắt ảnh · ${esc(p.name)}" data-edit="${p.id}"><button type="button" class="star" data-main="${p.id}" title="Đặt làm ảnh chính" aria-label="Đặt ${esc(p.name)} làm ảnh chính">★</button><button type="button" data-rm="${p.id}" aria-label="Bỏ ảnh ${esc(p.name)}">×</button></div>`).join("");
+  const mp=mainProduct(), cs=mp&&mp.cut&&mp.cutTol===CUT_TOL?mp.cut.status:"";
+  const cutNote=!mp?"":!cs?"Đang tách nền…":cs==="alpha"?"Ảnh đã có nền trong suốt, dùng nguyên.":cs==="all"?"Không tách được nền (sản phẩm trùng màu nền): sẽ dán cả khung ảnh.":cs==="none"?"Nền chưa tách được: tăng độ nhạy, hoặc dùng ảnh chụp trên nền trắng.":"Đã tách nền. Còn sót nền thì tăng độ nhạy, bị ăn vào sản phẩm thì giảm.";
   const add=n?(full?"":`<button type="button" class="pup" data-up><i>+</i>Thêm góc</button>`)
              :`<button type="button" class="pup big" data-up><i>⤒</i>Tải ảnh sản phẩm lên</button>`;
-  const html=`<div class="prods-top"><b>Ảnh sản phẩm thật${n?` (${n}/${MAX_PROD})`:""}</b><span>${n?"Gửi kèm mỗi lần tạo để giữ đúng nhãn":"Kéo thả hoặc bấm tải, tối đa "+MAX_PROD+" ảnh (nhiều góc chụp)"}</span></div>
+  const html=`<div class="prods-top"><b>Ảnh sản phẩm thật${n?` (${n}/${MAX_PROD})`:""}</b><span>${n?"Ảnh chính được dán nguyên vào ảnh tạo ra, giống 100%":"Kéo thả hoặc bấm tải, tối đa "+MAX_PROD+" ảnh (nhiều góc chụp)"}</span></div>
     <div class="prods-row">${thumbs}${add}</div>
+    ${mp?`<div class="cut-row"><label><span>Độ nhạy tách nền</span><input type="range" min="5" max="120" step="1" value="${CUT_TOL}" data-tol aria-label="Độ nhạy tách nền"></label><small>${esc(cutNote)}</small></div>`:""}
     ${SUG.status==="loading"?`<p class="pbusy">Đang đọc ảnh, chọn mẫu và điền brief…</p>`:""}
-    ${canva&&n?`<p class="pwarn">Canva trong Claude chưa nhận ảnh đính kèm. Chọn Gemini hoặc OpenAI để AI dùng ảnh sản phẩm này.</p>`:""}`;
+    `;
   document.querySelectorAll("[data-prods]").forEach(el=>{el.innerHTML=html});
+  if(mp&&!(mp.cut&&mp.cutTol===CUT_TOL)) refreshCut();
   renderSug();
 }
+/* ---------- Giữ sản phẩm 100%: tách nền ảnh chính + dán ảnh thật lên nền AI vẽ ---------- */
+let CUT_TOL=+(store.get("xa-cut-tol")||40);
+function pasteMode(){return S.products.length>0&&!S.base}
+function mainProduct(){return S.products[0]||null}
+// Xoá nền trắng/đơn sắc: loang từ mép ảnh, điểm nào gần màu nền (≤ độ nhạy) thì trong suốt; mép làm mềm; cắt sát sản phẩm
+async function cutoutBlob(blob,tol){
+  const img=await blobToImg(blob); let W=img.naturalWidth,H=img.naturalHeight; const k=Math.min(1,1600/Math.max(W,H));
+  W=Math.max(1,Math.round(W*k)); H=Math.max(1,Math.round(H*k));
+  const c=mkCanvas(W,H), g=c.getContext("2d",{willReadFrequently:true}); g.drawImage(img,0,0,W,H);
+  const id=g.getImageData(0,0,W,H), d=id.data, N=W*H;
+  const border=[]; for(let x=0;x<W;x++){border.push(x,(H-1)*W+x)} for(let y=1;y<H-1;y++){border.push(y*W,y*W+W-1)}
+  let clear=0; for(const i of border) if(d[i*4+3]<20) clear++;
+  let status="ok";
+  if(clear/border.length<0.5){
+    const step=Math.max(1,(border.length/600)|0), rs=[],gs=[],bs=[];
+    for(let j=0;j<border.length;j+=step){const p=border[j]*4; rs.push(d[p]); gs.push(d[p+1]); bs.push(d[p+2])}
+    const med=a=>a.sort((x,y)=>x-y)[a.length>>1], R=med(rs),G=med(gs),B=med(bs);
+    const dist=new Float32Array(N); for(let i=0,p=0;i<N;i++,p+=4){const dr=d[p]-R,dg=d[p+1]-G,db=d[p+2]-B; dist[i]=Math.sqrt(dr*dr+dg*dg+db*db)}
+    const bg=new Uint8Array(N), q=new Int32Array(N); let h=0,t=0;
+    for(const i of border) if(!bg[i]&&dist[i]<=tol){bg[i]=1;q[t++]=i}
+    while(h<t){const i=q[h++], x=i%W;
+      if(x>0&&!bg[i-1]&&dist[i-1]<=tol){bg[i-1]=1;q[t++]=i-1}
+      if(x<W-1&&!bg[i+1]&&dist[i+1]<=tol){bg[i+1]=1;q[t++]=i+1}
+      if(i>=W&&!bg[i-W]&&dist[i-W]<=tol){bg[i-W]=1;q[t++]=i-W}
+      if(i+W<N&&!bg[i+W]&&dist[i+W]<=tol){bg[i+W]=1;q[t++]=i+W}}
+    const soft=tol*1.6;
+    for(let i=0;i<N;i++){ if(bg[i]){d[i*4+3]=0;continue}
+      const x=i%W; if(dist[i]<soft&&((x>0&&bg[i-1])||(x<W-1&&bg[i+1])||(i>=W&&bg[i-W])||(i+W<N&&bg[i+W]))) d[i*4+3]=Math.round(d[i*4+3]*Math.max(0,Math.min(1,(dist[i]-tol)/(soft-tol)))) }
+    const removed=t/N;
+    if(removed>0.985){status="all"}            // gần như cả ảnh trùng màu nền: giữ nguyên ảnh
+    else{ if(removed<0.03) status="none"; g.putImageData(id,0,0) }
+  }else status="alpha";
+  if(status==="all") return {blob,w:img.naturalWidth,h:img.naturalHeight,status};
+  let x0=W,y0=H,x1=-1,y1=-1; const dd=g.getImageData(0,0,W,H).data;
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(dd[(y*W+x)*4+3]>16){if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y}
+  if(x1<0) return {blob,w:img.naturalWidth,h:img.naturalHeight,status:"all"};
+  const tw=x1-x0+1, th=y1-y0+1, o=mkCanvas(tw,th); o.getContext("2d").drawImage(c,x0,y0,tw,th,0,0,tw,th);
+  return {blob:await canvasBlob(o),w:tw,h:th,status};
+}
+async function ensureCut(p){
+  if(p.cut&&p.cutTol===CUT_TOL) return p.cut;
+  const r=await cutoutBlob(p.blob,CUT_TOL); if(p.cutUrl) URL.revokeObjectURL(p.cutUrl);
+  p.cut=r; p.cutTol=CUT_TOL; p.cutUrl=URL.createObjectURL(r.blob); return r;
+}
+let cutBusy=false;
+async function refreshCut(){ const p=mainProduct(); if(!p||cutBusy) return; if(p.cut&&p.cutTol===CUT_TOL) return;
+  cutBusy=true; try{await ensureCut(p)}catch(e){} cutBusy=false; renderProducts(); if(p.cutTol!==CUT_TOL) refreshCut() }
+// Vị trí đặt sản phẩm (tỉ lệ 0–1 của khung): khung "Sản phẩm" trong Bố cục phác > vị trí sản phẩm trong khung bố cục của mẫu > giữa ảnh
+function productBox(){
+  const lay=S.layout&&S.layout.boxes.find(b=>b.label==="Sản phẩm"); if(lay) return {x:lay.x,y:lay.y,w:lay.w,h:lay.h};
+  const id=S.src&&(S.src.kind==="ref"||S.src.kind==="my"?S.src.like:S.src.id);
+  const wf=(WF[id]||[]).filter(b=>b[0]==="product").sort((a,b)=>b[3]*b[4]-a[3]*a[4])[0];
+  // khung mẫu vẽ cho chai nước khá hẹp: nới tối thiểu 35% để sản phẩm nằm ngang không bị quá nhỏ
+  const grow=(b,m)=>{let {x,y,w,h}=b; if(w<m){x=Math.max(0,Math.min(1-m,x-(m-w)/2)); w=m} if(h<m){y=Math.max(0,Math.min(1-m,y-(m-h)/2)); h=m} return {x,y,w,h}};
+  if(wf) return grow({x:wf[1]/100,y:wf[2]/100,w:wf[3]/100,h:wf[4]/100},.35);
+  return {x:.3,y:.25,w:.4,h:.6};
+}
+function pasteLine(){
+  const b=productBox();
+  return `Không vẽ sản phẩm: chừa trống vùng ${where(b.x,b.y,b.w,b.h,1,1)} để ghép ảnh sản phẩm thật vào sau; ở chỗ đó chỉ vẽ mặt đỡ hoặc nền phù hợp, không đặt chữ hay vật khác đè lên.${refBlob?" Nếu ảnh mẫu có sản phẩm thì bỏ sản phẩm đó ra, để trống vị trí đó.":""}`;
+}
+function placeIn(box,W,H,cw,ch){const bw=box.w*W,bh=box.h*H,k=Math.min(bw/cw,bh/ch),w=cw*k,h=ch*k; return {x:box.x*W+(bw-w)/2,y:box.y*H+bh-h,w,h}}
+async function productLayer(W,H){
+  const p=mainProduct(); if(!p) return null; const c=await ensureCut(p), img=await blobToImg(c.blob);
+  return {type:"logo",name:"Sản phẩm (ảnh thật)",product:true,shadow:c.status!=="all",blob:c.blob,img,...placeIn(productBox(),W,H,c.w,c.h)};
+}
+async function compositeWithProduct(bgBlob){
+  const bg=await blobToImg(bgBlob), W=bg.naturalWidth, H=bg.naturalHeight;
+  const L=await productLayer(W,H); if(!L) return null;
+  const c=mkCanvas(W,H), g=c.getContext("2d"); g.drawImage(bg,0,0,W,H); drawObj(g,L,Math.max(W,H)/1000,{guides:false});
+  const {img,...layer}=L; return {blob:await canvasBlob(c),editBase:bgBlob,layers:[layer]};
+}
+function drawProductShadow(ctx,o){
+  const cx=o.x+o.w/2, cy=o.y+o.h-o.h*.01, rx=o.w*.5, ry=Math.max(3,o.h*.045);
+  ctx.save(); ctx.translate(cx,cy); ctx.scale(1,ry/rx);
+  const gr=ctx.createRadialGradient(0,0,0,0,0,rx); gr.addColorStop(0,"rgba(0,0,0,.32)"); gr.addColorStop(.6,"rgba(0,0,0,.14)"); gr.addColorStop(1,"rgba(0,0,0,0)");
+  ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(0,0,rx,0,Math.PI*2); ctx.fill(); ctx.restore();
+}
+
 // Ảnh chụp điện thoại thường rất lớn: thu về cạnh dài tối đa 2048 px để gửi nhanh, đỡ tốn
 async function shrink(f){
   try{
@@ -975,23 +1070,28 @@ async function addProducts(files){
   renderAuto();
   const extra=files.length>room?` Chỉ nhận ${room} ảnh vì tối đa ${MAX_PROD}.`:"";
   if(bad) sMsg(`Có ${bad} file không đọc được. Dùng ảnh JPG, PNG hoặc WebP.`+extra,"err");
-  else if(added) sMsg(`Đã thêm ${added} ảnh sản phẩm.`+(S.engine==="canva"?" Canva chưa nhận ảnh đính kèm, chọn Gemini hoặc OpenAI để dùng ảnh này.":" Ảnh sẽ được gửi kèm mỗi lần tạo.")+extra,S.engine==="canva"?"":"ok");
+  else if(added) sMsg(`Đã thêm ${added} ảnh sản phẩm. Ảnh chính được tách nền và dán nguyên vào ảnh tạo ra, AI chỉ vẽ nền và bối cảnh.`+extra,"ok");
+  refreshStudioPrompt();
   if(added) suggestFromProducts();
 }
 function removeProduct(id){
   const p=S.products.find(x=>x.id===id); if(!p) return;
-  URL.revokeObjectURL(p.url); S.products=S.products.filter(x=>x.id!==id); DB.del(id,"prod"); renderAuto();
+  URL.revokeObjectURL(p.url); if(p.cutUrl) URL.revokeObjectURL(p.cutUrl); S.products=S.products.filter(x=>x.id!==id); DB.del(id,"prod"); renderAuto(); refreshStudioPrompt();
 }
 async function loadProducts(){
   const all=await DB.all("prod"); if(!all||!all.length) return;
   S.products=all.sort((a,b)=>a.added-b.added).slice(0,MAX_PROD).map(r=>({...r,url:URL.createObjectURL(r.blob)}));
-  renderAuto();
+  renderAuto(); refreshStudioPrompt();
 }
 prodFile.addEventListener("change",()=>{addProducts(prodFile.files);prodFile.value=""});
+function refreshStudioPrompt(){ if(S.src&&!S.dirty&&!S.base) $("s-prompt").value=fillBody(S.src) }
 document.querySelectorAll("[data-prods]").forEach(el=>{
+  el.addEventListener("change",e=>{ if(e.target.matches("[data-tol]")){CUT_TOL=+e.target.value; store.set("xa-cut-tol",CUT_TOL); renderProducts()} });
   el.addEventListener("click",e=>{
     const rm=e.target.closest("[data-rm]"); if(rm){removeProduct(rm.dataset.rm);return}
     const ed=e.target.closest("[data-edit]"); if(ed){openProductEditor(ed.dataset.edit);return}
+    const mn=e.target.closest("[data-main]"); if(mn){const i=S.products.findIndex(x=>x.id===mn.dataset.main); if(i>0){const [p]=S.products.splice(i,1); S.products.unshift(p);
+      p.added=Math.min(...S.products.map(x=>x.added||0))-1; DB.put({id:p.id,name:p.name,blob:p.blob,added:p.added},"prod"); renderAuto(); refreshStudioPrompt()} return}
     if(e.target.closest("[data-up]")) prodFile.click();
   });
   ["dragenter","dragover"].forEach(ev=>el.addEventListener(ev,e=>{e.preventDefault();e.stopPropagation();el.classList.add("drag")}));
@@ -1332,8 +1432,8 @@ async function generate(){
   if(/\[(Thương hiệu|Sản phẩm|Màu chủ đạo|Phong cách|Thông điệp)\]/.test(userPrompt)) sMsg("Prompt còn chỗ trống trong ngoặc vuông, AI sẽ tự đoán phần đó. Điền brief bên trái để chính xác hơn.");
   const n=Number($("s-count").value)||1, ratio=S.ratio, prompt=fullPrompt();
   const label=S.base?("Sửa từ "+S.base.label).slice(0,60):(S.src?S.src.name:(S.srcLabel||"Ảnh tự viết prompt"));
-  const imgs=[]; if(eng!=="canva"){ if(S.base&&S.base.blob) imgs.push(S.base.blob); S.products.forEach(p=>imgs.push(p.blob)); if(refBlob&&!S.base) imgs.push(refBlob); if(S.layout&&!S.base) imgs.push(await layoutBlob(S.ratio)); }
-  const baseRef=S.base;
+  const imgs=[]; if(eng!=="canva"){ if(S.base&&S.base.blob) imgs.push(S.base.blob); if(!pasteMode()) S.products.forEach(p=>imgs.push(p.blob)); if(refBlob&&!S.base) imgs.push(refBlob); if(S.layout&&!S.base) imgs.push(await layoutBlob(S.ratio)); }
+  const baseRef=S.base, doPaste=pasteMode();
   S.busy=true; S.ctl=new AbortController(); $("s-go").disabled=true; $("s-stop").classList.remove("hidden");
   const t0=Date.now(); const ps=Array.from({length:n},()=>({ratio,label,engine:eng,t0})); pending.unshift(...ps); renderResults();
   sMsg(eng==="canva"?"Canva đang tạo ảnh, thường mất 20–60 giây…":"Đang tạo ảnh, thường mất 10–40 giây…");
@@ -1347,11 +1447,14 @@ async function generate(){
       model:eng==="canva"?"":modelOf(eng),label,mediaId:it.mediaId||null,link:it.link||null,parent:baseRef?baseRef.id:null,
       cost:eng==="canva"?null:actualOne(eng,ratio,it.usage,it.share)}));
     const spent=recs.reduce((t,r)=>t+(r.cost||0),0); addSpend(spent,recs.length);
+    let pasteFail=0;
+    if(doPaste) for(const r of recs){ if(!r.blob) continue; try{const c=await compositeWithProduct(r.blob); if(c){r.blob=c.blob; r.editBase=c.editBase; r.layers=c.layers}}catch(e){pasteFail++} }
     fresh.clear(); recs.forEach(r=>fresh.add(r.id));
     pending.splice(0,pending.length,...pending.filter(p=>!ps.includes(p)));
     await addRecords(recs);
     const secs=Math.round((Date.now()-t0)/1000);
     let m=`Xong ${recs.length} ảnh sau ${secs} giây${eng==="canva"?" · trừ vào lượt Canva":` · ≈ ${vnd(spent)}`}.`;
+    if(doPaste) m+=pasteFail?` Không ghép được ảnh sản phẩm vào ${pasteFail} ảnh.`:" Đã dán ảnh sản phẩm thật vào; chưa vừa chỗ thì bấm Chỉnh sửa để kéo, đổi cỡ.";
     if(res.failed) m+=` ${res.failed} ảnh lỗi: ${errText(res.firstErr)}`;
     if(recs.some(r=>!r.blob)) m+=" Canva không gửi ảnh xem trước, bấm Mở trong Canva để xem.";
     sMsg(m,res.failed?"err":"ok");
@@ -1658,15 +1761,14 @@ Quy tắc chỉnh prompt mẫu:
 - Giữ nguyên loại ấn phẩm, tỉ lệ, bố cục, vị trí chủ thể và thứ tự các câu của prompt mẫu.
 - Giữ nguyên các chỗ giữ trong ngoặc nhọn {thuong_hieu}, {san_pham}, {mau_chu_dao}, {phong_cach}, {thong_diep} (trang sẽ tự điền), không viết thẳng giá trị vào.
 - Thay những đạo cụ, bối cảnh, nhân vật, hành động hoặc chữ cố định không hợp với sản phẩm này (VD: nước bắn, chạy bộ, "Bù khoáng", "GIẢM 30%") bằng thứ hợp với sản phẩm và dịp dùng của nó.
-- Viết tiếng Việt, cùng độ dài với prompt mẫu.
+- Viết tiếng Việt, ngắn gọn (không dài hơn prompt mẫu). Không mô tả ngoại hình sản phẩm (hình dáng, màu, hoạ tiết, chữ trên sản phẩm): chỉ dùng {san_pham}, vì ảnh sản phẩm thật sẽ được ghép vào sau.
 
 Chỉ trả về JSON đúng dạng:
 {"thuong_hieu":"tên thương hiệu đọc được trên sản phẩm/bao bì; không đọc được thì để rỗng",
-"san_pham":"mô tả ngoại hình để model tạo ảnh vẽ lại đúng: loại, chất liệu, hình dáng, kích thước ước lượng, màu, nhãn và hoạ tiết nổi bật; 1–2 câu",
+"san_pham":"tên ngắn của sản phẩm, 2–6 chữ, VD: Lịch bloc Tết 2027; không mô tả hình dáng, màu, hoạ tiết",
 "mau_chu_dao":"2–3 màu hợp với sản phẩm, kèm mã HEX",
 "phong_cach":"3–6 từ",
 "thong_diep":["3 tiêu đề ngắn, tối đa 7 chữ, không hứa hẹn sai sự thật"],
-"chu_can_giu":"chữ in trên sản phẩm cần giữ nguyên, ghi chính xác; không có thì rỗng",
 "mau":[{"id":"id trong thư viện","ly_do":"1 câu","prompt":"prompt mẫu đã chỉnh, còn nguyên các chỗ {…}"}]}
 "mau" có đúng 3 phần tử, xếp mẫu hợp nhất lên đầu.`;
 }
@@ -1728,8 +1830,7 @@ function applySuggestion(data){
   const next={...prev};
   ["thuong_hieu","san_pham","mau_chu_dao","phong_cach"].forEach(k=>{const v=String(data[k]||"").trim(); if(v) next[k]=v});
   if(msgs[0]) next.thong_diep=msgs[0];
-  const keep=String(data.chu_can_giu||"").trim();
-  if(keep&&!next.them.includes(keep)) next.them=(next.them.trim()+` Giữ nguyên chữ in trên sản phẩm: "${keep}".`).trim();
+  next.them=String(next.them||"").replace(/\s*Giữ nguyên chữ in trên sản phẩm: "[^"]*"\.?/g,"").trim();
   const picks=[], adapt={};
   (data.mau||data.mau_phu_hop||[]).forEach(x=>{const id=String(x&&x.id||x); if(TYPES.some(t=>t.id===id)&&!picks.includes(id)){picks.push(id); const p=cleanAdapted(x&&x.prompt); if(p) adapt[id]=p}});
   SUG.prev=prev; SUG.picks=picks.slice(0,3); SUG.adapt=adapt; SUG.applied=true; SUG.msgs=msgs;
@@ -1893,7 +1994,7 @@ function drawBox(ctx,o,U){
 function drawObj(ctx,o,U,{guides=true,solid=false}={}){
   if(o.type==="mark"){ if(guides) drawMark(ctx,o,U,solid); return }
   if(o.type==="text") return drawText(ctx,o);
-  if(o.type==="logo"&&o.img) return ctx.drawImage(o.img,o.x,o.y,o.w,o.h);
+  if(o.type==="logo"&&o.img){ if(o.shadow) drawProductShadow(ctx,o); return ctx.drawImage(o.img,o.x,o.y,o.w,o.h) }
   if(o.type==="box") return drawBox(ctx,o,U);
 }
 let edRaf=0;
@@ -2064,10 +2165,10 @@ function renderEdSide(){
       ${ED.ext?`<div class="ed-ext"><b>Đã copy yêu cầu sửa.</b><span>Tải 2 ảnh dưới đây, đính kèm theo đúng thứ tự, dán yêu cầu (Ctrl + V) rồi tạo. Xong tải ảnh về và đưa lại vào tab "Sửa ảnh có sẵn".</span><div class="sug-chips"><button class="btn" type="button" data-ed="xb1">Tải ảnh 1 · ảnh gốc</button><button class="btn" type="button" data-ed="xb2">Tải ảnh 2 · ảnh đánh dấu</button>${(EXT_TARGETS[tool]||EXT_TARGETS.gpt).url?`<a class="btn primary" href="${(EXT_TARGETS[tool]||EXT_TARGETS.gpt).url}" target="_blank" rel="noopener">Mở ${esc((EXT_TARGETS[tool]||EXT_TARGETS.gpt).name)}</a>`:""}</div></div>`:""}
     </section>${status}
     <section class="ed-sec"><h4>Chữ và logo <span>chữ đúng dấu 100%</span></h4>
-      <div class="sug-chips"><button class="btn" type="button" data-ed="addtext">+ Thêm chữ</button><button class="btn" type="button" data-ed="addlogo">+ Chèn logo, sticker</button></div>
-      ${layers.length?`<ul class="ed-list">${layers.map(([o,i])=>`<li aria-current="${i===ED.sel}"><button type="button" data-sel="${i}">${o.type==="text"?"T · "+esc(String(o.text).slice(0,26)):"Logo · "+esc(o.name||"ảnh")}</button><button type="button" class="x" data-rm="${i}" aria-label="Xoá lớp">×</button></li>`).join("")}</ul>`:""}
+      <div class="sug-chips"><button class="btn" type="button" data-ed="addtext">+ Thêm chữ</button><button class="btn" type="button" data-ed="addlogo">+ Chèn logo, sticker</button>${S.products.length?`<button class="btn" type="button" data-ed="addprod">+ Chèn sản phẩm thật</button>`:""}</div>
+      ${layers.length?`<ul class="ed-list">${layers.map(([o,i])=>`<li aria-current="${i===ED.sel}"><button type="button" data-sel="${i}">${o.type==="text"?"T · "+esc(String(o.text).slice(0,26)):(o.product?"Sản phẩm thật":"Logo · "+esc(o.name||"ảnh"))}</button><button type="button" class="x" data-rm="${i}" aria-label="Xoá lớp">×</button></li>`).join("")}</ul>`:""}
       ${sel&&sel.type==="text"?textProps(sel,ED.sel):""}
-      ${sel&&sel.type==="logo"?`<p class="sug-note">Kéo logo để di chuyển, kéo ô vuông góc dưới để đổi cỡ.</p><div class="sug-chips"><button class="btn warn" type="button" data-ed="delobj">Xoá logo</button></div>`:""}
+      ${sel&&sel.type==="logo"?`<p class="sug-note">Kéo ${sel.product?"sản phẩm":"logo"} để di chuyển, kéo ô vuông góc dưới để đổi cỡ.</p><div class="sug-chips">${sel.product?`<label class="ed-checks"><input type="checkbox" data-shadow ${sel.shadow?"checked":""}> Bóng đổ dưới chân</label>`:""}<button class="btn warn" type="button" data-ed="delobj">Xoá ${sel.product?"sản phẩm":"logo"}</button></div>`:""}
     </section>
     ${cropSec}
     <div class="ed-foot"><button class="btn go" type="button" data-ed="save">Lưu thành ảnh mới</button><button class="btn" type="button" data-ed="dl">Tải về</button></div>`;
@@ -2087,6 +2188,7 @@ side.addEventListener("click",async e=>{
   const a=b.dataset.ed; if(!a) return;
   if(a==="addtext"){pushUndo(); ED.objs.push(newText({x:ED.W/2,y:ED.H*.08})); ED.sel=ED.objs.length-1; setEdTool("select"); renderEdSide(); edDraw(); const ta=side.querySelector('[data-p="text"]'); if(ta){ta.focus();ta.select()}}
   if(a==="addlogo") $("ed-logo").click();
+  if(a==="addprod"){const L=await productLayer(ED.W,ED.H); if(L){pushUndo(); ED.objs.push(L); ED.sel=ED.objs.length-1; setEdTool("select"); renderEdSide(); edDraw(); edStatus("Đã chèn ảnh sản phẩm thật. Kéo để di chuyển, kéo ô vuông góc dưới để đổi cỡ.","ok")}}
   if(a==="dup"){const o=ED.objs[ED.sel]; if(!o) return; pushUndo(); ED.objs.push({...o,_bb:undefined,x:o.x+ED.W*.03,y:o.y+ED.H*.03}); ED.sel=ED.objs.length-1; renderEdSide(); edDraw()}
   if(a==="delobj"&&ED.sel>=0){pushUndo(); ED.objs.splice(ED.sel,1); ED.sel=-1; renderEdSide(); edDraw()}
   if(a==="nocrop"){ED.crop=null; renderEdSide(); edDraw()}
@@ -2103,6 +2205,7 @@ side.addEventListener("click",async e=>{
 });
 side.addEventListener("input",e=>{
   const t=e.target;
+  if(t.matches("[data-shadow]")){const o=ED.objs[ED.sel]; if(o){pushUndo(); o.shadow=t.checked; edDraw()} return}
   if(t.dataset.note!=null){const o=ED.objs[+t.dataset.note]; if(o){o.note=t.value; ED.dirty=true} return}
   if(t.id==="ed-global"){ED.global=t.value; return}
   const p=t.dataset.p; if(!p) return; const o=ED.objs[ED.sel]; if(!o) return;
@@ -2225,7 +2328,7 @@ async function openResultEditor(rec){
 async function openProductEditor(id){
   const p=S.products.find(x=>x.id===id); if(!p) return;
   await openEditor({mode:"photo",blob:p.blob,title:"Cắt ảnh sản phẩm · "+p.name,onSave:async blob=>{
-    URL.revokeObjectURL(p.url); p.blob=blob; p.url=URL.createObjectURL(blob); await DB.put({id:p.id,name:p.name,blob,added:p.added},"prod"); renderAuto(); sMsg("Đã lưu ảnh sản phẩm đã cắt.","ok")}});
+    URL.revokeObjectURL(p.url); p.blob=blob; p.url=URL.createObjectURL(blob); p.cut=null; await DB.put({id:p.id,name:p.name,blob,added:p.added},"prod"); renderAuto(); sMsg("Đã lưu ảnh sản phẩm đã cắt.","ok")}});
 }
 async function openRefEditor(){
   if(!REF.blob) return;
@@ -2349,7 +2452,7 @@ function extPrompt(){
 }
 async function extFiles(){
   const f=[]; let i=0;
-  S.products.forEach(p=>{i++; f.push({n:i,what:"ảnh sản phẩm",blob:p.blob,name:`${i}-anh-san-pham.${(p.blob.type.split("/")[1]||"jpg").replace("jpeg","jpg")}`})});
+  if(!pasteMode()) S.products.forEach(p=>{i++; f.push({n:i,what:"ảnh sản phẩm",blob:p.blob,name:`${i}-anh-san-pham.${(p.blob.type.split("/")[1]||"jpg").replace("jpeg","jpg")}`})});
   if(refBlob){i++; f.push({n:i,what:"ảnh mẫu",blob:refBlob,name:`${i}-anh-mau.${(refBlob.type.split("/")[1]||"jpg").replace("jpeg","jpg")}`})}
   if(S.layout){i++; f.push({n:i,what:"sơ đồ bố cục",blob:await layoutBlob(S.ratio),name:`${i}-so-do-bo-cuc.png`})}
   return f;
