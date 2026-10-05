@@ -104,3 +104,21 @@ def save_settings(values):
     with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
         json.dump(settings, f, ensure_ascii=False, indent=2)
     return settings
+
+
+IMPORTED_FILE = os.path.join(DATA_DIR, "imported_keys.json")
+
+
+def imported_keys():
+    """Các kịch bản có sẵn trong gói cài đã từng được nạp (kể cả khi người dùng đã xoá về sau)."""
+    try:
+        with open(IMPORTED_FILE, encoding="utf-8") as f:
+            return set(json.load(f))
+    except FileNotFoundError:
+        return set()
+
+
+def mark_imported(keys):
+    os.makedirs(DATA_DIR, exist_ok=True)
+    with open(IMPORTED_FILE, "w", encoding="utf-8") as f:
+        json.dump(sorted(set(keys)), f, ensure_ascii=False)

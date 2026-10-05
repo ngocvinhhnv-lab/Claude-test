@@ -32,6 +32,29 @@ DEFAULT_PROJECT_SETTINGS = {
 }
 
 
+PLACEHOLDER = re.compile(r"\[[^\]]+\]")
+SPEAKER_LABEL = re.compile(r"(?:^|(?<=[\s.!?]))(?:Khách|Shop|Chủ shop|Mẹ|Con|Bố|Em|Anh|Chị)\s*:\s*")
+
+
+def speakable(text):
+    """Lời thoại để đọc và làm phụ đề: bỏ nhãn người nói (Khách:, Shop:) và dấu ngoặc kép."""
+    text = SPEAKER_LABEL.sub("", str(text or ""))
+    return " ".join(text.replace('"', "").replace("“", "").replace("”", "").split())
+
+
+def check_placeholders(beats, voice_on):
+    """Chặn xuất video khi lời đọc hoặc chữ trên màn hình còn ô chưa điền, ví dụ [kiểm tra]."""
+    problems = []
+    for i, beat in enumerate(beats, 1):
+        fields = [beat.get("text") or ""] + ([beat.get("voice") or ""] if voice_on else [])
+        found = [m for f in fields for m in PLACEHOLDER.findall(f)]
+        if found:
+            problems.append(f"Cảnh {i}: {' '.join(dict.fromkeys(found))}")
+    if problems:
+        raise ValueError("Còn ô chưa điền trong lời đọc hoặc chữ trên màn hình, sửa rồi xuất lại. "
+                         + " · ".join(problems))
+
+
 def split_subtitle(text, max_words=6):
     """Chia câu thành các cụm ngắn để hiện phụ đề, ưu tiên ngắt ở dấu câu."""
     chunks = []
@@ -116,6 +139,7 @@ def render_project(project, log=print):
     if not beats:
         raise ValueError("Dự án chưa có cảnh nào")
 
+    check_placeholders(beats, ps["voice_on"])
     out_dir = os.path.dirname(store.data_path("projects", project["id"], "out.mp4"))
     clips, parts, captions, t = [], [], [], 0.0
     for i, beat in enumerate(beats, 1):
@@ -127,9 +151,10 @@ def render_project(project, log=print):
             raise ValueError(f"Video nguồn của cảnh {i} chưa xử lý xong")
 
         voice_path, voice_len = None, 0.0
-        if ps["voice_on"] and (beat.get("voice") or "").strip():
+        line = speakable(beat.get("voice"))
+        if ps["voice_on"] and line:
             log(f"Tạo giọng đọc cảnh {i}/{len(beats)}")
-            voice_path, voice_len = tts.synthesize(beat["voice"], provider, voice, rate, settings)
+            voice_path, voice_len = tts.synthesize(line, provider, voice, rate, settings)
         if voice_path:
             length = max(MIN_BEAT, LEAD + voice_len + TAIL)
         else:
@@ -142,7 +167,7 @@ def render_project(project, log=print):
             captions.append({"start": t, "end": t + length, "text": beat["text"],
                              "pos": beat.get("text_pos") or "top"})
         if voice_path and ps["subtitles"]:
-            chunks = split_subtitle(beat["voice"])
+            chunks = split_subtitle(line)
             total_chars = sum(len(c) for c in chunks) or 1
             ct = t + LEAD
             for chunk in chunks:

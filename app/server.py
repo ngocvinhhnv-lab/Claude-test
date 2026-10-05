@@ -67,6 +67,7 @@ def _save_upload(upload, path):
 @app.on_event("startup")
 def startup():
     library.seed_templates()
+    library.seed_weekly()
 
 
 @app.get("/")
@@ -216,6 +217,7 @@ def create_project(data: dict = Body(...)):
             "caption": script.get("caption", ""),
             "hashtags": script.get("hashtags", []),
             "alt_hooks": script.get("alt_hooks", []),
+            "needs_info": script.get("needs_info", []),
             "beats": [{**b, "clip": None} for b in script.get("beats", [])],
         })
     if not project["beats"]:

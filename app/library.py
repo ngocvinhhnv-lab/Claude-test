@@ -182,3 +182,30 @@ def seed_templates():
                        "text_pos": b.get("pos", "top"), "duration": _seconds(b.get("canh"))}
                       for b in video["beats"]],
         })
+
+
+def seed_weekly():
+    """Nạp các kịch bản kế hoạch tuần (kich_ban/tuan_*.json) chưa từng được nạp.
+
+    Mỗi kịch bản có "key" duy nhất. Kịch bản đã nạp một lần sẽ không nạp lại, kể cả khi
+    người dùng đã xoá hoặc sửa nó, nên cập nhật app không ghi đè công việc của nhân viên.
+    """
+    folder = os.path.join(ROOT, "kich_ban")
+    if not os.path.isdir(folder):
+        return 0
+    done, added = store.imported_keys(), 0
+    for name in sorted(os.listdir(folder)):
+        if not (name.startswith("tuan_") and name.endswith(".json")):
+            continue
+        with open(os.path.join(folder, name), encoding="utf-8") as f:
+            batch = json.load(f)
+        for script in batch.get("scripts", []):
+            key = script.get("key")
+            if not key or key in done:
+                continue
+            store.scripts.save(dict(script))
+            done.add(key)
+            added += 1
+    if added:
+        store.mark_imported(done)
+    return added

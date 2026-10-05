@@ -53,7 +53,7 @@ main { max-width: 1240px; margin: 0 auto; padding: 20px; }
 :is(.btn, input, select, textarea):focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
 
 label.f { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--mu); font-weight: 500; }
-input[type=text], input[type=number], input[type=password], input[type=url], select, textarea {
+input[type=text], input[type=search], input[type=number], input[type=password], input[type=url], select, textarea {
   border: 1px solid var(--bd); background: var(--sf); border-radius: 8px; padding: 7px 10px; width: 100%; color: var(--ink); }
 textarea { resize: vertical; min-height: 56px; }
 input[type=range] { width: 100%; }
@@ -114,3 +114,7 @@ dialog::backdrop { background: rgba(0,0,0,.45); }
 @keyframes sp { to { transform: rotate(360deg); } }
 .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 10px; font-size: 13.5px; z-index: 50; max-width: 90vw; }
 .empty { text-align: center; color: var(--mu); padding: 30px 10px; }
+
+.chip.weekly { border-color: var(--ac); color: var(--ac); }
+.beat.has-blank { border-color: var(--dn); }
+#script-list { max-height: 62vh; overflow-y: auto; }

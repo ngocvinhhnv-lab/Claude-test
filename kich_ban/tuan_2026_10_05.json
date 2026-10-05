@@ -1,0 +1,2762 @@
+{
+ "batch": "tuan-2026-10-05",
+ "scripts": [
+  {
+   "key": "tuan-2026-10-05:L1",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "L1",
+   "channel": "NS",
+   "channel_name": "Newshop",
+   "stt": 1,
+   "product": "Bloc 14,5×20,5",
+   "group": "3. Lịch bloc (14 video)",
+   "title": "L1 · Đếm ngược Tết, giá ngay 3 giây đầu",
+   "summary": "Newshop #1 · Bloc 14,5×20,5 · Bối cảnh: bàn làm việc, cầm cuốn lịch trước máy",
+   "hook_type": "Mở đầu: con số → Chốt: khan hiếm",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Giọng gấp, hào hứng) Giơ cuốn lịch sát máy. Chữ to \"44K\" hiện giữa màn hình",
+     "voice": "Chưa tới 125 ngày nữa là Tết Đinh Mùi rồi anh chị ơi! Lịch bloc 2027, 44 nghìn!",
+     "text": "44K",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Mở đầu nối · (Lắc đầu, cười nhẹ) Cắt cảnh kệ lịch trống",
+     "voice": "Năm nào cũng vậy, sát Tết mới đi mua là hết mẫu đẹp, hết cỡ vừa.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 7.0,
+     "part": "Mở đầu nối",
+     "when": "3–10s"
+    },
+    {
+     "shot": "Công dụng · (Điềm tĩnh) Lật 3–4 tờ, zoom ngày âm",
+     "voice": "Treo lên là cả nhà xem được ngày âm, giờ hoàng đạo. Mùng một, ngày rằm không phải hỏi ai.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 8.0,
+     "part": "Công dụng",
+     "when": "10–18s"
+    },
+    {
+     "shot": "Thông số · (Chậm, rõ từng số) Thước đo đặt cạnh lịch. Phụ đề \"14,5×20,5 · 365 tờ\"",
+     "voice": "Cỡ 14 rưỡi nhân 20 rưỡi, đủ 365 tờ. Giấy Couche Matt không bóng, không lóa, lật hết năm không rách.",
+     "text": "14,5×20,5 · 365 tờ",
+     "text_pos": "bottom",
+     "duration": 12.0,
+     "part": "Thông số",
+     "when": "18–30s"
+    },
+    {
+     "shot": "Chốt · (Chỉ xuống giỏ, nghiêm mặt rồi cười) Mũi tên vào giỏ hàng",
+     "voice": "Mẫu này em còn ít, cỡ lớn đã hết rồi. Anh chị bấm giỏ hàng giữ một cuốn trước nha!",
+     "text": "",
+     "text_pos": "center",
+     "duration": 10.0,
+     "part": "Chốt",
+     "when": "30–40s"
+    }
+   ],
+   "needs_info": [
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:L2",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "L2",
+   "channel": "NS",
+   "channel_name": "Newshop",
+   "stt": 2,
+   "product": "Bloc 14,5×20,5",
+   "group": "3. Lịch bloc (14 video)",
+   "title": "L2 · POV: khách hỏi \"bao nhiêu tờ?\"",
+   "summary": "Newshop #2 · Bloc 14,5×20,5 · Bối cảnh: quầy shop, hai người (khách và chủ shop)",
+   "hook_type": "Mở đầu: câu hỏi → Chốt: tóm lợi ích",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Khách nghi ngờ, nhíu mày) Chữ \"POV: khách hỏi shop\"",
+     "voice": "Khách: \"Em ơi, cuốn này mỏng vậy, có đủ 365 tờ không?\"",
+     "text": "POV: khách hỏi shop",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · (Tự tin) Miết cạnh xấp lịch cho thấy độ dày",
+     "voice": "Shop: \"Dạ, đủ 365 tờ chị ơi. Mỏng là vì giấy mỏng mà dai, treo tường không nặng, không tuột đinh.\"",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "3–12s"
+    },
+    {
+     "shot": "Thông số · Lật thẳng xuống tờ cuối. Kéo nhẹ một tờ để thử độ dai",
+     "voice": "\"Chị nhìn nè, tờ cuối là 31 tháng 12. Giấy Couche Matt, kéo thử thế này cũng không rách.\"",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "12–22s"
+    },
+    {
+     "shot": "Thông số · Giơ hai loại chốt cạnh nhau",
+     "voice": "\"Cỡ 14 rưỡi nhân 20 rưỡi, treo bằng ốc vít xoắn hoặc chốt đầu bi, chị chọn loại nào cũng được.\"",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "22–32s"
+    },
+    {
+     "shot": "Chốt · (Khách gật gù cười) Chữ \"44K · 365 tờ\" + mũi tên giỏ",
+     "voice": "\"Đủ tờ, giấy dai, giá 44 nghìn. Lấy mấy cuốn để em gói chị?\" Khách: \"Lấy hai!\"",
+     "text": "44K · 365 tờ",
+     "text_pos": "center",
+     "duration": 10.0,
+     "part": "Chốt",
+     "when": "32–42s"
+    }
+   ],
+   "needs_info": [
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng",
+    "Kịch bản có nhiều người nói (Khách, Shop): giọng đọc AI chỉ có một giọng, nên tự thu âm lời thoại hoặc bỏ nhãn người nói"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:L3",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "L3",
+   "channel": "SH",
+   "channel_name": "Sách Hay",
+   "stt": 3,
+   "product": "Bloc 14,5×20,5",
+   "group": "3. Lịch bloc (14 video)",
+   "title": "L3 · Nỗi khổ tra ngày âm khi mẹ hỏi rằm",
+   "summary": "Sách Hay #3 · Bloc 14,5×20,5 · Bối cảnh: phòng khách, điện thoại reo",
+   "hook_type": "Mở đầu: nỗi khổ → Chốt: quà tặng",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Thở dài, cầm điện thoại) Màn hình cuộc gọi \"Mẹ\"",
+     "voice": "Tháng nào mẹ em cũng gọi: \"Con ơi, rằm là ngày mấy?\"",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Mở đầu nối · (Bực mình) Lướt app bị quảng cáo che",
+     "voice": "Mở app thì quảng cáo, mẹ lại không quen dùng điện thoại.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 7.0,
+     "part": "Mở đầu nối",
+     "when": "3–10s"
+    },
+    {
+     "shot": "Công dụng · (Nhẹ nhõm) Mẹ lật lịch, chỉ tay vào ngày âm",
+     "voice": "Từ ngày treo cuốn này ở nhà mẹ, ngày âm in to ngay dưới. Mẹ tự xem, tự biết hôm nào cúng.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Công dụng",
+     "when": "10–20s"
+    },
+    {
+     "shot": "Thông số · Zoom chữ âm lịch dưới ánh đèn",
+     "voice": "Cỡ 14 rưỡi nhân 20 rưỡi, 365 tờ, giấy mờ không lóa đèn. Mẹ em để cạnh bàn thờ vẫn đọc rõ.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "20–30s"
+    },
+    {
+     "shot": "Chốt · (Ấm áp, mỉm cười) Gói lịch vào giấy quà, chỉ giỏ",
+     "voice": "Tết này anh chị mua một cuốn biếu bố mẹ đi. 44 nghìn mà cả năm không phải hỏi ngày nữa.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 10.0,
+     "part": "Chốt",
+     "when": "30–40s"
+    }
+   ],
+   "needs_info": [
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:L4",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "L4",
+   "channel": "SH",
+   "channel_name": "Sách Hay",
+   "stt": 4,
+   "product": "Bloc 14,5×20,5",
+   "group": "3. Lịch bloc (14 video)",
+   "title": "L4 · Mở hộp, lật tờ đọc giờ hoàng đạo",
+   "summary": "Sách Hay #4 · Bloc 14,5×20,5 · Bối cảnh: quay từ trên xuống bàn gỗ",
+   "hook_type": "Mở đầu: tình huống đời thường → Chốt: tương tác",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Tò mò) Xé màng bọc nhanh",
+     "voice": "Hàng về rồi, mở thử cuốn lịch 2027 xem bên trong có gì nè.",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · Zoom từng vùng thông tin trên tờ lịch [kiểm tra nội dung in trên tờ]",
+     "voice": "Mỗi tờ có ngày dương to, ngày âm ngay bên dưới. Góc này là giờ hoàng đạo, ai hay xem giờ xuất hành là có sẵn.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 12.0,
+     "part": "Công dụng",
+     "when": "3–15s"
+    },
+    {
+     "shot": "Công dụng · (Bất ngờ, vui) Lật tới tờ 06/02/2027",
+     "voice": "Lật thử tờ mùng 1 Tết nè, ngày 6 tháng 2 năm 2027.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 7.0,
+     "part": "Công dụng",
+     "when": "15–22s"
+    },
+    {
+     "shot": "Thông số · Bàn tay đặt cạnh để so kích thước",
+     "voice": "365 tờ, giấy Couche Matt cầm là thấy mịn. Cỡ 14 rưỡi nhân 20 rưỡi, vừa một bàn tay.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "22–32s"
+    },
+    {
+     "shot": "Chốt · (Nháy mắt) Chữ \"Bình luận ngày bạn muốn xem\"",
+     "voice": "Anh chị muốn em lật xem ngày nào thì bình luận ngày đó, video sau em lật cho xem!",
+     "text": "Bình luận ngày bạn muốn xem",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "32–40s"
+    }
+   ],
+   "needs_info": [
+    "Kiểm tra khi quay: [kiểm tra nội dung in trên tờ]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:L5",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "L5",
+   "channel": "TV",
+   "channel_name": "Tường Vip",
+   "stt": 3,
+   "product": "Bloc 14,5×20,5",
+   "group": "3. Lịch bloc (14 video)",
+   "title": "L5 · Hướng dẫn lắp: ốc vít xoắn và chốt đầu bi",
+   "summary": "Tường Vip #3 · Bloc 14,5×20,5 · Bối cảnh: tường phòng khách, cận tay",
+   "hook_type": "Mở đầu: câu hỏi → Chốt: giỏ hàng",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Hỏi thật, nhìn thẳng máy) Hai tay giơ hai loại chốt",
+     "voice": "Lịch bloc có hai kiểu chốt, anh chị biết chọn loại nào chưa?",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · (Tập trung) Quay cận tay vặn ốc",
+     "voice": "Ốc vít xoắn: vặn vào là chắt, hợp tường có sẵn đinh, treo cả năm không lỏng.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Công dụng",
+     "when": "3–13s"
+    },
+    {
+     "shot": "Công dụng · Cắm chốt một lần, rút ra một lần",
+     "voice": "Chốt đầu bi: cắm vào là xong, tháo ra nhanh, hợp nhà hay đổi chỗ treo.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "13–22s"
+    },
+    {
+     "shot": "Thông số · Xé một tờ để thấy mép gọn",
+     "voice": "Cả hai đều giữ được 365 tờ cỡ 14 rưỡi nhân 20 rưỡi. Giấy dai, xé tờ nào gọn tờ đó, không rách lan.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "22–32s"
+    },
+    {
+     "shot": "Chốt · (Thân thiện) Chỉ xuống giỏ",
+     "voice": "Anh chị chọn loại chốt ngay trong phân loại, bấm giỏ hàng bên dưới nha.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "32–40s"
+    }
+   ],
+   "needs_info": [
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:L6",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "L6",
+   "channel": "TV",
+   "channel_name": "Tường Vip",
+   "stt": 4,
+   "product": "Bloc 14,5×20,5",
+   "group": "3. Lịch bloc (14 video)",
+   "title": "L6 · App điện thoại hay lịch giấy cho ông bà",
+   "summary": "Tường Vip #4 · Bloc 14,5×20,5 · Bối cảnh: chia đôi màn hình",
+   "hook_type": "Mở đầu: phủ định ngược → Chốt: quà tặng",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Dứt khoát, giơ tay ngăn) Nửa trái: điện thoại. Nửa phải: lịch",
+     "voice": "Đừng cài app lịch cho ông bà nữa!",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Mở đầu nối · (Ái ngại) Tay người lớn tuổi bấm lúng túng trên điện thoại",
+     "voice": "Chữ nhỏ, quảng cáo nhảy liên tục, ông bà bấm nhầm là mất cả buổi.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Mở đầu nối",
+     "when": "3–12s"
+    },
+    {
+     "shot": "Công dụng · (Vui) Tay xé tờ lịch buổi sáng",
+     "voice": "Lịch giấy thì mỗi sáng xé một tờ. Ngày âm, giờ hoàng đạo nằm sẵn, không cần mở máy.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Công dụng",
+     "when": "12–22s"
+    },
+    {
+     "shot": "Thông số · Phụ đề thông số, zoom chữ âm",
+     "voice": "Cuốn 14 rưỡi nhân 20 rưỡi, 365 tờ, giấy mờ không chói mắt.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "22–32s"
+    },
+    {
+     "shot": "Chốt · (Ấm áp) Treo lịch lên tường nhà gỗ, chỉ giỏ",
+     "voice": "Tết này về quê, mang một cuốn treo cho ông bà. Quà nhỏ mà ngày nào cũng dùng đến.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 10.0,
+     "part": "Chốt",
+     "when": "32–42s"
+    }
+   ],
+   "needs_info": [
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:L7",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "L7",
+   "channel": "TL",
+   "channel_name": "Kênh TL",
+   "stt": 7,
+   "product": "Bloc 14,5×20,5",
+   "group": "3. Lịch bloc (14 video)",
+   "title": "L7 · Quà biếu Tết dưới 50k",
+   "summary": "Kênh TL #7 · Bloc 14,5×20,5 · Bối cảnh: bàn gói quà, nhiều cuốn xếp chồng",
+   "hook_type": "Mở đầu: con số → Chốt: quà tặng",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Chắc chắn) Chữ \"DƯỚI 50K\" phủ màn hình",
+     "voice": "Quà biếu Tết dưới 50 nghìn mà không bị xem thường, có đó anh chị!",
+     "text": "DƯỚI 50K",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · (Nhẹ nhàng) Xếp lịch vào túi quà",
+     "voice": "Lịch là món duy nhất người nhận nhìn mỗi ngày, cả năm. Nhìn là nhớ người tặng.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "3–12s"
+    },
+    {
+     "shot": "Công dụng · 3 cảnh nhanh: văn phòng, cửa hàng, nhà ở",
+     "voice": "Tặng sếp, tặng khách hàng, tặng hàng xóm đều hợp. Ai cũng cần lịch.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Công dụng",
+     "when": "12–22s"
+    },
+    {
+     "shot": "Thông số · Phụ đề thông số + giá",
+     "voice": "Cỡ 14 rưỡi nhân 20 rưỡi, đủ 365 tờ, giấy Couche Matt. Giá 44 nghìn.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "22–32s"
+    },
+    {
+     "shot": "Chốt · (Cười) Đặt chồng 5 túi quà, chỉ giỏ [kiểm tra ưu đãi mua nhiều]",
+     "voice": "Anh chị cần biếu nhiều người thì mua một lần cho đủ, đỡ chạy đi chạy lại sát Tết.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 10.0,
+     "part": "Chốt",
+     "when": "32–42s"
+    }
+   ],
+   "needs_info": [
+    "Kiểm tra khi quay: [kiểm tra ưu đãi mua nhiều]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:L8",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "L8",
+   "channel": "TL",
+   "channel_name": "Kênh TL",
+   "stt": 8,
+   "product": "Bloc 14,5×20,5",
+   "group": "3. Lịch bloc (14 video)",
+   "title": "L8 · \"Đừng mua lịch bloc nếu chưa kiểm tra 3 điều\"",
+   "summary": "Kênh TL #8 · Bloc 14,5×20,5 · Bối cảnh: bàn trắng, đếm bằng ngón tay",
+   "hook_type": "Mở đầu: phủ định ngược → Chốt: tóm lợi ích",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Nghiêm, giơ 3 ngón tay)",
+     "voice": "Đừng mua lịch bloc nếu chưa kiểm tra 3 điều này!",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · Giơ 1 ngón. Lật tờ cuối 31/12",
+     "voice": "Một: đếm tờ. Lịch rẻ hay thiếu tờ, hoặc in gộp hai ngày một tờ. Cuốn này đủ 365.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "3–12s"
+    },
+    {
+     "shot": "Công dụng · Giơ 2 ngón. Soi đèn vào mặt giấy, xé thử",
+     "voice": "Hai: giấy. Giấy bóng thì lóa đèn, giấy mỏng thì xé rách cả tờ sau. Đây là Couche Matt, mờ và dai.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Công dụng",
+     "when": "12–22s"
+    },
+    {
+     "shot": "Thông số · Giơ 3 ngón. Treo lịch lên tường",
+     "voice": "Ba: cỡ và chốt. 14 rưỡi nhân 20 rưỡi là cỡ vừa cho phòng khách, có ốc vít xoắn hoặc chốt đầu bi.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "22–32s"
+    },
+    {
+     "shot": "Chốt · (Thở ra, cười) Chữ tóm 3 ý + giỏ",
+     "voice": "Đủ tờ, giấy tốt, cỡ vừa, 44 nghìn. Anh chị lưu video này lại để đi mua không bị hớ nha.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "32–40s"
+    }
+   ],
+   "needs_info": [
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:L9",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "L9",
+   "channel": "SH",
+   "channel_name": "Sách Hay",
+   "stt": 5,
+   "product": "Bloc Đại Lỡ 13×19",
+   "group": "3. Lịch bloc (14 video)",
+   "title": "L9 · Nhà nhỏ, góc bếp",
+   "summary": "Sách Hay #5 · Bloc Đại Lỡ 13×19 · Bối cảnh: căn bếp nhỏ, tủ lạnh",
+   "hook_type": "Mở đầu: tình huống đời thường → Chốt: giỏ hàng",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Than thở, cười) Quay lướt căn bếp hẹp",
+     "voice": "Nhà em bé xíu, treo lịch to là kín cả bức tường.",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · (Hài lòng) Treo lịch cạnh tủ lạnh/kệ gia vị",
+     "voice": "Nên em chọn cuốn Đại Lỡ này. Treo cạnh tủ lạnh, nấu cơm liếc qua là biết hôm nay mùng mấy.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "3–12s"
+    },
+    {
+     "shot": "Công dụng · Lật tờ, zoom ngày âm",
+     "voice": "Cúng mùng một, ngày rằm, đám giỗ trong nhà, lật là thấy ngày âm.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 8.0,
+     "part": "Công dụng",
+     "when": "12–20s"
+    },
+    {
+     "shot": "Thông số · Đặt cạnh cuốn 14,5×20,5 để so [kiểm tra số tờ cỡ 13×19]",
+     "voice": "Cỡ 13 nhân 19, nhỏ hơn cuốn phổ thông một chút nhưng vẫn đủ 365 tờ, chữ âm vẫn rõ.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "20–30s"
+    },
+    {
+     "shot": "Chốt · Chỉ giỏ, chữ \"Cỡ 13×19\"",
+     "voice": "Nhà nhỏ, phòng trọ, góc bếp thì lấy cỡ này. Anh chị chọn Đại Lỡ trong giỏ hàng nha.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "30–38s"
+    }
+   ],
+   "needs_info": [
+    "Kiểm tra khi quay: [kiểm tra số tờ cỡ 13×19]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:L10",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "L10",
+   "channel": "TL",
+   "channel_name": "Kênh TL",
+   "stt": 1,
+   "product": "Bloc Đại Lỡ 13×19",
+   "group": "3. Lịch bloc (14 video)",
+   "title": "L10 · Chọn cỡ: 13×19, 14,5×20,5 hay 20×30",
+   "summary": "Kênh TL #1 · Bloc Đại Lỡ 13×19 · Bối cảnh: 3 cuốn xếp cạnh nhau trên tường",
+   "hook_type": "Mở đầu: câu hỏi → Chốt: tương tác",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Nhanh, rõ) 3 cuốn treo cạnh nhau",
+     "voice": "Mua lịch bloc cỡ nào mới đúng? Xem 30 giây là biết!",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · Chỉ cuốn nhỏ, chữ \"13×19 · nhà nhỏ\"",
+     "voice": "Cỡ 13 nhân 19, Đại Lỡ: gọn, hợp nhà nhỏ, góc bếp, bàn làm việc.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Công dụng",
+     "when": "3–13s"
+    },
+    {
+     "shot": "Công dụng · Chỉ cuốn giữa, chữ \"14,5×20,5 · phòng khách\"",
+     "voice": "Cỡ 14 rưỡi nhân 20 rưỡi: phổ biến nhất, treo phòng khách vừa đẹp.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "13–22s"
+    },
+    {
+     "shot": "Thông số · Chỉ cuốn lớn, lùi máy ra xa [kiểm tra số tờ từng cỡ]",
+     "voice": "Cỡ 20 nhân 30, Siêu Đại: chữ to, nhà có ông bà hoặc cửa hàng nhìn từ xa. Cả ba đều 365 tờ.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "22–32s"
+    },
+    {
+     "shot": "Chốt · (Thân thiện) Chữ \"Bình luận vị trí treo\"",
+     "voice": "Nhà anh chị treo ở đâu? Bình luận vị trí, em tư vấn cỡ cho.",
+     "text": "Bình luận vị trí treo",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "32–40s"
+    }
+   ],
+   "needs_info": [
+    "Kiểm tra khi quay: [kiểm tra số tờ từng cỡ]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:L11",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "L11",
+   "channel": "TL",
+   "channel_name": "Kênh TL",
+   "stt": 2,
+   "product": "Bloc Đại Lỡ 13×19",
+   "group": "3. Lịch bloc (14 video)",
+   "title": "L11 · Quầy tiệm buôn bán, cúng mùng 1 và rằm",
+   "summary": "Kênh TL #2 · Bloc Đại Lỡ 13×19 · Bối cảnh: quầy tính tiền tiệm tạp hóa",
+   "hook_type": "Mở đầu: kể chuyện → Chốt: khan hiếm",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Hơi ngượng, gãi đầu) Đứng sau quầy",
+     "voice": "Tháng trước tiệm em quên cúng rằm, cả tuần thấy không yên.",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · (Yên tâm) Lịch treo cạnh máy tính tiền",
+     "voice": "Giờ treo cuốn này ngay quầy tính tiền. Bán hàng liếc qua là biết sắp mùng một, sắp rằm.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "3–12s"
+    },
+    {
+     "shot": "Công dụng · Zoom ô giờ hoàng đạo",
+     "voice": "Có giờ hoàng đạo, ngày đầu năm xem giờ mở hàng cũng tiện.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 8.0,
+     "part": "Công dụng",
+     "when": "12–20s"
+    },
+    {
+     "shot": "Thông số · Xé một tờ, lịch không che kệ hàng phía sau",
+     "voice": "Cỡ 13 nhân 19 gọn, không che hàng trên kệ. 365 tờ, giấy dai, xé mỗi ngày không rách.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "20–30s"
+    },
+    {
+     "shot": "Chốt · (Gấp) Chỉ giỏ [kiểm tra tồn kho trước khi nói câu khan hiếm]",
+     "voice": "Cỡ nhỏ này hết nhanh lắm, nhiều chỗ đã hết rồi. Anh chị có tiệm thì lấy sớm nha.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "30–38s"
+    }
+   ],
+   "needs_info": [
+    "Kiểm tra khi quay: [kiểm tra tồn kho trước khi nói câu khan hiếm]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:L12",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "L12",
+   "channel": "TL",
+   "channel_name": "Kênh TL",
+   "stt": 3,
+   "product": "Bloc Đại Đặc Biệt 17×24 / 17×26",
+   "group": "3. Lịch bloc (14 video)",
+   "title": "L12 · Chữ to cho mẹ mắt kém",
+   "summary": "Kênh TL #3 · Bloc Đại Đặc Biệt 17×24 / 17×26 · Bối cảnh: phòng khách, người lớn tuổi đeo kính",
+   "hook_type": "Mở đầu: nỗi khổ → Chốt: quà tặng",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Thương, hơi buồn) Mẹ ghe sát cuốn lịch nhỏ",
+     "voice": "Mẹ em đeo kính rồi mà vẫn phải ghe sát mới đọc được ngày âm.",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · (Vui) Mẹ ngồi xa, gật đầu",
+     "voice": "Năm nay em đổi sang cỡ Đại Đặc Biệt. Chữ âm to hơn hẳn, mẹ ngồi ghế cũng đọc được.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "3–12s"
+    },
+    {
+     "shot": "Công dụng · Tay mẹ chỉ vào ngày âm",
+     "voice": "Mẹ tự xem ngày rằm, tự biết hôm nào ăn chay, không phải gọi hỏi con nữa.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 8.0,
+     "part": "Công dụng",
+     "when": "12–20s"
+    },
+    {
+     "shot": "Thông số · Đặt cạnh cỡ nhỏ để so chữ [kiểm tra 2 cỡ và số tờ]",
+     "voice": "Có hai cỡ 17 nhân 24 và 17 nhân 26, đủ 365 tờ, giấy mờ không lóa.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "20–30s"
+    },
+    {
+     "shot": "Chốt · (Ấm áp) Mẹ cười, chỉ giỏ",
+     "voice": "Nhà có bố mẹ lớn tuổi thì biếu cỡ này, hợp hơn biếu món đắt tiền mà ít dùng.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 10.0,
+     "part": "Chốt",
+     "when": "30–40s"
+    }
+   ],
+   "needs_info": [
+    "Kiểm tra khi quay: [kiểm tra 2 cỡ và số tờ]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:L13",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "L13",
+   "channel": "TL",
+   "channel_name": "Kênh TL",
+   "stt": 4,
+   "product": "Bloc Đại Đặc Biệt 17×24 / 17×26",
+   "group": "3. Lịch bloc (14 video)",
+   "title": "L13 · Lật nhanh các mẫu bìa",
+   "summary": "Kênh TL #4 · Bloc Đại Đặc Biệt 17×24 / 17×26 · Bối cảnh: cắt cảnh theo nhịp nhạc",
+   "hook_type": "Mở đầu: cảm thán thời điểm → Chốt: tương tác",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Hào hứng) Cắt nhanh 1 bìa / 0,5 giây",
+     "voice": "Mẫu bìa lịch 2027 về rồi! Anh chị thích cái nào?",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · Giơ từng bìa, dừng 2 giây mỗi mẫu [kiểm tra các mẫu bìa hiện có]",
+     "voice": "Bìa thư pháp cho ai thích không khí Tết truyền thống. Bìa phong cảnh cho phòng khách hiện đại.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 12.0,
+     "part": "Công dụng",
+     "when": "3–15s"
+    },
+    {
+     "shot": "Công dụng · Treo lên tường, lùi máy",
+     "voice": "Bìa đẹp thì treo cả năm cũng là một món trang trí.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 7.0,
+     "part": "Công dụng",
+     "when": "15–22s"
+    },
+    {
+     "shot": "Thông số · Phụ đề thông số",
+     "voice": "Cỡ Đại Đặc Biệt 17 nhân 24, chữ to, 365 tờ, giấy Couche Matt.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "22–32s"
+    },
+    {
+     "shot": "Chốt · (Nháy mắt) 3 bìa đánh số 1–2–3",
+     "voice": "Anh chị chọn số 1, 2 hay 3? Bình luận số, em để riêng mẫu đó cho.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "32–40s"
+    }
+   ],
+   "needs_info": [
+    "Kiểm tra khi quay: [kiểm tra các mẫu bìa hiện có]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:L14",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "L14",
+   "channel": "SH",
+   "channel_name": "Sách Hay",
+   "stt": 6,
+   "product": "Bloc Siêu Đại 20×30",
+   "group": "3. Lịch bloc (14 video)",
+   "title": "L14 · Thử đứng xa 3 mét vẫn đọc được",
+   "summary": "Sách Hay #6 · Bloc Siêu Đại 20×30 · Bối cảnh: tường phòng khách rộng, thước dây trên sàn",
+   "hook_type": "Mở đầu: con số → Chốt: tóm lợi ích",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Thách thức) Kéo thước dây 3 mét trên sàn",
+     "voice": "Đứng cách 3 mét có đọc được ngày âm không? Thử luôn!",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · (Bất ngờ) Máy quay từ vị trí 3 mét, zoom dần",
+     "voice": "Đây là cuốn Siêu Đại. Đứng ở đây em vẫn đọc được ngày dương, cả ngày âm.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "3–12s"
+    },
+    {
+     "shot": "Công dụng · 2 cảnh nhanh: sảnh, cửa hàng",
+     "voice": "Hợp phòng khách rộng, sảnh công ty, cửa hàng: khách đứng xa cũng thấy.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 8.0,
+     "part": "Công dụng",
+     "when": "12–20s"
+    },
+    {
+     "shot": "Thông số · Đặt cạnh cuốn 14,5×20,5 để so [kiểm tra loại chốt cỡ 20×30]",
+     "voice": "Cỡ 20 nhân 30, gấp rưỡi cuốn thường. 365 tờ, giấy dai, treo bằng ốc vít xoắn chắc chắn.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "20–30s"
+    },
+    {
+     "shot": "Chốt · (Tự tin) Chữ tóm 3 ý + giỏ",
+     "voice": "Chữ to, nhìn xa, đủ năm. Tường rộng thì chọn Siêu Đại, bấm giỏ bên dưới nha anh chị.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 10.0,
+     "part": "Chốt",
+     "when": "30–40s"
+    }
+   ],
+   "needs_info": [
+    "Kiểm tra khi quay: [kiểm tra loại chốt cỡ 20×30]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:M1",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "M1",
+   "channel": "NS",
+   "channel_name": "Newshop",
+   "stt": 12,
+   "product": "Lịch laminate",
+   "group": "4. Lịch laminate (5 video)",
+   "title": "M1 · Lịch giấy quăn mép → lịch laminate lau được",
+   "summary": "Newshop #12 · Lịch laminate · Bối cảnh: tường bếp hoặc cửa hàng, bình xịt nước",
+   "hook_type": "Mở đầu: nỗi khổ → Chốt: giỏ hàng",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Chán nản) Cận tờ lịch giấy cũ, mép quăn",
+     "voice": "Mới tháng thứ ba mà tờ lịch treo tường đã quăn mép, dính dầu mỡ thế này!",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · (Hào hứng) Gỡ tờ cũ, treo tấm laminate",
+     "voice": "Năm nay em đổi sang lịch laminate. Mặt phủ bóng như gương, dính bẩn thì lau là sạch.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "3–12s"
+    },
+    {
+     "shot": "Công dụng · (Tự tin) Xịt nước, lau bằng khăn, zoom mặt lịch khô ráo",
+     "voice": "Em xịt nước thật luôn nè. Lau một cái, không nhòe, không phồng.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 8.0,
+     "part": "Công dụng",
+     "when": "12–20s"
+    },
+    {
+     "shot": "Thông số · Phụ đề thông số [kiểm tra cỡ, ngày âm]",
+     "voice": "Một tấm đủ 12 tháng, cỡ 40 nhân 60, có ngày âm. Treo cả năm vẫn phẳng, không quăn.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "20–30s"
+    },
+    {
+     "shot": "Chốt · Chỉ giỏ, giá hiện trên màn hình [giá giỏ]",
+     "voice": "Bếp, cửa hàng, chỗ hay ướt thì dùng loại này. Anh chị bấm giỏ hàng bên dưới nha.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 10.0,
+     "part": "Chốt",
+     "when": "30–40s"
+    }
+   ],
+   "needs_info": [
+    "Kiểm tra khi quay: [kiểm tra cỡ, ngày âm] [giá giỏ]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:M2",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "M2",
+   "channel": "TV",
+   "channel_name": "Tường Vip",
+   "stt": 11,
+   "product": "Lịch laminate",
+   "group": "4. Lịch laminate (5 video)",
+   "title": "M2 · Xem 12 tháng trên một tấm, cho văn phòng",
+   "summary": "Tường Vip #11 · Lịch laminate · Bối cảnh: văn phòng, bàn họp",
+   "hook_type": "Mở đầu: tình huống đời thường → Chốt: tóm lợi ích",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Bối rối) Nhiều người cúi đầu nhìn điện thoại",
+     "voice": "Sếp hỏi: \"Quý 2 năm sau giao hàng ngày nào?\" Cả phòng lại mở điện thoại.",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · (Nhẹ nhõm) Chỉ tay lên lịch trên tường",
+     "voice": "Phòng em giờ treo tấm này. Cả năm 2027 nằm trên một mặt, nhìn là thấy.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "3–12s"
+    },
+    {
+     "shot": "Công dụng · Quay cận ngón tay dò theo từng tháng",
+     "voice": "Lên kế hoạch, tính ngày nghỉ lễ, hẹn khách đều nhanh hơn.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 8.0,
+     "part": "Công dụng",
+     "when": "12–20s"
+    },
+    {
+     "shot": "Thông số · Phụ đề thông số [kiểm tra cỡ]",
+     "voice": "Cỡ 40 nhân 60, phủ laminate tráng gương, không bạc màu, lau bụi là sạch.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "20–30s"
+    },
+    {
+     "shot": "Chốt · (Tự tin) Chữ tóm lợi ích + giỏ",
+     "voice": "Một tấm, cả năm, cả phòng cùng xem. Văn phòng anh chị nên có một tấm.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "30–38s"
+    }
+   ],
+   "needs_info": [
+    "Kiểm tra khi quay: [kiểm tra cỡ]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:M3",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "M3",
+   "channel": "TV",
+   "channel_name": "Tường Vip",
+   "stt": 12,
+   "product": "Lịch laminate",
+   "group": "4. Lịch laminate (5 video)",
+   "title": "M3 · Lịch bloc hay laminate: chọn loại nào?",
+   "summary": "Tường Vip #12 · Lịch laminate · Bối cảnh: hai loại treo cạnh nhau",
+   "hook_type": "Mở đầu: câu hỏi → Chốt: tương tác",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Hỏi thật) Đứng giữa hai loại lịch",
+     "voice": "Lịch bloc hay lịch laminate, nhà mình hợp loại nào?",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · Chỉ lịch bloc, xé một tờ",
+     "voice": "Lịch bloc: mỗi ngày một tờ, có giờ hoàng đạo, hợp phòng khách, bàn thờ, nhà có ông bà.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Công dụng",
+     "when": "3–13s"
+    },
+    {
+     "shot": "Công dụng · Chỉ lịch laminate, lau mặt lịch",
+     "voice": "Lịch laminate: một tấm thấy cả năm, lau được, hợp văn phòng, bếp, cửa hàng.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "13–22s"
+    },
+    {
+     "shot": "Thông số · Bảng so sánh 2 cột trên màn hình [kiểm tra cỡ laminate]",
+     "voice": "Bloc cỡ 14 rưỡi nhân 20 rưỡi, 365 tờ. Laminate cỡ 40 nhân 60, tráng gương.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "22–32s"
+    },
+    {
+     "shot": "Chốt · (Cười) Chữ \"Bloc hay Laminate?\"",
+     "voice": "Nhiều nhà mua cả hai đó. Nhà anh chị treo loại nào? Bình luận \"bloc\" hoặc \"laminate\" nha!",
+     "text": "Bloc hay Laminate?",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "32–40s"
+    }
+   ],
+   "needs_info": [
+    "Kiểm tra khi quay: [kiểm tra cỡ laminate]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:M4",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "M4",
+   "channel": "TL",
+   "channel_name": "Kênh TL",
+   "stt": 5,
+   "product": "Lịch laminate",
+   "group": "4. Lịch laminate (5 video)",
+   "title": "M4 · Trả lời bình luận: \"Laminate là gì?\"",
+   "summary": "Kênh TL #5 · Lịch laminate · Bối cảnh: mở bằng khung trả lời bình luận của TikTok",
+   "hook_type": "Mở đầu: câu hỏi → Chốt: giỏ hàng",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Thân thiện) Khung bình luận hiện góc màn hình",
+     "voice": "Có chị hỏi em: \"Laminate là gì, khác gì lịch thường?\" Em trả lời đây ạ!",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · (Giảng giải chậm) Nghiêng tấm lịch cho thấy ánh bóng",
+     "voice": "Laminate là lớp phủ bóng bên ngoài tờ in, giống ép plastic. Nước, bụi, dầu mỡ không ngấm vào giấy.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Công dụng",
+     "when": "3–13s"
+    },
+    {
+     "shot": "Công dụng · (Bất ngờ) Đổ nước, nước trượt xuống, lau khô",
+     "voice": "Lịch thường dính nước là nhòe. Còn đây em đổ nước lên luôn nè.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "13–22s"
+    },
+    {
+     "shot": "Thông số · Phụ đề thông số [kiểm tra]",
+     "voice": "Một tấm 12 tháng, cỡ 40 nhân 60, tráng gương nên màu tươi, treo lâu không bạc.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "22–32s"
+    },
+    {
+     "shot": "Chốt · (Cười) Chỉ giỏ",
+     "voice": "Chị hỏi là em trả lời, giờ chị bấm giỏ hàng xem giá nha. Ai còn thắc mắc cứ bình luận!",
+     "text": "",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "32–40s"
+    }
+   ],
+   "needs_info": [
+    "Kiểm tra khi quay: [kiểm tra]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:M5",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "M5",
+   "channel": "TL",
+   "channel_name": "Kênh TL",
+   "stt": 6,
+   "product": "Lịch laminate",
+   "group": "4. Lịch laminate (5 video)",
+   "title": "M5 · Khoanh ngày nghỉ Tết lên lịch",
+   "summary": "Kênh TL #6 · Lịch laminate · Bối cảnh: gia đình hoặc nhóm văn phòng đứng trước lịch",
+   "hook_type": "Mở đầu: cảm thán thời điểm → Chốt: khan hiếm",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Háo hức) Cầm bút đứng trước lịch",
+     "voice": "Tết 2027 rơi vào tháng 2, nghỉ ngày nào? Khoanh luôn cho chắc!",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · (Rõ ràng) Khoanh ngày 06/02 [kiểm tra bút viết xóa được, nếu không thì dùng giấy note]",
+     "voice": "Mùng 1 Tết Đinh Mùi là ngày 6 tháng 2. Nhìn một tấm là thấy cả tuần trước và sau Tết.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Công dụng",
+     "when": "3–13s"
+    },
+    {
+     "shot": "Công dụng · Đánh dấu 3 ngày khác màu",
+     "voice": "Ngày về quê, ngày đi chúc Tết, ngày mở hàng lại, cả nhà cùng nhìn một chỗ.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "13–22s"
+    },
+    {
+     "shot": "Thông số · Phụ đề thông số [kiểm tra]",
+     "voice": "Lịch laminate 12 tháng, cỡ 40 nhân 60, lau được, treo cả năm.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "22–32s"
+    },
+    {
+     "shot": "Chốt · (Gấp nhưng vui) Chỉ giỏ",
+     "voice": "Càng sát Tết càng khó mua, anh chị đặt sớm để có lịch treo từ đầu năm nha.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "32–40s"
+    }
+   ],
+   "needs_info": [
+    "Kiểm tra khi quay: [kiểm tra bút viết xóa được, nếu không thì dùng giấy note] [kiểm tra]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:K1",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "K1",
+   "channel": "NS",
+   "channel_name": "Newshop",
+   "stt": 4,
+   "product": "Khổng Tử 02 Vàng",
+   "group": "5. Tranh liễn (11 video)",
+   "title": "K1 · Thay tranh phòng khách đón Tết",
+   "summary": "Newshop #4 · Khổng Tử 02 Vàng · Bối cảnh: phòng khách, quay trước và sau khi treo",
+   "hook_type": "Mở đầu: cảm thán thời điểm → Chốt: khan hiếm",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Gấp, hào hứng) Tường trống, chữ giá hiện ngay",
+     "voice": "Sắp Tết rồi, bức tường phòng khách nhà mình đã thay tranh chưa? Tranh Khổng Tử chỉ [giá giỏ]!",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · (Trầm trồ) Treo tranh, lùi máy chậm để lộ toàn cảnh",
+     "voice": "Tranh Khổng Tử nền vàng, treo lên là phòng khách sáng và trang trọng hẳn.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "3–12s"
+    },
+    {
+     "shot": "Công dụng · Cận chữ trên tranh",
+     "voice": "Khách đến chúc Tết nhìn vào là biết nhà coi trọng gia giáo, coi trọng việc học.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 8.0,
+     "part": "Công dụng",
+     "when": "12–20s"
+    },
+    {
+     "shot": "Thông số · Phụ đề thông số, zoom mép nẹp",
+     "voice": "Có các cỡ [kiểm tra cỡ], nẹp [kiểm tra loại nẹp], màu vàng ấm hợp tường trắng lẫn tường kem.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 12.0,
+     "part": "Thông số",
+     "when": "20–32s"
+    },
+    {
+     "shot": "Chốt · (Chân thành) Chỉ giỏ [kiểm tra tồn kho cỡ lớn]",
+     "voice": "Mẫu này mùa Tết bán rất chạy, cỡ lớn hay hết trước. Anh chị đặt sớm để kịp treo nha.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 10.0,
+     "part": "Chốt",
+     "when": "32–42s"
+    }
+   ],
+   "needs_info": [
+    "Điền vào lời đọc trước khi dựng (AI sẽ đọc to nếu để nguyên): [giá giỏ] [kiểm tra cỡ] [kiểm tra loại nẹp]",
+    "Kiểm tra khi quay: [kiểm tra tồn kho cỡ lớn]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:K2",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "K2",
+   "channel": "NS",
+   "channel_name": "Newshop",
+   "stt": 5,
+   "product": "Khổng Tử 02 Vàng",
+   "group": "5. Tranh liễn (11 video)",
+   "title": "K2 · Đọc một lời dạy trên tranh",
+   "summary": "Newshop #5 · Khổng Tử 02 Vàng · Bối cảnh: góc phòng yên tĩnh, ánh sáng ấm, nhạc nhẹ",
+   "hook_type": "Mở đầu: kể chuyện → Chốt: tương tác",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Chậm, trầm) Cận tay chạm nhẹ lên tranh",
+     "voice": "Có một câu trên bức tranh này mà bố em đọc cho em từ hồi bé.",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · (Chậm rãi, ngắt nghỉ) Zoom đúng câu đang đọc, phụ đề to",
+     "voice": "[Đọc một câu in trên tranh].",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Công dụng",
+     "when": "3–13s"
+    },
+    {
+     "shot": "Công dụng · Con nhỏ đứng đọc tranh",
+     "voice": "Treo trong nhà, con cái đi ngang qua đọc mỗi ngày. Không cần giảng, tự thấm.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "13–22s"
+    },
+    {
+     "shot": "Thông số · Phụ đề thông số",
+     "voice": "Tranh Khổng Tử 02 nền vàng, cỡ [kiểm tra], in rõ nét, màu không phai.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "22–32s"
+    },
+    {
+     "shot": "Chốt · (Ấm áp) Chữ \"Câu dạy của nhà bạn?\"",
+     "voice": "Nhà anh chị có câu nào ông bà hay dạy không? Bình luận cho em biết với.",
+     "text": "Câu dạy của nhà bạn?",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "32–40s"
+    }
+   ],
+   "needs_info": [
+    "Điền vào lời đọc trước khi dựng (AI sẽ đọc to nếu để nguyên): [Đọc một câu in trên tranh] [kiểm tra]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:K3",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "K3",
+   "channel": "SH",
+   "channel_name": "Sách Hay",
+   "stt": 7,
+   "product": "Khổng Tử 02 Vàng",
+   "group": "5. Tranh liễn (11 video)",
+   "title": "K3 · 3 điều cần biết trước khi mua tranh",
+   "summary": "Sách Hay #7 · Khổng Tử 02 Vàng · Bối cảnh: tranh dựng trên bàn, thước dây",
+   "hook_type": "Mở đầu: phủ định ngược → Chốt: tóm lợi ích",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Nghiêm, giơ 3 ngón)",
+     "voice": "Đừng đặt tranh treo tường khi chưa biết 3 điều này!",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · Kéo thước đo tường",
+     "voice": "Một: đo tường trước. Tường sofa dài thì chọn cỡ lớn, hành lang hay phòng học thì cỡ vừa.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "3–12s"
+    },
+    {
+     "shot": "Công dụng · Zoom nẹp, bẻ nhẹ để thấy độ cứng [kiểm tra loại nẹp]",
+     "voice": "Hai: xem nẹp. Nẹp chắc thì tranh phẳng, treo lâu không cong vênh.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Công dụng",
+     "when": "12–22s"
+    },
+    {
+     "shot": "Thông số · Đặt tranh lên 2 nền tường khác nhau",
+     "voice": "Ba: màu nền. Nền vàng hợp tường trắng, tường kem, nhìn ấm và hợp không khí Tết.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "22–32s"
+    },
+    {
+     "shot": "Chốt · (Cười) Chữ tóm 3 ý + giỏ",
+     "voice": "Đúng cỡ, nẹp chắc, màu hợp tường là treo đẹp cả chục năm. Anh chị lưu video lại nha.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "32–40s"
+    }
+   ],
+   "needs_info": [
+    "Kiểm tra khi quay: [kiểm tra loại nẹp]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:K4",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "K4",
+   "channel": "SH",
+   "channel_name": "Sách Hay",
+   "stt": 8,
+   "product": "Khổng Tử 02 Vàng",
+   "group": "5. Tranh liễn (11 video)",
+   "title": "K4 · Quà biếu Tết bố mẹ, sếp",
+   "summary": "Sách Hay #8 · Khổng Tử 02 Vàng · Bối cảnh: tranh gói giấy quà, nơ đỏ",
+   "hook_type": "Mở đầu: câu hỏi → Chốt: quà tặng",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Suy nghĩ, chống cằm) Giỏ bánh kẹo bị đẩy sang bên",
+     "voice": "Tết này biếu bố mẹ, biếu sếp gì cho khác bánh kẹo?",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · (Vui) Mở giấy gói, lộ tranh",
+     "voice": "Em chọn tranh Khổng Tử. Bánh kẹo ăn hết là quên, tranh thì treo cả chục năm.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "3–12s"
+    },
+    {
+     "shot": "Công dụng · 2 cảnh: phòng khách, phòng giám đốc",
+     "voice": "Biếu bố mẹ là lời cảm ơn về gia giáo. Biếu sếp thì trang trọng, hợp phòng làm việc.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Công dụng",
+     "when": "12–22s"
+    },
+    {
+     "shot": "Thông số · Cận hộp đóng gói [kiểm tra quy cách gói]",
+     "voice": "Nền vàng, cỡ [kiểm tra], nẹp [kiểm tra], đóng gói cẩn thận để đi biếu được luôn.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "22–32s"
+    },
+    {
+     "shot": "Chốt · (Ấm áp) Chỉ giỏ",
+     "voice": "Món quà được nhìn mỗi ngày. Anh chị đặt sớm để kịp đi biếu trước Tết nha.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "32–40s"
+    }
+   ],
+   "needs_info": [
+    "Điền vào lời đọc trước khi dựng (AI sẽ đọc to nếu để nguyên): [kiểm tra]",
+    "Kiểm tra khi quay: [kiểm tra quy cách gói]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:K5",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "K5",
+   "channel": "TV",
+   "channel_name": "Tường Vip",
+   "stt": 1,
+   "product": "Khổng Tử 02 Vàng",
+   "group": "5. Tranh liễn (11 video)",
+   "title": "K5 · Trả lời bình luận: vàng hay trắng?",
+   "summary": "Tường Vip #1 · Khổng Tử 02 Vàng · Bối cảnh: mở bằng khung trả lời bình luận, hai tranh cạnh nhau",
+   "hook_type": "Mở đầu: câu hỏi → Chốt: giỏ hàng",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Thân thiện) Khung bình luận góc màn hình",
+     "voice": "Có anh hỏi: \"Tranh Khổng Tử nên lấy nền vàng hay nền trắng?\" Em trả lời đây!",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · Treo tranh vàng trên tường trắng",
+     "voice": "Tường trắng, tường kem: lấy nền vàng, nổi bật và ấm, đặc biệt hợp dịp Tết.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Công dụng",
+     "when": "3–13s"
+    },
+    {
+     "shot": "Công dụng · Đặt tranh lên nền tường đậm [kiểm tra có mẫu nền trắng]",
+     "voice": "Tường màu đậm hoặc ốp gỗ: nền sáng sẽ nổi hơn.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "13–22s"
+    },
+    {
+     "shot": "Thông số · Phụ đề thông số",
+     "voice": "Khách bên em chọn vàng nhiều nhất vì hợp phòng khách Việt. Cỡ [kiểm tra], nẹp [kiểm tra].",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "22–32s"
+    },
+    {
+     "shot": "Chốt · (Cười) Chỉ giỏ",
+     "voice": "Tường nhà anh chị màu gì, chụp gửi em tư vấn. Còn chọn vàng thì bấm giỏ bên dưới nha.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "32–40s"
+    }
+   ],
+   "needs_info": [
+    "Điền vào lời đọc trước khi dựng (AI sẽ đọc to nếu để nguyên): [kiểm tra]",
+    "Kiểm tra khi quay: [kiểm tra có mẫu nền trắng]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:N1",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "N1",
+   "channel": "NS",
+   "channel_name": "Newshop",
+   "stt": 8,
+   "product": "Liễn Nề nếp gia đình Tím",
+   "group": "5. Tranh liễn (11 video)",
+   "title": "N1 · Màu tím hiện đại cho phòng khách trẻ",
+   "summary": "Newshop #8 · Liễn Nề nếp gia đình Tím · Bối cảnh: phòng khách chung cư, nội thất sáng màu",
+   "hook_type": "Mở đầu: phủ định ngược → Chốt: giỏ hàng",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Tinh nghịch) Chữ giá hiện ngay",
+     "voice": "Ai bảo liễn gia đình là phải đỏ vàng mới đẹp? Giá chỉ từ 53 nghìn!",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · (Thích thú) Treo liễn, lùi máy [kiểm tra mẫu tím thật]",
+     "voice": "Bản màu tím này hợp phòng khách chung cư, nội thất trắng, ghế xám. Nhìn hiện đại mà vẫn có nề nếp.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "3–12s"
+    },
+    {
+     "shot": "Công dụng · Zoom lướt từng dòng chữ",
+     "voice": "Mỗi dòng là một quy tắc trong nhà, cả nhà nhìn là nhớ.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 8.0,
+     "part": "Công dụng",
+     "when": "12–20s"
+    },
+    {
+     "shot": "Thông số · Bảng giá theo cỡ trên màn hình",
+     "voice": "Nẹp nhựa 30 nhân 40 là 53 nghìn. Nẹp gỗ có cỡ 30 nhân 40, 40 nhân 60, 60 nhân 90.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 12.0,
+     "part": "Thông số",
+     "when": "20–32s"
+    },
+    {
+     "shot": "Chốt · Chỉ giỏ",
+     "voice": "Nhà trẻ, tường sáng thì chọn màu tím. Anh chị bấm giỏ chọn cỡ nha.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "32–40s"
+    }
+   ],
+   "needs_info": [
+    "Kiểm tra khi quay: [kiểm tra mẫu tím thật]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:N2",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "N2",
+   "channel": "NS",
+   "channel_name": "Newshop",
+   "stt": 9,
+   "product": "Liễn Nề nếp gia đình Kem",
+   "group": "5. Tranh liễn (11 video)",
+   "title": "N2 · Nhắc con mỗi ngày mà không cần nói",
+   "summary": "Newshop #9 · Liễn Nề nếp gia đình Kem · Bối cảnh: cửa ra vào, con đi học về",
+   "hook_type": "Mở đầu: nỗi khổ → Chốt: tóm lợi ích",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Mệt, thở dài) Con chạy vào nhà không chào",
+     "voice": "Nói mãi \"đi học về phải chào\", con vẫn quên.",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · (Bất ngờ, vui) Con dừng lại, khoanh tay chào",
+     "voice": "Từ hồi treo liễn này cạnh cửa, con đi ngang là đọc. Giờ tự chào, không cần nhắc.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "3–12s"
+    },
+    {
+     "shot": "Công dụng · Zoom một dòng chữ [đọc đúng câu in trên liễn]",
+     "voice": "Chữ rõ, câu ngắn, con nhỏ cũng đọc được.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 8.0,
+     "part": "Công dụng",
+     "when": "12–20s"
+    },
+    {
+     "shot": "Thông số · Phụ đề giá + cỡ",
+     "voice": "Bản màu kem nhẹ nhàng, hợp mọi màu tường. Nẹp gỗ 30 nhân 40 chỉ 64 nghìn.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 12.0,
+     "part": "Thông số",
+     "when": "20–32s"
+    },
+    {
+     "shot": "Chốt · (Mỉm cười) Chỉ giỏ",
+     "voice": "Một tấm liễn thay cả trăm lần nhắc. Anh chị bấm giỏ bên dưới nha.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "32–40s"
+    }
+   ],
+   "needs_info": [
+    "Kiểm tra khi quay: [đọc đúng câu in trên liễn]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:N3",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "N3",
+   "channel": "TV",
+   "channel_name": "Tường Vip",
+   "stt": 5,
+   "product": "Liễn Nề nếp gia đình",
+   "group": "5. Tranh liễn (11 video)",
+   "title": "N3 · Cả nhà đọc một quy tắc mỗi tối",
+   "summary": "Tường Vip #5 · Liễn Nề nếp gia đình · Bối cảnh: cả nhà sau bữa tối, quay trước và sau",
+   "hook_type": "Mở đầu: kể chuyện → Chốt: tương tác",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Tâm tình) Cả nhà ngồi quanh bàn",
+     "voice": "Nhà em có một thói quen nhỏ sau bữa tối, làm một tháng là thấy khác.",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · Con đứng đọc to [đọc đúng câu in trên liễn]",
+     "voice": "Mỗi tối một người đọc một dòng trên liễn. Đọc xong nói hôm nay mình đã làm được chưa.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Công dụng",
+     "when": "3–13s"
+    },
+    {
+     "shot": "Công dụng · (Ấm áp) Cảnh trước: cắm mặt vào điện thoại. Cảnh sau: cười nói",
+     "voice": "Trước là mỗi người một điện thoại. Giờ có 10 phút cả nhà nói chuyện với nhau.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "13–22s"
+    },
+    {
+     "shot": "Thông số · Phụ đề thông số",
+     "voice": "Liễn có nẹp nhựa và nẹp gỗ, cỡ từ 30 nhân 40 đến 60 nhân 90, giá từ 53 nghìn.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "22–32s"
+    },
+    {
+     "shot": "Chốt · (Cười) Chữ \"Quy tắc nhà bạn là gì?\"",
+     "voice": "Nhà anh chị có quy tắc nào riêng không? Bình luận cho em học với!",
+     "text": "Quy tắc nhà bạn là gì?",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "32–40s"
+    }
+   ],
+   "needs_info": [
+    "Kiểm tra khi quay: [đọc đúng câu in trên liễn]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:N4",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "N4",
+   "channel": "TV",
+   "channel_name": "Tường Vip",
+   "stt": 6,
+   "product": "Liễn Nề nếp gia đình",
+   "group": "5. Tranh liễn (11 video)",
+   "title": "N4 · So nẹp gỗ và nẹp nhựa, giá theo cỡ",
+   "summary": "Tường Vip #6 · Liễn Nề nếp gia đình · Bối cảnh: hai liễn đặt cạnh nhau trên bàn",
+   "hook_type": "Mở đầu: câu hỏi → Chốt: giỏ hàng",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Tò mò) Giơ hai tấm cạnh nhau",
+     "voice": "Nẹp gỗ hay nẹp nhựa, chênh 11 nghìn có đáng không?",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · Cầm nẹp nhựa, lắc nhẹ",
+     "voice": "Nẹp nhựa nhẹ, treo bằng đinh nhỏ là được, hợp phòng con, phòng thuê.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Công dụng",
+     "when": "3–13s"
+    },
+    {
+     "shot": "Công dụng · Zoom vân gỗ, gõ nhẹ vào nẹp",
+     "voice": "Nẹp gỗ chắc tay, vân gỗ nhìn sang hơn, hợp phòng khách và đi biếu.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "13–22s"
+    },
+    {
+     "shot": "Thông số · (Chậm, rõ từng số) Bảng giá 4 dòng trên màn hình",
+     "voice": "Giá nè: nhựa 30 nhân 40 là 53 nghìn. Gỗ 30 nhân 40 là 64 nghìn 7. Gỗ 40 nhân 60 là 118 nghìn 7. Gỗ 60 nhân 90 là 182 nghìn 4.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 12.0,
+     "part": "Thông số",
+     "when": "22–34s"
+    },
+    {
+     "shot": "Chốt · Chỉ giỏ",
+     "voice": "Treo phòng con thì nhựa, phòng khách và đi biếu thì gỗ. Anh chị chọn đúng cỡ trong giỏ hàng nha.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "34–42s"
+    }
+   ],
+   "needs_info": [
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:A1",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "A1",
+   "channel": "TV",
+   "channel_name": "Tường Vip",
+   "stt": 7,
+   "product": "Tranh Chữ An",
+   "group": "5. Tranh liễn (11 video)",
+   "title": "A1 · \"Năm 2027 anh chị cầu gì nhất?\"",
+   "summary": "Tường Vip #7 · Tranh Chữ An · Bối cảnh: tranh treo tường, ánh đèn vàng ấm",
+   "hook_type": "Mở đầu: câu hỏi → Chốt: tương tác",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Nhẹ, nhìn thẳng máy)",
+     "voice": "Năm 2027, anh chị cầu điều gì nhất?",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · (Trầm, chậm) Máy tiến chậm tới chữ An",
+     "voice": "Em thì chỉ cầu một chữ: An. Nhà an, người an, làm ăn bình an.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "3–12s"
+    },
+    {
+     "shot": "Công dụng · Người mở cửa về nhà, nhìn lên tranh",
+     "voice": "Treo chữ An ở phòng khách, mỗi lần về nhà nhìn thấy là thấy nhẹ lòng.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 8.0,
+     "part": "Công dụng",
+     "when": "12–20s"
+    },
+    {
+     "shot": "Thông số · Zoom canvas, hoa sen, dây thừng",
+     "voice": "Nền nâu, chữ An vàng, có hoa sen. In trên canvas, nẹp gỗ, dây thừng vàng treo sẵn.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "20–30s"
+    },
+    {
+     "shot": "Chốt · (Ấm áp) Chữ \"Bạn cầu chữ gì?\"",
+     "voice": "Anh chị bình luận một chữ mình cầu cho năm mới đi. Em chúc anh chị được như ý!",
+     "text": "Bạn cầu chữ gì?",
+     "text_pos": "center",
+     "duration": 10.0,
+     "part": "Chốt",
+     "when": "30–40s"
+    }
+   ],
+   "needs_info": [
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:A2",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "A2",
+   "channel": "TV",
+   "channel_name": "Tường Vip",
+   "stt": 8,
+   "product": "Tranh Chữ An",
+   "group": "5. Tranh liễn (11 video)",
+   "title": "A2 · Tường trống, quà tân gia, treo một tay",
+   "summary": "Tường Vip #8 · Tranh Chữ An · Bối cảnh: căn nhà mới, tường trống",
+   "hook_type": "Mở đầu: tình huống đời thường → Chốt: quà tặng",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Ngập ngừng) Quay tường trống",
+     "voice": "Nhà mới dọn vào, bức tường trống trơn thế này.",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · (Nhanh, gọn) Một tay treo tranh",
+     "voice": "Một tay em treo lên luôn. Dây thừng có sẵn, một cái đinh là xong.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "3–12s"
+    },
+    {
+     "shot": "Công dụng · Lùi máy cho thấy tranh rủ thẳng",
+     "voice": "Tranh rủ xuống thẳng, không lệch. Tường trống thành góc đẹp nhất nhà.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 8.0,
+     "part": "Công dụng",
+     "when": "12–20s"
+    },
+    {
+     "shot": "Thông số · Cận nẹp gỗ và dây thừng [kiểm tra cỡ]",
+     "voice": "Canvas nền nâu, chữ An vàng, hoa sen, nẹp gỗ trên dưới, dây thừng vàng.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "20–30s"
+    },
+    {
+     "shot": "Chốt · (Mỉm cười) Gói tranh, chỉ giỏ",
+     "voice": "Đi tân gia mà tặng chữ An là ý nghĩa nhất rồi. Anh chị bấm giỏ bên dưới nha.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 10.0,
+     "part": "Chốt",
+     "when": "30–40s"
+    }
+   ],
+   "needs_info": [
+    "Kiểm tra khi quay: [kiểm tra cỡ]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:T1",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "T1",
+   "channel": "NS",
+   "channel_name": "Newshop",
+   "stt": 6,
+   "product": "Thời khóa biểu",
+   "group": "6. Thời khóa biểu (4 video)",
+   "title": "T1 · Sáng nào con cũng hỏi \"hôm nay học gì?\"",
+   "summary": "Newshop #6 · Thời khóa biểu · Bối cảnh: 6h30 sáng, bàn ăn sáng vội vàng",
+   "hook_type": "Mở đầu: tình huống đời thường → Chốt: giỏ hàng",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Mẹ vừa cột tóc vừa thở dài)",
+     "voice": "Con: \"Mẹ ơi hôm nay con học môn gì?\" Sáng nào cũng câu này!",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · (Nhẹ nhõm) Con tự dò ngón tay theo thứ",
+     "voice": "Giờ em dán thời khóa biểu này ngay bàn học. Con tự nhìn, tự biết, mẹ khỏi trả lời.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "3–12s"
+    },
+    {
+     "shot": "Công dụng · Zoom các ô trên tranh [kiểm tra bố cục ô]",
+     "voice": "Ghi môn theo từng thứ, sáng chiều riêng, có cả ô ghi lịch học thêm.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 8.0,
+     "part": "Công dụng",
+     "when": "12–20s"
+    },
+    {
+     "shot": "Thông số · Phụ đề thông số + \"35K\"",
+     "voice": "Phủ laminate tráng gương, chống nước, màu tươi. Cỡ [kiểm tra], giá 35 nghìn.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "20–30s"
+    },
+    {
+     "shot": "Chốt · (Cười) Chỉ giỏ",
+     "voice": "35 nghìn mua lại mỗi sáng yên bình. Mẹ nào cần thì bấm giỏ nha.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "30–38s"
+    }
+   ],
+   "needs_info": [
+    "Điền vào lời đọc trước khi dựng (AI sẽ đọc to nếu để nguyên): [kiểm tra]",
+    "Kiểm tra khi quay: [kiểm tra bố cục ô]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:T2",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "T2",
+   "channel": "NS",
+   "channel_name": "Newshop",
+   "stt": 7,
+   "product": "Thời khóa biểu",
+   "group": "6. Thời khóa biểu (4 video)",
+   "title": "T2 · Con tự soạn cặp, giá 35k trong 3 giây đầu",
+   "summary": "Newshop #7 · Thời khóa biểu · Bối cảnh: buổi tối, con ngồi cạnh cặp sách",
+   "hook_type": "Mở đầu: con số → Chốt: tóm lợi ích",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Dứt khoát) Chữ \"35K\" to giữa màn hình",
+     "voice": "35 nghìn để con tự soạn cặp, không quên sách nữa!",
+     "text": "35K",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · Con nhìn tranh rồi bỏ sách vào cặp",
+     "voice": "Tối nào con cũng nhìn thời khóa biểu, mai thứ mấy thì lấy đúng sách thứ đó.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "3–12s"
+    },
+    {
+     "shot": "Công dụng · (Tự hào) Con kéo khóa cặp, giơ ngón cái",
+     "voice": "Tuần đầu mẹ soạn cùng, tuần sau con tự làm. Tự lập từ việc nhỏ nhất.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 8.0,
+     "part": "Công dụng",
+     "when": "12–20s"
+    },
+    {
+     "shot": "Thông số · Phụ đề thông số",
+     "voice": "Phủ laminate tráng gương, dán tường hay đặt bàn đều được, cỡ [kiểm tra].",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "20–30s"
+    },
+    {
+     "shot": "Chốt · Chữ tóm 3 ý + giỏ",
+     "voice": "Con tự lập, mẹ đỡ mệt, giá chỉ 35 nghìn. Bấm giỏ bên dưới nha anh chị.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "30–38s"
+    }
+   ],
+   "needs_info": [
+    "Điền vào lời đọc trước khi dựng (AI sẽ đọc to nếu để nguyên): [kiểm tra]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:T3",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "T3",
+   "channel": "TV",
+   "channel_name": "Tường Vip",
+   "stt": 9,
+   "product": "Thời khóa biểu",
+   "group": "6. Thời khóa biểu (4 video)",
+   "title": "T3 · Xịt nước, lau sạch như mới",
+   "summary": "Tường Vip #9 · Thời khóa biểu · Bối cảnh: bàn học, bình xịt, bút màu",
+   "hook_type": "Mở đầu: phủ định ngược → Chốt: khan hiếm",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Lắc đầu) Giơ tờ giấy nhàu nát",
+     "voice": "Thời khóa biểu giấy để con vẽ bậy là bỏ! Thử cái này xem.",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · (Tự tin) Xịt nước, lau khăn, zoom mặt tranh",
+     "voice": "Em xịt nước thật luôn. Lau một cái là sạch, chữ không nhòe.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "3–12s"
+    },
+    {
+     "shot": "Công dụng · Vẽ thử một nét rồi lau [kiểm tra loại bút lau được]",
+     "voice": "Bé lỡ tay vẽ lên cũng lau được. Dùng cả năm học vẫn như mới.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 8.0,
+     "part": "Công dụng",
+     "when": "12–20s"
+    },
+    {
+     "shot": "Thông số · Bẻ nhẹ cho thấy độ cứng",
+     "voice": "Mặt phủ laminate tráng gương, giấy cứng, không quăn mép. Giá 35 nghìn.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "20–30s"
+    },
+    {
+     "shot": "Chốt · (Gấp nhưng vui) Chỉ giỏ",
+     "voice": "Giữa năm học hay hết mẫu đẹp lắm, anh chị lấy sớm cho con nha.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "30–38s"
+    }
+   ],
+   "needs_info": [
+    "Kiểm tra khi quay: [kiểm tra loại bút lau được]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:T4",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "T4",
+   "channel": "TV",
+   "channel_name": "Tường Vip",
+   "stt": 10,
+   "product": "Thời khóa biểu",
+   "group": "6. Thời khóa biểu (4 video)",
+   "title": "T4 · Góc học tập đẹp dưới 100k",
+   "summary": "Tường Vip #10 · Thời khóa biểu · Bối cảnh: góc học tập trước và sau khi dọn",
+   "hook_type": "Mở đầu: con số → Chốt: tương tác",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Hào hứng) Cảnh trước: góc bàn bừa bộn",
+     "voice": "Làm mới góc học tập cho con, dưới 100 nghìn thôi!",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · Dán tranh lên tường",
+     "voice": "Món đầu tiên: thời khóa biểu 35 nghìn dán ngay tầm mắt con.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Công dụng",
+     "when": "3–13s"
+    },
+    {
+     "shot": "Công dụng · (Vui) Xếp đồ nhanh theo nhịp nhạc",
+     "voice": "Thêm cốc bút, kệ sách nhỏ, đèn bàn. Góc học gọn hẳn, con ngồi vào là muốn học.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "13–22s"
+    },
+    {
+     "shot": "Thông số · Zoom tranh [kiểm tra viết xóa được]",
+     "voice": "Thời khóa biểu phủ laminate tráng gương, lau được, có ô ghi lịch học thêm.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "22–32s"
+    },
+    {
+     "shot": "Chốt · (Cười) Cảnh sau, chữ \"Trước → Sau\"",
+     "voice": "Góc học nhà anh chị đang thiếu món gì? Bình luận em gợi ý thêm.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "32–40s"
+    }
+   ],
+   "needs_info": [
+    "Kiểm tra khi quay: [kiểm tra viết xóa được]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:Q1",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "Q1",
+   "channel": "NS",
+   "channel_name": "Newshop",
+   "stt": 3,
+   "product": "Tranh Quan Vũ",
+   "group": "7. Quan Vũ và bài vị Thần Tài (2 video)",
+   "title": "Q1 · Ý nghĩa và vị trí treo, quà khai trương",
+   "summary": "Newshop #3 · Tranh Quan Vũ · Bối cảnh: cửa hàng hoặc văn phòng, tranh treo tường",
+   "hook_type": "Mở đầu: câu hỏi → Chốt: quà tặng",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Nghiêm, hơi hạ giọng) Cận gương mặt trong tranh",
+     "voice": "Treo tranh Quan Vũ ở đâu mới đúng? Nhiều nhà treo sai mà không biết.",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · (Chậm rãi) Toàn cảnh tranh",
+     "voice": "Theo quan niệm dân gian, Quan Vũ tượng trưng cho chữ Nghĩa và chữ Tín. Người buôn bán hay treo để nhắc mình giữ uy tín.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Công dụng",
+     "when": "3–13s"
+    },
+    {
+     "shot": "Công dụng · Mũi tên đúng/sai trên màn hình",
+     "voice": "Hay được treo ở chỗ trang trọng, hướng ra cửa chính, tránh treo trong phòng ngủ hay nhà vệ sinh.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "13–22s"
+    },
+    {
+     "shot": "Thông số · Zoom chi tiết áo giáp, chất in",
+     "voice": "Tranh in sắc nét, màu đỏ vàng nổi, cỡ [kiểm tra], nẹp [kiểm tra].",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "22–32s"
+    },
+    {
+     "shot": "Chốt · (Trang trọng rồi mỉm cười) Gói tranh kèm thiệp, chỉ giỏ",
+     "voice": "Bạn bè khai trương, tặng một bức là vừa ý nghĩa vừa sang. Anh chị bấm giỏ nha.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "32–40s"
+    }
+   ],
+   "needs_info": [
+    "Điền vào lời đọc trước khi dựng (AI sẽ đọc to nếu để nguyên): [kiểm tra]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:B1",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "B1",
+   "channel": "TV",
+   "channel_name": "Tường Vip",
+   "stt": 2,
+   "product": "Bài vị Thần Tài",
+   "group": "7. Quan Vũ và bài vị Thần Tài (2 video)",
+   "title": "B1 · Dọn bàn thờ cuối năm, thay bài vị mới",
+   "summary": "Tường Vip #2 · Bài vị Thần Tài · Bối cảnh: bàn thờ Thần Tài trong cửa hàng",
+   "hook_type": "Mở đầu: cảm thán thời điểm → Chốt: khan hiếm",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Nhắc nhẹ) Lau bàn thờ",
+     "voice": "Cuối năm rồi, bàn thờ Thần Tài nhà mình đã dọn chưa anh chị?",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · Cận bài vị cũ bong tróc",
+     "voice": "Bài vị cũ bạc màu, bong chữ. Nhiều nhà có lệ dọn bàn thờ cuối năm thì thay luôn bài vị mới.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Công dụng",
+     "when": "3–13s"
+    },
+    {
+     "shot": "Công dụng · (Trang trọng) Đặt bài vị mới vào",
+     "voice": "Bài vị mới chữ rõ, màu đỏ vàng tươi, bàn thờ sáng và trang nghiêm hơn hẳn.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "13–22s"
+    },
+    {
+     "shot": "Thông số · Phụ đề thông số",
+     "voice": "Chất liệu [kiểm tra], cỡ [kiểm tra] vừa bàn thờ phổ biến, mặt in không phai.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "22–32s"
+    },
+    {
+     "shot": "Chốt · (Nhẹ nhàng) Chỉ giỏ",
+     "voice": "Sát Tết hàng thờ cúng hay hết, anh chị đặt sớm để kịp dọn bàn thờ nha.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "32–40s"
+    }
+   ],
+   "needs_info": [
+    "Điền vào lời đọc trước khi dựng (AI sẽ đọc to nếu để nguyên): [kiểm tra]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:S1",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "S1",
+   "channel": "NS",
+   "channel_name": "Newshop",
+   "stt": 10,
+   "product": "Sâm dứa túi lọc",
+   "group": "8. Trà sâm dứa túi lọc Newtea (4 video)",
+   "title": "S1 · Chủ quán trà đá pha nhanh, không lọc bã",
+   "summary": "Newshop #10 · Sâm dứa túi lọc · Bối cảnh: quán trà đá vỉa hè, bình đá lớn",
+   "hook_type": "Mở đầu: nỗi khổ → Chốt: giỏ hàng",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Mệt mỏi) Tay lọc bã qua rây",
+     "voice": "Bán trà đá mà sáng nào cũng ngồi lọc bã trà, mệt lắm anh chị ơi!",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · (Nhẹ nhõm) Thả túi vào bình, rót nước",
+     "voice": "Em đổi sang sâm dứa túi lọc. Thả túi vào bình, chế nước sôi, đợi là xong.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "3–12s"
+    },
+    {
+     "shot": "Công dụng · Rót ly trà đá, soi ly nước trong",
+     "voice": "Không bã trà nổi, nước trong, mùi sâm dứa thơm, khách uống không bị vướng.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 8.0,
+     "part": "Công dụng",
+     "when": "12–20s"
+    },
+    {
+     "shot": "Thông số · Phụ đề \"150g · 30 túi\"",
+     "voice": "Gói 150g có 30 túi. Mỗi bình em dùng [kiểm tra số túi / lít nước].",
+     "text": "150g · 30 túi",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "20–30s"
+    },
+    {
+     "shot": "Chốt · (Cười) Chỉ giỏ",
+     "voice": "Chủ quán nào muốn đỡ cực thì bấm giỏ, lấy vài gói về pha thử nha.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "30–38s"
+    }
+   ],
+   "needs_info": [
+    "Điền vào lời đọc trước khi dựng (AI sẽ đọc to nếu để nguyên): [kiểm tra số túi / lít nước]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:S2",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "S2",
+   "channel": "NS",
+   "channel_name": "Newshop",
+   "stt": 11,
+   "product": "Sâm dứa túi lọc",
+   "group": "8. Trà sâm dứa túi lọc Newtea (4 video)",
+   "title": "S2 · Trà rời hay túi lọc?",
+   "summary": "Newshop #11 · Sâm dứa túi lọc · Bối cảnh: chia đôi màn hình, hai ấm pha cùng lúc",
+   "hook_type": "Mở đầu: câu hỏi → Chốt: tương tác",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Tò mò) Hai ấm đặt cạnh nhau",
+     "voice": "Trà sâm dứa rời hay túi lọc, loại nào đáng mua hơn? Thử luôn!",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · Nửa trái: đong trà, lọc, bã vương",
+     "voice": "Trà rời: phải đong, phải lọc, rửa ấm thì bã bám khắp nơi.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Công dụng",
+     "when": "3–13s"
+    },
+    {
+     "shot": "Công dụng · Nửa phải: thả túi, nhấc túi ra",
+     "voice": "Túi lọc: thả một túi, pha xong nhấc ra. Ấm sạch, vị đều mỗi lần pha.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "13–22s"
+    },
+    {
+     "shot": "Thông số · Cận gói và túi lọc",
+     "voice": "Gói Newtea 150g, 30 túi, mỗi túi đã định lượng sẵn, không phải đong.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "22–32s"
+    },
+    {
+     "shot": "Chốt · (Cười) Chữ \"Rời hay Túi?\"",
+     "voice": "Nhà anh chị hay pha loại nào? Bình luận \"rời\" hoặc \"túi\" cho em biết nha!",
+     "text": "Rời hay Túi?",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "32–40s"
+    }
+   ],
+   "needs_info": [
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:S3",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "S3",
+   "channel": "SH",
+   "channel_name": "Sách Hay",
+   "stt": 9,
+   "product": "Sâm dứa túi lọc",
+   "group": "8. Trà sâm dứa túi lọc Newtea (4 video)",
+   "title": "S3 · Tính giá một túi ≈ 1.240đ",
+   "summary": "Sách Hay #9 · Sâm dứa túi lọc · Bối cảnh: máy tính cầm tay, gói trà, ly trà đá",
+   "hook_type": "Mở đầu: con số → Chốt: tóm lợi ích",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Chắc chắn) Bấm máy tính",
+     "voice": "Một túi trà sâm dứa chưa tới 1.300 đồng! Tính cho anh chị xem.",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Thông số · Màn hình máy tính \"37.200 ÷ 30\" [kiểm tra giá giỏ]",
+     "voice": "Gói 150g có 30 túi, giá 37 nghìn 2. Chia 30 là khoảng 1.240 đồng một túi.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Thông số",
+     "when": "3–12s"
+    },
+    {
+     "shot": "Công dụng · (Ngạc nhiên) Rót ra nhiều ly",
+     "voice": "Một túi pha được [kiểm tra] ly. Tính ra mỗi ly trà đá chỉ vài trăm đồng tiền trà.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Công dụng",
+     "when": "12–22s"
+    },
+    {
+     "shot": "Công dụng · 3 cảnh nhanh: nhà, văn phòng, quán",
+     "voice": "Uống ở nhà, mang đi làm, hay mở quán đều tiện, không cần dụng cụ lọc.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Công dụng",
+     "when": "22–32s"
+    },
+    {
+     "shot": "Chốt · (Vui) Chữ tóm 3 ý + giỏ",
+     "voice": "Rẻ, tiện, thơm. Anh chị bấm giỏ lấy một gói uống thử nha.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 8.0,
+     "part": "Chốt",
+     "when": "32–40s"
+    }
+   ],
+   "needs_info": [
+    "Điền vào lời đọc trước khi dựng (AI sẽ đọc to nếu để nguyên): [kiểm tra]",
+    "Kiểm tra khi quay: [kiểm tra giá giỏ]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  },
+  {
+   "key": "tuan-2026-10-05:S4",
+   "origin": "weekly",
+   "status": "ready",
+   "batch": "tuan-2026-10-05",
+   "code": "S4",
+   "channel": "SH",
+   "channel_name": "Sách Hay",
+   "stt": 10,
+   "product": "Sâm dứa túi lọc",
+   "group": "8. Trà sâm dứa túi lọc Newtea (4 video)",
+   "title": "S4 · Pha bình mời khách ngày Tết",
+   "summary": "Sách Hay #10 · Sâm dứa túi lọc · Bối cảnh: phòng khách bày mâm bánh kẹo, quay thực tế",
+   "hook_type": "Mở đầu: cảm thán thời điểm → Chốt: quà tặng",
+   "why_it_works": "Kịch bản trong kế hoạch tuần, đã chia sẵn 4 phần: mở đầu, công dụng, thông số, chốt.",
+   "beats": [
+    {
+     "shot": "Mở đầu · (Vội vàng, cười) Khách bước vào cửa",
+     "voice": "Tết đến khách đông, pha trà không kịp thì làm sao?",
+     "text": "",
+     "text_pos": "top",
+     "duration": 3.0,
+     "part": "Mở đầu",
+     "when": "0–3s"
+    },
+    {
+     "shot": "Công dụng · Rót trà mời khách [quay pha thật theo đúng tỷ lệ]",
+     "voice": "Nhà em pha sẵn một bình sâm dứa túi lọc. Khách tới là rót, nóng hay đá đều ngon.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 9.0,
+     "part": "Công dụng",
+     "when": "3–12s"
+    },
+    {
+     "shot": "Công dụng · Khách cầm ly, gật gù",
+     "voice": "Mùi sâm dứa thơm nhẹ, hợp ăn kèm mứt, bánh chưng, ai uống cũng được.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 8.0,
+     "part": "Công dụng",
+     "when": "12–20s"
+    },
+    {
+     "shot": "Thông số · Cận bình trà trong, phụ đề thông số",
+     "voice": "Gói 150g, 30 túi, đủ cho cả mấy ngày Tết. Pha xong nhấc túi ra, bình không bã.",
+     "text": "",
+     "text_pos": "bottom",
+     "duration": 10.0,
+     "part": "Thông số",
+     "when": "20–30s"
+    },
+    {
+     "shot": "Chốt · (Ấm áp) Xếp gói trà vào giỏ quà, chỉ giỏ",
+     "voice": "Mua thêm vài gói biếu hàng xóm cũng hợp. Quà nhỏ mà dùng được ngay.",
+     "text": "",
+     "text_pos": "center",
+     "duration": 10.0,
+     "part": "Chốt",
+     "when": "30–40s"
+    }
+   ],
+   "needs_info": [
+    "Kiểm tra khi quay: [quay pha thật theo đúng tỷ lệ]",
+    "Giá trong kịch bản lấy theo giỏ hàng 05/10: so lại với giỏ ngày đăng"
+   ],
+   "caption": "",
+   "hashtags": []
+  }
+ ]
+}

@@ -9,7 +9,9 @@ const fmt = (t) => (t == null ? "–" : `${Math.floor(t / 60)}:${(t % 60).toFixe
 const S = { settings: {}, voices: {}, providers: {}, scripts: [], sources: [], projects: [],
   scriptId: null, script: null, project: null, jobs: new Map() };
 
-const ORIGIN = { competitor: "Đối thủ", template: "Mẫu", rewrite: "Đã viết lại", manual: "Tự viết" };
+const ORIGIN = { competitor: "Đối thủ", template: "Mẫu", rewrite: "Đã viết lại", manual: "Tự viết", weekly: "Kế hoạch tuần" };
+const PLACEHOLDER = /\[[^\]]+\]/g;
+const plain = (t) => String(t || "").normalize("NFD").replace(/\p{M}/gu, "").replace(/đ/g, "d").toLowerCase();
 const POS = { top: "Trên", center: "Giữa", bottom: "Dưới" };
 const PROJECT_DEFAULTS = { ratio: "9:16", fit: "blur", voice_on: true, subtitles: true, music: "auto",
   music_volume: 0.35, source_volume: 0.3, logo_on: true, fade: 0.25 };
@@ -74,17 +76,28 @@ async function loadScripts(selectId) {
   if (S.scripts.some((s) => s.status === "processing")) setTimeout(() => loadScripts(), 4000);
 }
 
+function scriptMatches(s, q) {
+  if (!q) return true;
+  const hay = plain([s.title, s.summary, s.product, s.code, s.channel, s.channel_name, s.group, s.hook_type].join(" "));
+  const words = hay.split(/[^a-z0-9]+/);
+  return plain(q).split(/\s+/).filter(Boolean).every((w) => (w.length <= 3 ? words.includes(w) : hay.includes(w)));
+}
+
 function renderScriptList() {
-  $("#script-list").innerHTML = S.scripts.length ? S.scripts.map((s) => `
+  const q = ($("#script-search") || {}).value || "";
+  const list = S.scripts.filter((s) => scriptMatches(s, q));
+  $("#script-count").textContent = q ? `${list.length}/${S.scripts.length}` : S.scripts.length;
+  $("#script-list").innerHTML = list.length ? list.map((s) => `
     <div class="item ${s.id === S.scriptId ? "on" : ""}" data-id="${s.id}">
       ${s.poster ? `<img src="${esc(s.poster)}" alt="">` : `<div class="thumb-ph"></div>`}
       <div class="grow"><div class="t">${esc(s.title || "Chưa đặt tên")}</div>
-        <div class="row small" style="gap:6px"><span class="chip ${s.origin}">${ORIGIN[s.origin] || s.origin}</span>
+        <div class="row small" style="gap:6px"><span class="chip ${s.origin}">${s.channel ? esc(s.channel) + " · " : ""}${ORIGIN[s.origin] || s.origin}</span>
           ${s.status === "processing" ? `<span class="chip processing">Đang phân tích</span>` : ""}
           ${s.status === "error" ? `<span class="chip error">Lỗi</span>` : ""}
           <span class="muted">${(s.beats || []).length} cảnh</span></div></div>
-    </div>`).join("") : `<div class="empty small">Chưa có kịch bản</div>`;
+    </div>`).join("") : `<div class="empty small">${S.scripts.length ? "Không có kịch bản khớp" : "Chưa có kịch bản"}</div>`;
 }
+$("#script-search").addEventListener("input", renderScriptList);
 $("#script-list").addEventListener("click", (e) => { const it = e.target.closest(".item"); if (it) selectScript(it.dataset.id); });
 
 function selectScript(id) {
@@ -361,6 +374,7 @@ function renderStudio() {
         <label class="btn sm">Upload nhạc riêng<input type="file" id="pj-music" accept="audio/*" hidden></label>
       </div>
     </div>
+    ${(p.needs_info || []).length ? `<div class="warn"><b>Cần kiểm tra trước khi đăng:</b><ul style="margin:6px 0 0">${p.needs_info.map((m) => `<li>${esc(m)}</li>`).join("")}</ul></div>` : ""}
     ${(p.missing || []).length ? `<div class="warn"><b>Cần quay thêm:</b><ul style="margin:6px 0 0">${p.missing.map((m) => `<li>${esc(m)}</li>`).join("")}</ul></div>` : ""}
     ${(p.alt_hooks || []).length ? `<div class="card"><div class="muted small" style="margin-bottom:6px">Hook khác cho cảnh 1 (bấm để dùng)</div>
       <div class="row">${p.alt_hooks.map((h, i) => `<button class="btn sm" data-act="use-hook" data-i="${i}">${esc(h.text)}</button>`).join("")}</div></div>` : ""}
@@ -380,10 +394,31 @@ function renderStudio() {
   </div>`;
 }
 
+function blanksOf(b) {
+  return [...new Set(`${b.voice || ""} ${b.text || ""}`.match(PLACEHOLDER) || [])];
+}
+
+function blankWarning(blanks) {
+  return `Còn ô chưa điền: <b>${blanks.map(esc).join(" ")}</b>. Sửa lại câu này bằng thông tin thật, nếu không sẽ không xuất được video.`;
+}
+
+function refreshBlanks(card, beat) {
+  const blanks = blanksOf(beat);
+  card.classList.toggle("has-blank", blanks.length > 0);
+  let note = $(".blank-note", card);
+  if (blanks.length && !note) {
+    note = document.createElement("div");
+    note.className = "full err blank-note";
+    $(".body", card).append(note);
+  }
+  if (note) { if (blanks.length) note.innerHTML = blankWarning(blanks); else note.remove(); }
+}
+
 function beatCard(b, i, cfg) {
   const thumb = clipThumb(b.clip);
   const est = estSeconds(b.voice);
-  return `<div class="beat" data-i="${i}">
+  const blanks = blanksOf(b);
+  return `<div class="beat ${blanks.length ? "has-blank" : ""}" data-i="${i}">
     <div class="clip">
       ${thumb ? `<img src="${esc(thumb)}" alt="">` : `<div class="thumb-ph">Chưa chọn đoạn video</div>`}
       ${b.clip ? `<div class="small muted">${fmt(b.clip.start)} → ${fmt(b.clip.end)}</div>` : ""}
@@ -397,6 +432,7 @@ function beatCard(b, i, cfg) {
       <div class="body">
         <label class="f full">Cảnh quay<input type="text" data-k="shot" value="${esc(b.shot)}"></label>
         <label class="f full">Lời đọc ${est ? `<span class="small">(~${est}s)</span>` : ""}<textarea data-k="voice" rows="2">${esc(b.voice)}</textarea></label>
+        ${blanks.length ? `<div class="full err blank-note">${blankWarning(blanks)}</div>` : ""}
         <label class="f">Chữ trên màn hình<textarea data-k="text" rows="2">${esc(b.text)}</textarea></label>
         <div class="stack" style="gap:8px">
           <label class="f">Vị trí chữ<select data-k="text_pos">${Object.entries(POS).map(([k, v]) => `<option value="${k}" ${b.text_pos === k ? "selected" : ""}>${v}</option>`).join("")}</select></label>
@@ -421,6 +457,7 @@ $("#studio").addEventListener("input", (e) => {
   } else if (t.dataset.k) {
     const beat = p.beats[+t.closest(".beat").dataset.i];
     beat[t.dataset.k] = t.dataset.k === "duration" ? parseFloat(t.value) || 3 : t.value;
+    if (t.dataset.k === "voice" || t.dataset.k === "text") refreshBlanks(t.closest(".beat"), beat);
   } else if (t.dataset.set) {
     p.settings = p.settings || {};
     const k = t.dataset.set;

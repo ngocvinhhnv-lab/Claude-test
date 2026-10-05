@@ -18,7 +18,7 @@ App mở tại http://127.0.0.1:8000. Để máy khác trong mạng nội bộ d
 
 ### Quy trình
 
-1. **Kịch bản.** Upload video đối thủ (tải từ TikTok về) hoặc dán link TikTok/Facebook (app tự tải bằng yt-dlp, được cập nhật mỗi lần mở app). AI xem khung hình, đọc chữ, nghe lời thoại, rồi tách thành từng cảnh: cảnh quay gì, lời đọc, chữ trên màn hình, độ dài. Sau đó bấm **Viết lại cho sản phẩm của tôi**: AI giữ cấu trúc và nhịp nhưng viết lời mới, không bịa giá hay khuyến mãi. Thư viện có sẵn 3 kịch bản mẫu KB1–KB3.
+1. **Kịch bản.** Upload video đối thủ (tải từ TikTok về) hoặc dán link TikTok/Facebook (app tự tải bằng yt-dlp, được cập nhật mỗi lần mở app). AI xem khung hình, đọc chữ, nghe lời thoại, rồi tách thành từng cảnh: cảnh quay gì, lời đọc, chữ trên màn hình, độ dài. Sau đó bấm **Viết lại cho sản phẩm của tôi**: AI giữ cấu trúc và nhịp nhưng viết lời mới, không bịa giá hay khuyến mãi. Thư viện có sẵn 3 kịch bản mẫu KB1–KB3 và 40 kịch bản của kế hoạch tuần 05–11/10/2026 (`kich_ban/tuan_2026_10_05.json`), có ô tìm kiếm theo mã, sản phẩm, kênh. Kịch bản còn ô `[kiểm tra]` trong lời đọc sẽ bị chặn xuất video cho tới khi điền thông tin thật.
 2. **Video nguồn.** Upload video tự quay, được nhiều file một lúc. App tạo bản xem thử, chia thành các đoạn ngắn và tự chuyển màu video HDR của iPhone.
 3. **Dựng video.** Từ kịch bản bấm **Dựng video từ kịch bản này**, rồi:
    - **Chọn cảnh:** bấm **AI ghép cảnh tự động** (AI chọn đoạn nguồn cho từng cảnh và báo cảnh còn thiếu), hoặc tự chọn từng đoạn.
@@ -137,3 +137,13 @@ Video xuất ra ở dạng MP4 (H.264 + AAC), dùng được cho TikTok, Faceboo
 pip install numpy
 python tao_nhac.py nhac_tet.m4a --seconds 20 --bpm 104
 ```
+
+## Nạp kịch bản từ tài liệu kế hoạch tuần
+
+Các file `kich_ban/tuan_*.json` được app nạp tự động khi mở, mỗi kịch bản một lần (xoá đi sẽ không bị nạp lại, cập nhật app không ghi đè kịch bản đã sửa). Tạo file cho tuần mới từ tài liệu "Kịch bản video tuần …" (dạng bảng Mốc / Phần / Lời thoại / Hình ảnh):
+
+```bash
+python tools/parse_ke_hoach_doc.py doc.xml kich_ban/tuan_2026_10_12.json --batch tuan-2026-10-12
+```
+
+`doc.xml` là nội dung tài liệu ở dạng XML (trường `data.xml` khi đọc tài liệu bằng Claude Docs).
