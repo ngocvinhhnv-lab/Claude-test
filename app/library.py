@@ -185,12 +185,23 @@ DIRTY_MESSAGE = ("Mọi đoạn quay đều còn chữ, sticker hoặc nét vẽ
                  "sang \u201cVẫn dùng nếu chữ ngắn\u201d nếu chấp nhận chữ cũ còn trong hình.")
 
 
-def usable_shots(shots, strict=True):
-    """Bỏ các đoạn còn chữ hay nét chèn sẵn, và bỏ cả file nếu file đó rõ ràng là bản đã dựng.
+SALVAGE_NOTE = ("Mọi đoạn quay đều là của bản đã dựng (còn chữ, sticker hoặc nét vẽ). App chuyển sang chế độ "
+                "xào nấu: cắt bỏ dải có chữ cũ khỏi khung hình, đảo lại thứ tự và viết lời mới thành một video khác. "
+                "Để video đẹp nhất vẫn nên thả file quay gốc chưa qua dựng.")
 
-    Trả về (đoạn dùng được, đoạn đã bỏ). Có thể không còn đoạn nào: thà báo cho người dùng quay lại
-    còn hơn ghép ra video dính chữ của lần dựng trước.
+
+def usable_shots(shots, mode="strict"):
+    """Lọc kho đoạn quay theo cách xử lý chữ cháy sẵn. Trả về (đoạn dùng được, đoạn đã bỏ).
+
+    strict: bỏ mọi đoạn còn chữ, và bỏ cả file nếu file đó rõ ràng là bản đã dựng.
+    salvage: giữ hết, vì dải chữ cũ sẽ bị cắt khỏi khung hình khi dựng (xem crop_for).
+    lenient: chỉ bỏ đoạn mà AI nói chữ cũ không hợp với lời mới.
     """
+    if mode == "salvage":
+        # chữ nằm giữa khung thì cắt kiểu gì cũng còn, nên vẫn bỏ các đoạn đó nếu còn đoạn khác
+        keep = [s for s in shots if not (s.get("sub") or s.get("marks")) or crop_for(s)]
+        return (keep, [s for s in shots if s not in keep]) if keep else (shots, [])
+    strict = mode != "lenient"
     bad = set(edited_sources(shots)) if strict else set()
 
     def drop(shot):
@@ -199,10 +210,25 @@ def usable_shots(shots, strict=True):
     return [s for s in shots if not drop(s)], [s for s in shots if drop(s)]
 
 
-def clip_from_shot(shot, reason=""):
+CROP = {"bottom": 0.22, "top": 0.16}   # cắt bao nhiêu phần khung hình để bỏ hẳn dải chữ cũ
+
+
+def crop_for(shot):
+    """Dải cần cắt bỏ để chữ cháy sẵn biến mất khỏi khung hình. Chữ nằm giữa khung thì chịu."""
+    pos = shot.get("sub_pos")
+    if (shot.get("sub") or shot.get("marks")) and pos in CROP:
+        return {pos: CROP[pos]}
+    return None
+
+
+def clip_from_shot(shot, reason="", salvage=False):
+    """Đoạn cắt cho một cảnh. salvage: cắt bỏ luôn dải có chữ cũ thay vì chỉ tránh chỗ đó."""
     clip = {"source_id": shot["source_id"], "start": shot["start"], "end": shot["end"],
             "scene_start": shot["scene_start"], "scene_end": shot["scene_end"], "note": reason}
-    if shot.get("sub") and shot.get("sub_pos") in ("top", "center", "bottom"):
+    crop = crop_for(shot) if salvage else None
+    if crop:
+        clip["crop"] = crop          # chữ cũ bị cắt khỏi hình nên không phải tránh nữa
+    elif shot.get("sub") and shot.get("sub_pos") in ("top", "center", "bottom"):
         # chữ mới sẽ tránh chỗ đã có chữ cháy sẵn trong video nguồn
         clip["avoid"] = [shot["sub_pos"]]
     if shot.get("talking"):
@@ -539,7 +565,7 @@ def fix_beats(beats, by_id=None):
     return out
 
 
-def review_beats(script, beats, shots, log=print, rounds=2):
+def review_beats(script, beats, shots, log=print, rounds=2, salvage=False):
     """Soát lại từng cảnh với đoạn quay đã chọn: lời có đúng hình không, mạch có hợp lý không, đủ 30–40 giây chưa.
 
     Trả về {"beats", "changes", "note", "blocked"}. Mỗi vòng là một lượt hỏi AI; dừng sớm khi đã đạt.
@@ -553,7 +579,7 @@ def review_beats(script, beats, shots, log=print, rounds=2):
         if attempt and low <= seconds <= high:
             break
         try:
-            result = ai.review_plan(script, beats, shots, seconds, TARGET_SECONDS)
+            result = ai.review_plan(script, beats, shots, seconds, TARGET_SECONDS, salvage=salvage)
         except ai.AIError as err:
             note = f"Không soát lại được bằng AI ({err}), giữ nguyên kịch bản"
             break
@@ -596,9 +622,12 @@ def suggest_from_sources(spec, log=print):
         raise docs.DocError("Chưa có video nguồn nào xử lý xong. Thả video đã quay vào Bước 1 trước.")
     ensure_shot_labels(source_ids, log=log)
     all_shots = collect_shots(source_ids)
-    shots, dropped = usable_shots(all_shots, strict=spec.get("strict", True))
-    if not shots and dropped:
-        raise docs.DocError(DIRTY_MESSAGE)
+    mode = spec.get("mode", "strict")
+    salvage = mode == "salvage"
+    shots, dropped = usable_shots(all_shots, mode)
+    if len(shots) < 3 and mode == "strict":
+        log("Mọi đoạn quay đều của bản đã dựng, chuyển sang chế độ xào nấu")
+        shots, dropped, salvage = usable_shots(all_shots, "salvage") + (True,)
     if len(shots) < 3:
         raise docs.DocError("Video đã quay chưa đủ phân đoạn để viết kịch bản (cần ít nhất 3 đoạn khác nhau).")
     count = max(1, min(5, int(spec.get("count") or 3)))
@@ -624,14 +653,15 @@ def suggest_from_sources(spec, log=print):
         for beat, src in zip(item["beats"], picked):
             shot = by_id[src["shot_id"]]
             beat["shot_id"] = shot["id"]
-            beat["clip"] = clip_from_shot(shot, "kịch bản này được viết từ chính đoạn quay đó")
+            beat["clip"] = clip_from_shot(shot, "kịch bản này được viết từ chính đoạn quay đó", salvage)
         item["created"] = base - index * 0.01
         saved = store.scripts.save(item)
         titles.append(saved["title"])
         ids.append(saved["id"])
     if not titles:
         raise docs.DocError("AI chưa viết được kịch bản nào từ video này. Thêm ghi chú sản phẩm rồi thử lại.")
-    return {"added": len(titles), "titles": titles, "ids": ids, "shots": len(shots), "dropped": len(dropped)}
+    return {"added": len(titles), "titles": titles, "ids": ids, "shots": len(shots),
+            "dropped": len(dropped), "salvage": salvage, "note": SALVAGE_NOTE if salvage else ""}
 
 
 def import_job(spec, log=print):

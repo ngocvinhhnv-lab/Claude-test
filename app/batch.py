@@ -45,7 +45,7 @@ def active():
 
 
 def create(script_ids, options=None):
-    options = {"voice_mode": "one", "music": "auto", "review": True, "strict": True, **(options or {})}
+    options = {"voice_mode": "one", "music": "auto", "review": True, "mode": "strict", **(options or {})}
     if active():
         raise ValueError("Đang có một đợt tạo video chạy. Đợi xong hoặc bấm Dừng trước.")
     items = []
@@ -178,7 +178,7 @@ def _pick(shot, beat, fit, reason):
             "orig_voice": beat.get("voice", ""), "adapted": False, "drop": False}
 
 
-def _finish(picks, beats, warnings, changes, missing):
+def _finish(picks, beats, warnings, changes, missing, salvage=False):
     """Kiểm tra lần cuối rồi trả kế hoạch: bỏ cảnh đã drop, chặn nếu còn quá ít cảnh hoặc còn ô chưa điền."""
     for pick in picks:
         # sửa lời và chữ đặt nhầm chỗ, bỏ chữ thừa ở cảnh có người đang nói trong hình
@@ -197,16 +197,16 @@ def _finish(picks, beats, warnings, changes, missing):
     blanks = script_blanks({"beats": [{"voice": p["voice"], "text": p["text"]} for p, _ in kept]})
     if blanks:
         return {**base, "blocked": "Còn ô chưa điền trong lời đọc: " + " ".join(blanks) + ". Sửa kịch bản rồi bấm Tiếp tục."}
-    return {"blocked": "", "warnings": warnings, "missing": missing, "changes": changes,
+    return {"blocked": "", "warnings": warnings, "missing": missing, "changes": changes, "salvage": salvage,
             "picks": [p for p, _ in kept], "beats": [b for _, b in kept]}
 
 
-def _review(script, picks, beats, shots, warnings, changes, missing, note):
+def _review(script, picks, beats, shots, warnings, changes, missing, note, salvage=False):
     """Soát lại cả kịch bản với cảnh quay đã chọn rồi dựng lại danh sách cảnh theo kết quả soát."""
     items = [{"part": b.get("part", ""), "shot_id": p["shot"]["id"], "voice": p["voice"], "text": p["text"],
               "text_pos": p["text_pos"], "duration": b.get("duration") or 3}
              for p, b in zip(picks, beats) if not p["drop"]]
-    result = library.review_beats(script, items, shots, rounds=2)
+    result = library.review_beats(script, items, shots, rounds=2, salvage=salvage)
     if result["note"] and result["note"] not in warnings:
         warnings.append("Soát lại: " + result["note"])
     if result["blocked"]:
@@ -232,10 +232,10 @@ def _review(script, picks, beats, shots, warnings, changes, missing, note):
     if len(new_picks) < 3:
         return {"blocked": "Sau khi soát lại, kịch bản còn quá ít cảnh dùng được. Quay thêm rồi bấm Tiếp tục.",
                 "warnings": warnings, "missing": missing, "changes": changes, "picks": [], "beats": []}
-    return _finish(new_picks, new_beats, warnings, changes, missing)
+    return _finish(new_picks, new_beats, warnings, changes, missing, salvage)
 
 
-def plan_beats(script, beats, shots, used, use_ai, adapt, note=lambda m: None, review=True, strict=True):
+def plan_beats(script, beats, shots, used, use_ai, adapt, note=lambda m: None, review=True, mode="strict"):
     """Chọn đoạn quay cho từng cảnh; cảnh nào chưa khớp thì (nếu bật adapt) nhờ AI viết lại cho khớp video đã quay.
 
     Cảnh đã khớp tốt luôn được giữ nguyên lời gốc. Kịch bản chỉ là tham khảo: cảnh không có video quay phù hợp
@@ -246,9 +246,17 @@ def plan_beats(script, beats, shots, used, use_ai, adapt, note=lambda m: None, r
     kho video này (mỗi cảnh đã có shot_id) thì dùng luôn đoạn đã gắn, không ghép lại nữa.
     """
     warnings, changes, missing = [], [], []
-    shots, dropped = library.usable_shots(shots, strict)
-    if dropped:
+    all_shots, salvage = shots, mode == "salvage"
+    shots, dropped = library.usable_shots(all_shots, mode)
+    if len(shots) < 3 and mode == "strict":
+        # không còn đoạn nào sạch: vẫn làm video, nhưng cắt bỏ dải có chữ cũ rồi xào lại cho khác đi
+        note("Xào nấu lại: cắt bỏ vùng chữ cũ khỏi khung hình")
+        shots, dropped, salvage = (*library.usable_shots(all_shots, "salvage"), True)
+        warnings.append(library.SALVAGE_NOTE)
+    elif dropped:
         warnings.append(f"Đã bỏ {len(dropped)} đoạn quay còn chữ hoặc nét chèn sẵn của video cũ")
+    if salvage and dropped:
+        warnings.append(f"Bỏ thêm {len(dropped)} đoạn có chữ nằm giữa khung hình, cắt kiểu gì cũng còn")
     if not shots:
         return {"blocked": library.DIRTY_MESSAGE, "warnings": warnings, "missing": [],
                 "changes": [], "picks": [], "beats": []}
@@ -258,8 +266,8 @@ def plan_beats(script, beats, shots, used, use_ai, adapt, note=lambda m: None, r
                  for shot, beat in zip(bound, beats)]
         if review and use_ai:
             note("Soát lại kịch bản cho khớp cảnh quay")
-            return _review(script, picks, beats, shots, warnings, changes, missing, note)
-        return _finish(picks, beats, warnings, changes, missing)
+            return _review(script, picks, beats, shots, warnings, changes, missing, note, salvage)
+        return _finish(picks, beats, warnings, changes, missing, salvage)
     try:
         result = ai.match_clips(beats, shots, script, used) if use_ai else ai.simple_match(beats, shots, used)
     except ai.AIError as err:
@@ -315,8 +323,8 @@ def plan_beats(script, beats, shots, used, use_ai, adapt, note=lambda m: None, r
                 "warnings": warnings, "missing": missing, "changes": changes, "picks": [], "beats": []}
     if review and use_ai and any(not p["drop"] for p in picks):
         note("Soát lại kịch bản cho khớp cảnh quay")
-        return _review(script, picks, beats, shots, warnings, changes, missing, note)
-    return _finish(picks, beats, warnings, changes, missing)
+        return _review(script, picks, beats, shots, warnings, changes, missing, note, salvage)
+    return _finish(picks, beats, warnings, changes, missing, salvage)
 
 
 def _process(batch_id, index, shots, used, voice_for, use_ai):
@@ -341,7 +349,8 @@ def _process(batch_id, index, shots, used, voice_for, use_ai):
     adapt = bool(options.get("adapt", True))
     plan = plan_beats(script, beats, shots, used, use_ai, adapt,
                       note=lambda m: _item(batch_id, index, message=m),
-                      review=bool(options.get("review", True)), strict=bool(options.get("strict", True)))
+                      review=bool(options.get("review", True)),
+                      mode=options.get("mode") or ("strict" if options.get("strict", True) else "lenient"))
     if plan["blocked"]:
         kind = "blank" if plan["blocked"].startswith("Còn ô") else "footage"
         _item(batch_id, index, status="blocked", block_kind=kind, message=plan["blocked"],
@@ -351,7 +360,8 @@ def _process(batch_id, index, shots, used, voice_for, use_ai):
         used[pick["shot"]["id"]] += 1
 
     new_beats = [{**beat_extra, "voice": p["voice"], "text": p["text"], "text_pos": p["text_pos"],
-                  "clip": library.clip_from_shot(p["shot"], p["reason"]), "adapted": p["adapted"],
+                  "clip": library.clip_from_shot(p["shot"], p["reason"], plan.get("salvage")),
+                  "adapted": p["adapted"],
                   "orig_voice": p["orig_voice"] if p["adapted"] else None}
                  for p, beat_extra in zip(plan["picks"], plan["beats"])]
     fits = [p["fit"] for p in plan["picks"]]

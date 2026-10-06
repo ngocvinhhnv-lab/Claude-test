@@ -550,7 +550,7 @@ REVIEW_SCHEMA = {
 }
 
 
-def review_plan(script, items, shots, seconds, target=(30, 40)):
+def review_plan(script, items, shots, seconds, target=(30, 40), salvage=False):
     """Đối chiếu từng cảnh với đoạn quay đã chọn rồi sửa lại cho khớp và đủ dài trước khi dựng.
 
     items: [{"shot_id", "part", "voice", "text", "text_pos", "duration"}] theo thứ tự hiện tại.
@@ -589,7 +589,12 @@ def review_plan(script, items, shots, seconds, target=(30, 40)):
         "7. Không bịa giá, thông số, đánh giá; không để ô trống kiểu [kiểm tra].\n"
         "Trường changed: ghi ngắn gọn đã đổi gì (viết lại lời, đổi đoạn, đổi chỗ, thêm cảnh), để trống nếu giữ nguyên. "
         "verdict: 'ok' nếu gần như không phải sửa, 'sua' nếu có sửa, 'khong_dung_duoc' nếu kho quay không đủ để "
-        "làm một video mạch lạc.\n" + TEXT_RULES + "\n" + ADAPT_RULES)})
+        "làm một video mạch lạc.\n"
+        + ("ĐẶC BIỆT: các đoạn quay này lấy từ một video đã dựng trước đó, nên video mới PHẢI KHÁC HẲN video cũ: "
+           "đổi thứ tự các đoạn so với thứ tự quay, mở đầu bằng một đoạn khác, gom các ý theo cách khác, "
+           "viết lời hoàn toàn mới chứ không kể lại y như cũ. Vẫn phải đúng: nói gì thì phải đang thấy cái đó.\n"
+           if salvage else "")
+        + TEXT_RULES + "\n" + ADAPT_RULES)})
     schema = {**REVIEW_SCHEMA}
     schema["properties"] = {**REVIEW_SCHEMA["properties"]}
     schema["properties"]["beats"] = {**REVIEW_SCHEMA["properties"]["beats"]}

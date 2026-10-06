@@ -270,9 +270,10 @@ def import_doc(file: Optional[UploadFile] = File(None), url: str = Form(""), tex
 @app.post("/api/scripts/suggest")
 def suggest_scripts(data: dict = Body(default={})):
     """AI xem các phân đoạn trong video đã quay rồi viết vài kịch bản khớp sẵn với video đó."""
+    mode = data.get("mode") if data.get("mode") in ("strict", "salvage", "lenient") else "strict"
     return jobs.submit("suggest", library.suggest_from_sources,
                        {"count": data.get("count"), "note": str(data.get("note", ""))[:2000],
-                        "channel": str(data.get("channel", ""))[:40]})
+                        "channel": str(data.get("channel", ""))[:40], "mode": mode})
 
 
 @app.get("/api/scripts/{script_id}")

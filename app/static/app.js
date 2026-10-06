@@ -492,6 +492,7 @@ function beatCard(b, i, cfg) {
       ${b.clip && b.clip.note ? `<div class="muted small">AI: ${esc(b.clip.note)}</div>` : ""}
       ${b.clip && (b.clip.avoid || []).length ? `<div class="muted small">Đoạn này đã có chữ sẵn ở ${(b.clip.avoid || []).map((p) => POS[p] || p).join(", ")}: chữ và phụ đề mới sẽ được đặt tránh chỗ đó.</div>` : ""}
       ${b.clip && b.clip.talking ? `<div class="muted small">Trong đoạn này đã có người nói với máy quay nên app không chèn chữ lên hình.</div>` : ""}
+      ${b.clip && b.clip.crop ? `<div class="muted small">Đã cắt bỏ dải ${Object.keys(b.clip.crop).map((k) => (k === "top" ? "trên" : "dưới")).join(", ")} khung hình để bỏ chữ của bản dựng cũ.</div>` : ""}
       <div class="row"><button class="btn sm" data-act="listen" ${b.voice && cfg.voice_on ? "" : "disabled"}>Nghe thử lời đọc</button><audio hidden></audio></div>
     </div></div>`;
 }
@@ -778,6 +779,13 @@ function blanksOfScript(s) {
   return [...new Set((s.beats || []).flatMap((b) => `${b.voice || ""} ${b.text || ""}`.match(PLACEHOLDER) || []))];
 }
 
+function burnedLabel(n) {
+  const mode = ($("#bt-strict") || {}).value || "strict";
+  if (mode === "salvage") return `${n} đoạn có chữ cũ · sẽ cắt bỏ dải chữ`;
+  if (mode === "lenient") return `${n} đoạn có chữ cũ · chữ mới sẽ tránh chỗ đó`;
+  return `Bỏ ${n} đoạn còn chữ hoặc nét chèn sẵn`;
+}
+
 function renderBatchSources() {
   const box = $("#bt-sources");
   if (!box) return;
@@ -791,7 +799,7 @@ function renderBatchSources() {
           ${s.status === "processing" ? `<span class="chip processing">Đang xử lý</span>` : ""}
           ${s.status === "error" ? `<span class="chip error" title="${esc(s.error)}">Lỗi</span>` : ""}
           ${s.info ? `<span>${fmt(s.info.duration)} · ${shots.length} đoạn${labelled ? ` · AI đã mô tả ${labelled}` : ""}</span>` : ""}
-          ${burned.length ? `<span class="chip warn" title="${esc(burned.map((x) => x.sub || x.marks).join(" · "))}">Bỏ ${burned.length} đoạn còn chữ hoặc nét chèn sẵn</span>` : ""}</div></div>
+          ${burned.length ? `<span class="chip warn" title="${esc(burned.map((x) => x.sub || x.marks).join(" · "))}">${burnedLabel(burned.length)}</span>` : ""}</div></div>
       <input type="text" data-note="${s.id}" value="${esc(s.note || "")}" placeholder="Ghi chú sản phẩm: VD lịch bloc 14,5×20,5">
       <button class="btn ghost sm" data-del="${s.id}" title="Xoá">✕</button></div>`;
   }).join("") : `<div class="empty small">Chưa có video nguồn. Thả video vào khung trên.</div>`;
@@ -896,7 +904,7 @@ $("#gen-go").addEventListener("click", async () => {
   $("#gen-hint").textContent = "AI đang xem từng phân đoạn, việc này mất vài phút…";
   try {
     const job = await api("POST", "/api/scripts/suggest", { count: parseInt($("#gen-count").value) || 3,
-      note: $("#gen-note").value, channel: $("#gen-channel").value });
+      note: $("#gen-note").value, channel: $("#gen-channel").value, mode: $("#bt-strict").value });
     watchJob(job, "Viết kịch bản từ video", async (res) => {
       btn.disabled = false; $("#gen-hint").textContent = "";
       S.btFresh = new Set(res.ids || []);
@@ -904,7 +912,8 @@ $("#gen-go").addEventListener("click", async () => {
       await Promise.all([loadScripts(), loadSources()]);  // tải lại nguồn để hiện đoạn AI vừa xem và vừa bỏ
       $("#bt-scripts").scrollIntoView({ behavior: "smooth", block: "center" });
       toast(`Đã viết ${res.added} kịch bản từ ${res.shots} đoạn quay của bạn` +
-        (res.dropped ? ` (bỏ ${res.dropped} đoạn còn chữ hoặc nét chèn sẵn)` : "") + " — chọn kịch bản bạn thích.");
+        (res.dropped ? ` (bỏ ${res.dropped} đoạn còn chữ hoặc nét chèn sẵn)` : "") +
+        " — chọn kịch bản bạn thích." + (res.note ? " " + res.note : ""));
     }, (err) => { btn.disabled = false; $("#gen-hint").textContent = ""; $("#gen-err").textContent = err; });
   } catch (err) { btn.disabled = false; $("#gen-hint").textContent = ""; $("#gen-err").textContent = err.message; }
 });
@@ -926,6 +935,7 @@ function renderBatchEstimate() {
   $("#bt-start").textContent = running ? "Đang có một đợt chạy…" : n ? `Bắt đầu tạo ${n} video` : "Bắt đầu tạo video";
 }
 
+$("#bt-strict").addEventListener("change", renderBatchSources);
 $("#bt-search").addEventListener("input", renderBatchScripts);
 $("#bt-channels").addEventListener("click", (e) => { if (e.target.dataset.ch !== undefined) { S.btChannel = e.target.dataset.ch; renderBatchScripts(); } });
 $("#bt-scripts").addEventListener("change", (e) => {
@@ -943,7 +953,7 @@ $("#bt-start").addEventListener("click", async () => {
     const b = await api("POST", "/api/batches", { script_ids: order, options: {
       voice_mode: $("#bt-voice").value, music: $("#bt-music").value,
       source_volume: parseFloat($("#bt-audio").value), adapt: $("#bt-adapt").value === "1",
-      review: $("#bt-review").value === "1", strict: $("#bt-strict").value === "1" } });
+      review: $("#bt-review").value === "1", mode: $("#bt-strict").value } });
     S.btSel.clear(); renderBatchScripts();
     await loadBatches(b.id);
     $("#bt-run").scrollIntoView({ behavior: "smooth" });

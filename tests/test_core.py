@@ -403,7 +403,7 @@ class BurnedSubtitles(unittest.TestCase):
         self.assertEqual(keep, [])   # 3/4 đoạn dính chữ: cả file là bản đã dựng
         self.assertEqual([s["id"] for s in dropped], ["s_0", "s_1", "s_2", "s_3"])
         # chế độ nới lỏng: chỉ bỏ đoạn AI nói là không phù hợp
-        keep, dropped = library.usable_shots(shots, strict=False)
+        keep, dropped = library.usable_shots(shots, "lenient")
         self.assertEqual([s["id"] for s in keep], ["s_0", "s_2", "s_3"])
 
     def test_a_whole_file_that_looks_already_edited_is_dropped(self):
@@ -420,13 +420,25 @@ class BurnedSubtitles(unittest.TestCase):
         self.assertEqual(len(keep), 9)
         self.assertEqual([s["id"] for s in dropped], ["s_9"])
 
-    def test_nothing_usable_blocks_the_video_instead_of_making_a_dirty_one(self):
-        shots = [self.shot(i, "một câu lời thoại dài", ok=False) for i in range(3)]
-        beats = [{"voice": f"Lời đọc số {i} đủ dài để đọc.", "text": "", "text_pos": "top", "duration": 3}
-                 for i in range(4)]
+    def test_nothing_clean_left_still_makes_a_video_by_cropping_the_old_text_away(self):
+        # tất cả đoạn đều của bản đã dựng: vẫn dựng, nhưng cắt bỏ dải chữ cũ khỏi khung hình
+        shots = [self.shot(i, "một câu lời thoại dài", ok=False) for i in range(4)]
+        beats = [{"voice": f"Lời đọc số {i} đủ dài để đọc nha anh chị.", "text": "", "text_pos": "top",
+                  "duration": 3} for i in range(4)]
         plan = batch.plan_beats({"title": "T"}, beats, shots, {}, False, True)
-        self.assertIn("file quay gốc", plan["blocked"])
-        self.assertEqual(plan["picks"], [])
+        self.assertEqual(plan["blocked"], "")
+        self.assertEqual(len(plan["picks"]), 4)
+        self.assertTrue(plan["salvage"])
+        self.assertTrue(any("xào nấu" in w for w in plan["warnings"]))
+        clip = library.clip_from_shot(plan["picks"][0]["shot"], "", plan["salvage"])
+        self.assertEqual(clip["crop"], {"bottom": library.CROP["bottom"]})
+        self.assertNotIn("avoid", clip)   # chữ cũ bị cắt mất rồi nên không phải né nữa
+
+    def test_text_stuck_in_the_middle_of_the_frame_is_still_skipped(self):
+        shots = [self.shot(0, "nụ", pos="center"), self.shot(1, "LỊCH 2027", pos="bottom")]
+        keep, dropped = library.usable_shots(shots, "salvage")
+        self.assertEqual([s["id"] for s in keep], ["s_1"])
+        self.assertEqual([s["id"] for s in dropped], ["s_0"])
 
     def test_matching_never_sees_the_dropped_shots_and_says_so(self):
         shots = [self.shot(i) for i in range(4)] + [self.shot(9, "Bấm giỏ hàng ngay", ok=False)]
@@ -582,6 +594,42 @@ class CutQuality(unittest.TestCase):
         self.assertFalse(any("lời dài hơn" in w for w in plan["warnings"]))
 
 
+class Salvage(unittest.TestCase):
+    """Chỉ còn file đã dựng: cắt bỏ dải chữ cũ khỏi khung hình rồi xào lại thành video khác."""
+
+    def test_the_band_with_the_old_text_is_cut_out_of_the_frame(self):
+        self.assertIn("crop=iw:", make_videos.crop_filter({"bottom": 0.22}))
+        self.assertIn(":0:trunc(ih*0.1600/2)*2", make_videos.crop_filter({"top": 0.16}))
+        self.assertEqual(make_videos.crop_filter(None), "")
+        self.assertEqual(make_videos.crop_filter({"bottom": 0}), "")
+
+    def test_only_text_at_the_top_or_bottom_can_be_cut_away(self):
+        self.assertEqual(library.crop_for({"sub": "LỊCH 2027", "sub_pos": "bottom"}), {"bottom": 0.22})
+        self.assertEqual(library.crop_for({"sub": "tên kênh", "sub_pos": "top"}), {"top": 0.16})
+        self.assertIsNone(library.crop_for({"sub": "nụ", "sub_pos": "center"}))
+        self.assertIsNone(library.crop_for({"sub": "", "sub_pos": "none"}))
+
+    def test_choosing_salvage_crops_even_when_clean_clips_exist(self):
+        dirty = {"id": "s_0", "source_id": "s", "start": 0.0, "end": 3.0, "length": 3.0, "desc": "đoạn",
+                 "note": "", "thumb": "", "scene_start": 0.0, "scene_end": 12.0, "sub": "LỊCH 2027",
+                 "sub_pos": "bottom", "marks": "", "sub_ok": True, "talking": False}
+        clean = {**dirty, "id": "s_1", "sub": "", "sub_pos": "none"}
+        beats = [{"voice": f"Lời đọc số {i} đủ dài để đọc nha anh chị.", "text": "", "text_pos": "top",
+                  "duration": 3} for i in range(4)]
+        plan = batch.plan_beats({"title": "T"}, beats, [dirty, clean], {}, False, True, mode="salvage")
+        self.assertTrue(plan["salvage"])
+        self.assertEqual(plan["blocked"], "")
+        crops = [library.clip_from_shot(p["shot"], "", plan["salvage"]).get("crop") for p in plan["picks"]]
+        self.assertIn({"bottom": library.CROP["bottom"]}, crops)   # đoạn dính chữ bị cắt
+        self.assertIn(None, crops)                                 # đoạn sạch giữ nguyên khung
+
+    def test_a_cut_clip_fills_the_frame_instead_of_showing_blurred_bars(self):
+        segs = make_videos.clip_segments("x.mp4", {"duration": 10.0, "width": 1080, "height": 1920,
+                                                   "has_audio": False, "hdr": False},
+                                         [{"start": 0, "end": 3, "crop": {"bottom": 0.22}}])
+        self.assertEqual(segs[0][6], {"bottom": 0.22})
+
+
 class Review(unittest.TestCase):
     """Trước khi dựng, AI soát lại từng cảnh cho khớp đoạn quay và đủ 30–40 giây."""
 
@@ -598,7 +646,7 @@ class Review(unittest.TestCase):
         ai.review_plan = self.real
 
     def reviewer(self, beats_out, verdict="sua", note="đã sửa"):
-        def fake(script, items, shots, seconds, target=(30, 40)):
+        def fake(script, items, shots, seconds, target=(30, 40), salvage=False):
             self.calls.append(round(seconds))
             return {"verdict": verdict, "note": note, "beats": beats_out}
         ai.review_plan = fake

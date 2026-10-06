@@ -313,10 +313,21 @@ def probe_cached(path):
     return _PROBE_CACHE[key]
 
 
-def clip_segments(source, info, clips):
-    """Chuẩn hoá danh sách clip thành (nguồn, info, start, end, tốc độ, giây giữ khung cuối).
+def crop_filter(crop):
+    """Cắt bỏ một dải trên/dưới khung hình (để bỏ chữ cháy sẵn của bản dựng cũ)."""
+    top = max(0.0, min(0.4, float((crop or {}).get("top", 0) or 0)))
+    bottom = max(0.0, min(0.4, float((crop or {}).get("bottom", 0) or 0)))
+    if not top and not bottom:
+        return ""
+    keep = max(0.3, 1.0 - top - bottom)
+    # trunc(.../2)*2: giữ kích thước chẵn, nếu không libx264 báo lỗi
+    return f",crop=iw:trunc(ih*{keep:.4f}/2)*2:0:trunc(ih*{top:.4f}/2)*2"
 
-    Clip dạng dict có thể chỉ định "source" (video khác), "speed" và "pad".
+
+def clip_segments(source, info, clips):
+    """Chuẩn hoá danh sách clip thành (nguồn, info, start, end, tốc độ, giây giữ khung cuối, cắt khung).
+
+    Clip dạng dict có thể chỉ định "source" (video khác), "speed", "pad" và "crop".
     """
     segs = []
     for clip in clips:
@@ -324,20 +335,21 @@ def clip_segments(source, info, clips):
         src = opt.get("source") or source
         sinfo = info if src == source and info else probe_cached(src)
         start, end = parse_clip(clip, sinfo["duration"])
-        segs.append((src, sinfo, start, end, float(opt.get("speed", 1.0)), float(opt.get("pad", 0.0))))
+        segs.append((src, sinfo, start, end, float(opt.get("speed", 1.0)), float(opt.get("pad", 0.0)),
+                     opt.get("crop")))
     return segs
 
 
 def render(source, info, opts, ratio, out_path, tmpdir):
     segs = clip_segments(source, info, opts["clips"])
     speed = float(opts["speed"])
-    seg_lens = [(e - s) / sp + pad for _, _, s, e, sp, pad in segs]
+    seg_lens = [(e - s) / sp + pad for _, _, s, e, sp, pad, _ in segs]
     total = sum(seg_lens) / speed
     fade = float(opts["fade"] or 0)
 
     cmd = [FFMPEG, "-hide_banner", "-loglevel", "error", "-y"]
     # Mỗi đoạn là một input riêng với -ss để tua nhanh, không phải giải mã từ đầu
-    for src, _, s, e, _, _ in segs:
+    for src, _, s, e, _, _, _ in segs:
         cmd += ["-ss", f"{s:.3f}", "-t", f"{e - s:.3f}", "-i", src]
     next_input = len(segs)
     logo_idx = music_idx = voice_idx = None
@@ -357,10 +369,13 @@ def render(source, info, opts, ratio, out_path, tmpdir):
     first = segs[0][1]
     _, w, h = frame_filter(ratio, opts["fit"], first["width"], first["height"])
     graph = []
-    for i, (_, sinfo, s, e, sp, pad) in enumerate(segs):
-        # Đưa từng đoạn về cùng khung hình trước khi nối, vì các nguồn có thể khác kích thước
-        ff, _, _ = frame_filter(ratio, opts["fit"], first["width"], first["height"], tag=str(i))
-        vf = f"[{i}:v]{TONEMAP + ',' if sinfo['hdr'] else ''}setpts=(PTS-STARTPTS)/{sp},fps={opts['fps']}"
+    for i, (_, sinfo, s, e, sp, pad, crop) in enumerate(segs):
+        # Đưa từng đoạn về cùng khung hình trước khi nối, vì các nguồn có thể khác kích thước.
+        # Đoạn đã cắt bỏ dải chữ cũ thì phóng cho đầy khung, không để viền mờ lộ ra chỗ vừa cắt.
+        fit = "crop" if crop_filter(crop) else opts["fit"]
+        ff, _, _ = frame_filter(ratio, fit, first["width"], first["height"], tag=str(i))
+        vf = (f"[{i}:v]{TONEMAP + ',' if sinfo['hdr'] else ''}setpts=(PTS-STARTPTS)/{sp},fps={opts['fps']}"
+              + crop_filter(crop))
         if pad > 0:
             vf += f",tpad=stop_mode=clone:stop_duration={pad:.3f}"
         graph.append(f"{vf},{ff},format=yuv420p,trim=duration={seg_lens[i]:.3f}[v{i}]")
