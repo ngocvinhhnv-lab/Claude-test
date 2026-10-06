@@ -13,15 +13,30 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
 from fastapi import Body, FastAPI, File, Form, HTTPException, UploadFile  # noqa: E402
-from fastapi.responses import FileResponse  # noqa: E402
+from fastapi.responses import FileResponse, JSONResponse  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
-from . import assemble, batch, jobs, library, media, store, tts  # noqa: E402
+from starlette.background import BackgroundTask  # noqa: E402
+
+import make_videos  # noqa: E402
+
+from . import __version__, assemble, batch, jobs, library, media, store, tts  # noqa: E402
 
 app = FastAPI(title="TikTok Video Studio")
 STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 os.makedirs(store.DATA_DIR, exist_ok=True)
-app.mount("/data", StaticFiles(directory=store.DATA_DIR), name="data")
+class MediaFiles(StaticFiles):
+    """Chỉ phát file ảnh, video, âm thanh trong thư mục data. Các file dữ liệu khác (.json...) trả về 404."""
+
+    ALLOWED = {".mp4", ".mov", ".webm", ".jpg", ".jpeg", ".png", ".mp3", ".m4a", ".wav", ".zip"}
+
+    async def get_response(self, path, scope):
+        if os.path.splitext(path)[1].lower() not in self.ALLOWED:
+            raise HTTPException(404)
+        return await super().get_response(path, scope)
+
+
+app.mount("/data", MediaFiles(directory=store.DATA_DIR), name="data")
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 DATA_PREFIX = os.path.abspath(store.DATA_DIR) + os.sep
@@ -64,8 +79,22 @@ def _save_upload(upload, path):
     return path
 
 
+@app.middleware("http")
+async def same_origin_only(request, call_next):
+    """Chặn trang web lạ trong trình duyệt gửi lệnh ghi vào app (CSRF): yêu cầu thay đổi dữ liệu mà
+    có Origin thì Origin phải trùng địa chỉ app đang được truy cập."""
+    if request.method not in ("GET", "HEAD", "OPTIONS"):
+        origin = request.headers.get("origin")
+        if origin and origin.split("://", 1)[-1] != request.headers.get("host"):
+            return JSONResponse({"detail": "Yêu cầu từ trang web khác bị chặn"}, status_code=403)
+    return await call_next(request)
+
+
 @app.on_event("startup")
 def startup():
+    store.migrate_settings()
+    for problem in make_videos.ffmpeg_problems():
+        print(f"CẢNH BÁO ffmpeg thiếu {problem}")
     library.seed_templates()
     library.seed_weekly()
     batch.recover()
@@ -90,7 +119,8 @@ def public_settings():
 @app.get("/api/state")
 def state():
     return {"settings": public_settings(), "voices": tts.VOICES, "providers": tts.PROVIDER_NAMES,
-            "jobs": jobs.active()}
+            "jobs": jobs.active(), "version": __version__,
+            "ffmpeg": {"path": make_videos.FFMPEG, "problems": make_videos.ffmpeg_problems()}}
 
 
 @app.put("/api/settings")
@@ -348,8 +378,9 @@ def resume_batch(batch_id: str):
 @app.get("/api/batches/{batch_id}/zip")
 def zip_batch(batch_id: str):
     _get(store.batches, batch_id)
-    return FileResponse(batch.build_zip(batch_id), media_type="application/zip",
-                        filename=f"video_{batch_id}.zip")
+    path = batch.build_zip(batch_id)
+    return FileResponse(path, media_type="application/zip", filename=f"video_{batch_id}.zip",
+                        background=BackgroundTask(os.remove, path))  # xoá file tạm sau khi gửi xong
 
 
 @app.delete("/api/batches/{batch_id}")

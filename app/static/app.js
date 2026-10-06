@@ -734,7 +734,7 @@ $("#bt-start").addEventListener("click", async () => {
   $("#bt-err").textContent = "";
   const order = S.scripts.filter((s) => S.btSel.has(s.id)).map((s) => s.id);
   try {
-    const b = await api("POST", "/api/batches", { script_ids: order, options: { voice_mode: $("#bt-voice").value, music: $("#bt-music").value } });
+    const b = await api("POST", "/api/batches", { script_ids: order, options: { voice_mode: $("#bt-voice").value, music: $("#bt-music").value, source_volume: parseFloat($("#bt-audio").value) } });
     S.btSel.clear(); renderBatchScripts();
     await loadBatches(b.id);
     $("#bt-run").scrollIntoView({ behavior: "smooth" });
@@ -844,6 +844,12 @@ $("#bt-run").addEventListener("click", async (e) => {
 (async function init() {
   const st = await api("GET", "/api/state");
   Object.assign(S, { settings: st.settings, voices: st.voices, providers: st.providers });
+  $("#ver").textContent = st.version ? `v${st.version}` : "";
+  if (st.ffmpeg && st.ffmpeg.problems.length) {
+    const box = $("#env-warn");
+    box.hidden = false;
+    box.innerHTML = `<b>ffmpeg trên máy thiếu chức năng, video có thể dựng lỗi:</b><ul style="margin:6px 0 0">${st.ffmpeg.problems.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>Cài lại bản ffmpeg đầy đủ theo hướng dẫn (bước 2 phần A).`;
+  }
   renderSettings();
   await Promise.all([loadScripts(), loadSources(), loadProjects()]);
   renderBatchScripts();

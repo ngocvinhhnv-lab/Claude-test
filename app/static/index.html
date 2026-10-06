@@ -18,7 +18,9 @@
     <button data-page="settings">Cài đặt</button>
   </nav>
   <div class="jobs" id="jobs"></div>
+  <span class="muted small" id="ver"></span>
 </header>
+<div class="warn" id="env-warn" hidden style="margin:12px 20px 0"></div>
 
 <main>
   <!-- ========== TẠO HÀNG LOẠT ========== -->
@@ -49,6 +51,9 @@
           <label class="f">Giọng đọc<select id="bt-voice">
             <option value="one">Một giọng chung (theo Cài đặt)</option>
             <option value="channel">Mỗi kênh một giọng và tốc độ khác nhau</option></select></label>
+          <label class="f">Tiếng gốc của video quay<select id="bt-audio">
+            <option value="0.3">Giữ nhỏ (30%) làm nền</option>
+            <option value="0">Tắt hẳn (nên chọn nếu video có tiếng người nói)</option></select></label>
           <label class="f">Nhạc nền<select id="bt-music">
             <option value="auto">Tự tạo nhạc Tết, mỗi video một nhịp khác</option>
             <option value="none">Không nhạc</option></select></label>

@@ -56,7 +56,7 @@
   <div class="meta">
     <div><b>Thời gian cài lần đầu</b>khoảng 20 phút</div>
     <div><b>Máy tính</b>Windows 10 hoặc 11 (64-bit)</div>
-    <div><b>Phiên bản tài liệu</b>06/10/2026</div>
+    <div><b>Phiên bản tài liệu</b>06/10/2026 (app v2026.10.06)</div>
   </div>
 </div>
 
@@ -86,14 +86,14 @@
   <h3>Cài Python</h3>
   <ol>
     <li>Mở trình duyệt, vào <b>python.org/downloads</b>.</li>
-    <li>Bấm nút vàng <span class="btn">Download Python 3.x</span> (bản 3.12 trở lên), rồi mở file vừa tải về.</li>
+    <li>Kéo xuống mục <b>Looking for a specific release?</b> và tải <b>Python 3.12.x</b> (hoặc 3.13.x), bản <b>Windows installer (64-bit)</b>. <b>Không dùng bản mới nhất ở nút vàng</b> nếu số phiên bản cao hơn 3.13: một số thư viện của app chưa có sẵn cho bản quá mới nên cài sẽ lỗi. Mở file vừa tải về.</li>
     <li>Ở màn hình cài đặt đầu tiên, <b>tick vào ô “Add python.exe to PATH”</b> ở phía dưới cửa sổ.</li>
     <li>Bấm <span class="btn">Install Now</span> và đợi đến khi hiện “Setup was successful”, rồi bấm <span class="btn">Close</span>.</li>
   </ol>
   <div class="box stop"><b>Quan trọng nhất của cả bước 1</b>Nếu quên tick ô “Add python.exe to PATH”, app sẽ không chạy. Khi đó, mở lại file cài Python, chọn <b>Uninstall</b>, rồi cài lại và nhớ tick ô này.</div>
   <p><b>Kiểm tra:</b> bấm nút Start, gõ <code>cmd</code>, Enter để mở cửa sổ Command Prompt. Gõ lệnh dưới rồi Enter:</p>
   <pre>python --version</pre>
-  <p>Hiện dòng <code>Python 3.12.x</code> (hoặc số cao hơn) là đúng. Nếu cửa sổ Microsoft Store tự mở ra hoặc báo <i>“not recognized”</i>, xem mục C1 ở Phần C.</p>
+  <p>Hiện dòng <code>Python 3.12.x</code> hoặc <code>Python 3.13.x</code> là đúng. Nếu hiện số cao hơn (ví dụ 3.14) thì cài lại theo bước trên. Nếu cửa sổ Microsoft Store tự mở ra hoặc báo <i>“not recognized”</i>, xem mục C1 ở Phần C.</p>
 </div></div>
 
 <div class="step"><div class="num">2</div><div>
@@ -176,7 +176,7 @@
   <ol>
     <li><b>Bước 1 · Thả video đã quay.</b> Kéo thả tất cả video quay được vào khung (nhiều file một lúc, quay dọc). Đợi mỗi video hiện ảnh và số đoạn, khoảng vài chục giây. Nên ghi chú sản phẩm vào ô bên phải mỗi video (ví dụ <i>“lịch bloc 14,5×20,5”</i>): không bắt buộc nhưng giúp chọn đúng cảnh hơn.</li>
     <li><b>Bước 2 · Chọn kịch bản.</b> Gõ vào ô tìm hoặc bấm nút kênh <b>NS, SH, TV, TL</b> để lọc, rồi tick từng kịch bản hoặc bấm <span class="btn">Chọn tất cả đang hiện</span>. Kịch bản có nhãn vàng <b>Còn n ô trống</b> sẽ bị giữ lại, vì còn chỗ <code>[kiểm tra]</code> chưa điền.</li>
-    <li><b>Bước 3 · Tạo video.</b> Chọn giọng đọc (một giọng chung, hoặc mỗi kênh một giọng và tốc độ khác nhau cho đỡ giống nhau) và nhạc nền, rồi bấm <span class="btn red">Bắt đầu tạo N video</span>.</li>
+    <li><b>Bước 3 · Tạo video.</b> Chọn giọng đọc (một giọng chung, hoặc mỗi kênh một giọng và tốc độ khác nhau cho đỡ giống nhau) và nhạc nền. Nếu video quay có tiếng người nói hoặc ồn thì ở ô <b>Tiếng gốc của video quay</b> chọn <b>Tắt hẳn</b>, tránh chồng lên giọng đọc. Rồi bấm <span class="btn red">Bắt đầu tạo N video</span>.</li>
   </ol>
   <p><b>Phần mềm tự làm:</b> mô tả video bạn quay (lần đầu), ghép cảnh quay vào từng kịch bản, tạo giọng đọc, chữ, phụ đề, nhạc, rồi dựng lần lượt từng video. Mỗi video khoảng 1–2 phút tuỳ máy, bạn có thể để máy chạy và làm việc khác. <b>Đừng đóng cửa sổ đen.</b> Đóng trình duyệt thì app vẫn chạy; nếu lỡ tắt app, mở lại và bấm <span class="btn">Tiếp tục</span>.</p>
 <figure><img src="s_batch_setup.png" alt=""><figcaption>Hình 2. Tab Tạo hàng loạt: thả video (Bước 1), chọn kịch bản (Bước 2), chọn giọng và nhạc rồi bấm tạo (Bước 3).</figcaption></figure>
@@ -226,7 +226,7 @@
   <h3>Quay và upload video nguồn (tab “2. Video nguồn”)</h3>
   <p><b>Quay theo cột “Cảnh quay” của kịch bản:</b></p>
   <ul>
-    <li><b>Quay dọc</b>, mỗi cảnh 3–10 giây, đủ sáng, cầm chắc tay.</li>
+    <li><b>Quay dọc</b>, đủ sáng, cầm chắc tay. <b>Mỗi cảnh quay 8–12 giây</b>: lời đọc của mỗi cảnh dài khoảng 6–12 giây, cảnh quay ngắn hơn thì app phải quay chậm hoặc dừng hình cho đủ, nhìn không đẹp.</li>
     <li>Mỗi cảnh quay dư ra 1–2 giây ở đầu và cuối để dễ cắt.</li>
     <li>Không cần thu tiếng nói: app tự lồng giọng đọc.</li>
   </ul>
@@ -272,7 +272,7 @@
   <ul>
     <li><b>Tắt app:</b> đóng cửa sổ đen.</li>
     <li><b>Mọi dữ liệu</b> (video nguồn, kịch bản, video đã xuất) nằm trong thư mục <code>D:\TikTokVideoStudio\data</code>. <b>Không xoá thư mục này.</b></li>
-    <li><b>Sao lưu:</b> cuối tuần, copy thư mục <code>data</code> sang ổ khác, NAS hoặc Google Drive.</li>
+    <li><b>Sao lưu:</b> cuối tuần, copy thư mục <code>data</code> sang ổ khác, NAS hoặc Google Drive. <b>API key không nằm trong thư mục này</b> mà lưu riêng trong <code>%APPDATA%\TikTokVideoStudio</code>, nên sao lưu <code>data</code> không làm lộ key. Cài lại Windows thì phải nhập lại key.</li>
     <li>Video đã xuất nằm trong <code>data\projects\</code>. Có thể mở trực tiếp bằng File Explorer.</li>
   </ul>
 </div></div>
@@ -311,6 +311,10 @@
     <td>App chỉ chạy một đợt tại một thời điểm. Đợi đợt đang chạy xong, hoặc bấm <b>Dừng</b> ở đợt đó (app dừng sau khi dựng xong video đang làm).</td></tr>
   <tr><td>C15</td><td>Vài video ở trạng thái <b>Cần điền</b> hoặc <b>Lỗi</b> khi chạy xong</td>
     <td>Cần điền: sửa kịch bản như bảng ở bước 2 phần B. Lỗi: đọc dòng chữ đỏ bên dưới tên video (thường là mạng hoặc giọng đọc), khắc phục rồi bấm <b>Tiếp tục</b>, app chỉ làm lại các video bị lỗi.</td></tr>
+  <tr><td>C16</td><td>Trên đầu app có khung vàng <i>“ffmpeg trên máy thiếu chức năng…”</i>, hoặc xuất video báo <i>“thiếu bộ lọc”</i></td>
+    <td>Máy đang dùng bản ffmpeg rút gọn. Cài bản đầy đủ theo bước 2 phần A (<code>winget install --id Gyan.FFmpeg -e</code> hoặc bản <b>full</b> ở gyan.dev), đóng cửa sổ đen rồi mở lại app.</td></tr>
+  <tr><td>C17</td><td>Cửa sổ đen báo <i>“Canh bao: nen dung Python 3.12 hoac 3.13”</i> hoặc <i>“Loi cai thu vien”</i></td>
+    <td>Bản Python quá mới hoặc quá cũ. Gỡ Python, cài <b>Python 3.12.x</b> như bước 1 phần A, xoá thư mục <code>.venv</code> trong thư mục app rồi mở lại.</td></tr>
 </table>
 <div class="box tip"><b>Khi cần báo lỗi cho quản lý, gửi kèm</b>
   <ol>

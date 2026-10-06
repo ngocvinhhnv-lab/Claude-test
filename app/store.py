@@ -2,6 +2,7 @@
 
 import json
 import os
+import shutil
 import threading
 import time
 import uuid
@@ -77,7 +78,24 @@ scripts = Collection("scripts")
 projects = Collection("projects")
 batches = Collection("batches")
 
-SETTINGS_FILE = os.path.join(DATA_DIR, "settings.json")
+def _config_dir():
+    """Nơi lưu cài đặt (có API key), tách khỏi thư mục data để không bị chia sẻ hay sao lưu nhầm.
+
+    Có thể đặt bằng biến VIDEO_APP_CONFIG. Khi chạy với data tuỳ biến (thử nghiệm) thì dùng thư mục anh em
+    của data để các môi trường không đè lên nhau.
+    """
+    if os.environ.get("VIDEO_APP_CONFIG"):
+        return os.environ["VIDEO_APP_CONFIG"]
+    if os.environ.get("VIDEO_APP_DATA"):
+        return DATA_DIR.rstrip(os.sep) + "_config"
+    if os.name == "nt":
+        return os.path.join(os.environ.get("APPDATA") or os.path.expanduser("~"), "TikTokVideoStudio")
+    return os.path.join(os.path.expanduser("~"), ".config", "tiktok-video-studio")
+
+
+CONFIG_DIR = _config_dir()
+SETTINGS_FILE = os.path.join(CONFIG_DIR, "settings.json")
+_OLD_SETTINGS_FILE = os.path.join(DATA_DIR, "settings.json")  # bản cũ để trong data, từng bị lộ qua /data/...
 DEFAULT_SETTINGS = {
     "anthropic_api_key": "",
     "tts_provider": "edge",
@@ -91,6 +109,19 @@ DEFAULT_SETTINGS = {
 }
 
 
+def migrate_settings():
+    """Chuyển cài đặt từ vị trí cũ (data/settings.json) sang vị trí mới rồi xoá bản cũ."""
+    if os.path.exists(_OLD_SETTINGS_FILE):
+        if not os.path.exists(SETTINGS_FILE):
+            os.makedirs(CONFIG_DIR, exist_ok=True)
+            shutil.copyfile(_OLD_SETTINGS_FILE, SETTINGS_FILE)
+            try:
+                os.chmod(SETTINGS_FILE, 0o600)
+            except OSError:
+                pass
+        os.remove(_OLD_SETTINGS_FILE)
+
+
 def get_settings():
     try:
         with open(SETTINGS_FILE, encoding="utf-8") as f:
@@ -101,9 +132,13 @@ def get_settings():
 
 def save_settings(values):
     settings = {**get_settings(), **{k: v for k, v in values.items() if k in DEFAULT_SETTINGS}}
-    os.makedirs(DATA_DIR, exist_ok=True)
+    os.makedirs(CONFIG_DIR, exist_ok=True)
     with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
         json.dump(settings, f, ensure_ascii=False, indent=2)
+    try:
+        os.chmod(SETTINGS_FILE, 0o600)  # chỉ chủ tài khoản đọc được (không có tác dụng trên Windows)
+    except OSError:
+        pass
     return settings
 
 

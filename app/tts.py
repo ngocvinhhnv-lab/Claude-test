@@ -65,10 +65,16 @@ def _edge(text, voice, rate, out):
     async def run():
         await edge_tts.Communicate(text, voice, rate=f"{rate:+d}%").save(out)
 
-    try:
-        asyncio.run(run())
-    except Exception as err:  # edge-tts báo lỗi mạng bằng nhiều loại ngoại lệ khác nhau
-        raise TTSError(f"Không gọi được giọng Edge (kiểm tra mạng tới speech.platform.bing.com): {err}") from err
+    last = None
+    for attempt in range(3):  # dịch vụ miễn phí hay chập chờn hoặc giới hạn tần suất, thử lại có giãn cách
+        try:
+            asyncio.run(run())
+            return
+        except Exception as err:  # edge-tts báo lỗi mạng bằng nhiều loại ngoại lệ khác nhau
+            last = err
+            time.sleep(1.5 * (attempt + 1) ** 2)
+    raise TTSError(f"Không gọi được giọng Edge sau 3 lần thử (kiểm tra mạng tới speech.platform.bing.com, "
+                   f"hoặc dùng Azure/FPT.AI): {last}") from last
 
 
 def _azure(text, voice, rate, out, settings):

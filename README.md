@@ -4,7 +4,7 @@
 
 ## Chạy ứng dụng web
 
-Cần **Python 3.10+** và **ffmpeg** (bản đầy đủ, có `libass` và `zscale`).
+Cần **Python 3.10–3.13 (khuyên dùng 3.12)** và **ffmpeg** bản đầy đủ (bản đầy đủ, có `libass` và `zscale`).
 
 | Hệ điều hành | Cài ffmpeg | Chạy app |
 |---|---|---|
@@ -158,3 +158,18 @@ python tools/parse_ke_hoach_doc.py doc.xml kich_ban/tuan_2026_10_12.json --batch
 ```
 
 `doc.xml` là nội dung tài liệu ở dạng XML (trường `data.xml` khi đọc tài liệu bằng Claude Docs).
+
+## Bảo mật và dữ liệu
+
+- Cài đặt (API key giọng đọc và AI) lưu ngoài thư mục `data`: Windows `%APPDATA%\TikTokVideoStudio\settings.json`, macOS/Linux `~/.config/tiktok-video-studio/settings.json` (đổi bằng biến `VIDEO_APP_CONFIG`). Bản cũ để trong `data/` sẽ tự chuyển sang.
+- Thư mục `data` chỉ phát ra web các file ảnh, video, âm thanh; file `.json` trả về 404.
+- Yêu cầu ghi dữ liệu từ trang web lạ (có `Origin` khác địa chỉ app) bị chặn.
+- App không có đăng nhập. Mặc định chỉ mở ở `127.0.0.1`; khi chạy `--host 0.0.0.0` thì chỉ dùng trong mạng nội bộ tin cậy.
+- Phông chữ DejaVu Sans đi kèm trong `fonts/` (giấy phép trong `fonts/LICENSE-DejaVu.txt`) nên chữ trong video giống nhau trên mọi máy.
+
+## Kiểm thử
+
+```bash
+pip install httpx
+python -m unittest discover -s tests -v
+```

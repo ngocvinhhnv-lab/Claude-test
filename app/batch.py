@@ -7,6 +7,7 @@ Trạng thái nằm trong data/batches nên đóng trình duyệt hay tắt app 
 
 import os
 import re
+import tempfile
 import threading
 import time
 import unicodedata
@@ -220,7 +221,8 @@ def _process(batch_id, index, shots, used, voice_for, use_ai):
                "hashtags": script.get("hashtags", []), "needs_info": script.get("needs_info", []),
                "beats": new_beats, "renders": [], "missing": result.get("missing", []),
                "settings": {"tts_provider": provider, "tts_voice": voice, "tts_rate": rate,
-                            "music": options.get("music", "auto"), "music_bpm": 96 + (index * 7) % 25}}
+                            "music": options.get("music", "auto"), "music_bpm": 96 + (index * 7) % 25,
+                            "source_volume": float(options.get("source_volume", 0.3))}}
     if item.get("project_id"):
         project["id"] = item["project_id"]
         project["renders"] = store.projects.get(item["project_id"]).get("renders", [])
@@ -239,7 +241,8 @@ def _process(batch_id, index, shots, used, voice_for, use_ai):
 def build_zip(batch_id):
     """Gói mọi video đã xong cùng nội dung đăng và danh sách cần quay thêm vào một file ZIP."""
     batch = store.batches.get(batch_id)
-    out = store.data_path("batches", batch_id, "videos.zip")
+    fd, out = tempfile.mkstemp(suffix=".zip", prefix=f"video_{batch_id}_")
+    os.close(fd)
     posts, names = [], set()
     with zipfile.ZipFile(out, "w", zipfile.ZIP_STORED) as z:
         for item in batch["items"]:

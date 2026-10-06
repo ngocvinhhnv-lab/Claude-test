@@ -50,8 +50,8 @@ DEFAULTS = {
     "voice_volume": 1.0,
     "duck": True,          # tự hạ nhạc khi có giọng đọc
     "safe_zone": False,    # tránh vùng TikTok che (thanh tab, cột nút, caption)
-    # Arial có sẵn trên Windows/macOS và đủ dấu tiếng Việt; Linux thường có DejaVu Sans
-    "font": "Arial" if sys.platform in ("win32", "darwin") else "DejaVu Sans",
+    # Phông đi kèm app (thư mục fonts/) nên chữ giống nhau trên mọi hệ điều hành và đủ dấu tiếng Việt
+    "font": "DejaVu Sans",
     "crf": 20,
 }
 
@@ -68,9 +68,35 @@ def find_ffmpeg():
 
 
 FFMPEG = find_ffmpeg()
+FONTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonts")
 
 TONEMAP = ("zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,"
            "tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv,format=yuv420p")
+
+
+# Bộ lọc ffmpeg mà app cần, kèm công dụng để báo lỗi dễ hiểu
+REQUIRED_FILTERS = {
+    "ass": "chữ tiêu đề và phụ đề (cần bản ffmpeg đầy đủ, có libass)",
+    "zscale": "đổi màu video HDR của iPhone",
+    "tonemap": "đổi màu video HDR của iPhone",
+    "boxblur": "nền mờ khi đổi khung hình",
+    "sidechaincompress": "tự hạ nhạc khi có giọng đọc",
+    "alimiter": "chống vỡ tiếng",
+    "amix": "trộn giọng đọc, nhạc và tiếng gốc",
+    "concat": "ghép các cảnh",
+    "atempo": "đổi tốc độ",
+}
+_FFMPEG_PROBLEMS = None
+
+
+def ffmpeg_problems():
+    """Danh sách chức năng ffmpeg trên máy đang thiếu. Rỗng nghĩa là đủ dùng."""
+    global _FFMPEG_PROBLEMS
+    if _FFMPEG_PROBLEMS is None:
+        out = subprocess.run([FFMPEG, "-hide_banner", "-filters"], capture_output=True, text=True).stdout
+        have = {line.split()[1] for line in out.splitlines() if len(line.split()) > 2 and line.startswith(" ")}
+        _FFMPEG_PROBLEMS = [f"{name}: {why}" for name, why in REQUIRED_FILTERS.items() if name not in have]
+    return _FFMPEG_PROBLEMS
 
 
 def parse_time(value):
@@ -341,7 +367,7 @@ def render(source, info, opts, ratio, out_path, tmpdir):
     if opts.get("text") or opts.get("captions"):
         ass = os.path.join(tmpdir, os.path.basename(out_path) + ".ass")
         build_ass(opts, w, h, total, ass, top_min)
-        graph.append(f"{v}ass='{filter_path(ass)}'[vt]")
+        graph.append(f"{v}ass='{filter_path(ass)}':fontsdir='{filter_path(FONTS_DIR)}'[vt]")
         v = "[vt]"
 
     if fade > 0:
@@ -391,7 +417,12 @@ def render(source, info, opts, ratio, out_path, tmpdir):
 
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
-        raise RuntimeError(result.stderr.strip() or "ffmpeg lỗi")
+        err = result.stderr.strip()
+        missing = re.search(r"No such filter: '(\w+)'", err)
+        if missing:
+            raise RuntimeError(f"ffmpeg trên máy thiếu bộ lọc '{missing[1]}'. Cài lại bản ffmpeg đầy đủ "
+                               f"(gyan.dev, bản 'full') theo hướng dẫn rồi mở lại app.")
+        raise RuntimeError(err[-600:] or "ffmpeg lỗi")
     return total
 
 

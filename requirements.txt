@@ -6,7 +6,9 @@ anthropic
 numpy
 edge-tts
 imageio-ffmpeg   # ffmpeg dự phòng nếu máy chưa cài ffmpeg
-yt-dlp[default,curl-cffi]   # tải video đối thủ từ link; curl-cffi giúp vượt lớp chặn của TikTok
+
+# yt-dlp (tải video đối thủ từ link) do chay_app.bat / chay_app.sh cài riêng và cập nhật mỗi lần mở,
+# vì thư viện này hay lỗi theo phiên bản Python và TikTok hay đổi. Không cài được thì chỉ mất tính năng dán link.
 
 # Tuỳ chọn
 # faster-whisper   # chuyển lời thoại video đối thủ thành chữ (tải model ~500MB lần đầu)
