@@ -147,6 +147,7 @@ button.chip { cursor: pointer; background: none; }
 .peek-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .peek-table td { padding: 3px 6px 3px 0; vertical-align: top; border-bottom: 1px solid var(--bd); }
 .peek-thumb { width: 34px; height: 60px; object-fit: cover; border-radius: 4px; display: block; }
+.tag-text { background: var(--sf2); border: 1px solid var(--bd); border-radius: 5px; padding: 1px 6px; }
 .bt-scripts .item [data-peek] { flex: none; }
 
 /* Chọn màu chữ */

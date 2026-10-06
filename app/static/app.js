@@ -491,6 +491,7 @@ function beatCard(b, i, cfg) {
       </div>
       ${b.clip && b.clip.note ? `<div class="muted small">AI: ${esc(b.clip.note)}</div>` : ""}
       ${b.clip && (b.clip.avoid || []).length ? `<div class="muted small">Đoạn này đã có chữ sẵn ở ${(b.clip.avoid || []).map((p) => POS[p] || p).join(", ")}: chữ và phụ đề mới sẽ được đặt tránh chỗ đó.</div>` : ""}
+      ${b.clip && b.clip.talking ? `<div class="muted small">Trong đoạn này đã có người nói với máy quay nên app không chèn chữ lên hình.</div>` : ""}
       <div class="row"><button class="btn sm" data-act="listen" ${b.voice && cfg.voice_on ? "" : "disabled"}>Nghe thử lời đọc</button><audio hidden></audio></div>
     </div></div>`;
 }
@@ -846,20 +847,31 @@ function renderBatchScripts() {
 
 // Độ dài ước tính: lời đọc khoảng 4 từ mỗi giây, cộng khoảng nghỉ đầu và cuối mỗi cảnh
 function scriptSeconds(s) {
-  const total = (s.beats || []).reduce((sum, b) => {
-    const words = String(b.voice || "").trim().split(/\s+/).filter(Boolean).length;
-    return sum + (words ? 0.5 + words / 4 : Math.max(1, parseFloat(b.duration) || 3));
-  }, 0);
-  return Math.round(total);
+  return Math.round((s.beats || []).reduce((sum, b) => sum + beatSeconds(b), 0));
+}
+
+function beatSeconds(b) {
+  const words = String(b.voice || "").trim().split(/\s+/).filter(Boolean).length;
+  return words ? 0.5 + words / 4 : Math.max(1, parseFloat(b.duration) || 3);
+}
+
+function shotOf(clip) {
+  if (!clip) return null;
+  const src = S.sources.find((s) => s.id === clip.source_id);
+  if (!src) return null;
+  return (src.shots || []).find((sh) => clip.start >= sh.start - 0.01 && clip.start < sh.end) || null;
 }
 
 function scriptPreview(s) {
   const rows = (s.beats || []).map((b, i) => {
-    const thumb = clipThumb(b.clip);
+    const thumb = clipThumb(b.clip), shot = shotOf(b.clip);
     return `<tr><td class="muted">${i + 1}</td>
       <td>${thumb ? `<img src="${esc(thumb)}" alt="" class="peek-thumb">` : `<span class="muted small">${esc((b.shot || "").slice(0, 40)) || "–"}</span>`}</td>
-      <td>${esc(b.voice) || `<span class="muted">(không có lời)</span>`}</td>
-      <td class="small">${b.text ? esc(b.text) : `<span class="muted">–</span>`}</td></tr>`;
+      <td><div>${esc(b.voice) || `<span class="muted">(không có lời)</span>`}</div>
+        <div class="small" style="margin-top:3px">${b.text
+          ? `<span class="tag-text">Chữ trên hình: ${esc(b.text)}</span>`
+          : `<span class="muted">${shot && shot.talking ? "Không chèn chữ · trong hình đã có người nói" : "Không chèn chữ"}</span>`}
+          <span class="muted"> · ${Math.round(beatSeconds(b))}s${b.part ? ` · ${esc(b.part)}` : ""}</span></div></td></tr>`;
   }).join("");
   return `<div class="peek"><table class="peek-table"><tbody>${rows}</tbody></table>
     <div class="small muted">Tổng khoảng ${scriptSeconds(s)} giây. Lúc tạo, AI còn soát lại từng cảnh cho khớp video của bạn.</div></div>`;

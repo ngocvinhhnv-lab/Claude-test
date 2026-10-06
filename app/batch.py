@@ -180,6 +180,15 @@ def _pick(shot, beat, fit, reason):
 
 def _finish(picks, beats, warnings, changes, missing):
     """Kiểm tra lần cuối rồi trả kế hoạch: bỏ cảnh đã drop, chặn nếu còn quá ít cảnh hoặc còn ô chưa điền."""
+    for pick in picks:
+        # sửa lời và chữ đặt nhầm chỗ, bỏ chữ thừa ở cảnh có người đang nói trong hình
+        fixed = library.tidy_beat({"voice": pick["voice"], "text": pick["text"]}, pick["shot"])
+        pick.update(voice=fixed["voice"], text=fixed["text"], drop=pick["drop"] or not fixed["voice"])
+    for i, (pick, beat) in enumerate(zip(picks, beats)):
+        if not pick["drop"] and assemble.stretch_of({"voice": pick["voice"], "duration": beat.get("duration")},
+                                                    pick["shot"]) > 1.5:
+            warnings.append(f"Cảnh {i + 1}: lời dài hơn đoạn quay nên hình sẽ chậm lại, "
+                            "xem lại và cắt bớt lời nếu thấy gượng")
     kept = [(p, b) for p, b in zip(picks, beats) if not p["drop"]]
     base = {"warnings": warnings, "missing": missing, "changes": changes, "picks": [], "beats": []}
     if len(kept) < 3:
@@ -240,6 +249,9 @@ def plan_beats(script, beats, shots, used, use_ai, adapt, note=lambda m: None, r
     shots, dropped = library.usable_shots(shots, strict)
     if dropped:
         warnings.append(f"Đã bỏ {len(dropped)} đoạn quay còn chữ hoặc nét chèn sẵn của video cũ")
+    if not shots:
+        return {"blocked": library.DIRTY_MESSAGE, "warnings": warnings, "missing": [],
+                "changes": [], "picks": [], "beats": []}
     bound = [next((s for s in shots if s["id"] == (b.get("shot_id") or "")), None) for b in beats]
     if beats and all(bound):
         picks = [_pick(shot, beat, "tot", "kịch bản viết từ chính đoạn quay này")

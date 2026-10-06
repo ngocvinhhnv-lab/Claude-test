@@ -213,15 +213,19 @@ def label_shots(items, note=""):
         "- marks: nét vẽ, mũi tên, vòng tròn, emoji, sticker không phải chữ; rỗng nếu không có.\n"
         "- sub_ok: CHỈ true khi đoạn hoàn toàn sạch, không có bất cứ chữ chèn hay nét vẽ nào trong cả 3 khung hình "
         "(chữ in trên sản phẩm không tính). Thấy dù chỉ một chữ nhỏ, một sticker hay một nét khoanh thì để false. "
-        "Thà báo false nhầm còn hơn để sót, vì đoạn lọt lưới sẽ làm bẩn video mới.")})
+        "Thà báo false nhầm còn hơn để sót, vì đoạn lọt lưới sẽ làm bẩn video mới.\n"
+        "- talking: true nếu trong hình có người đang nói với máy quay (thấy mặt, miệng đang mở, đang giới thiệu "
+        "sản phẩm), false nếu chỉ thấy tay, sản phẩm, máy móc hay cảnh vật.")})
     schema = {
         "type": "object",
         "properties": {"shots": {"type": "array", "items": {
             "type": "object",
             "properties": {"index": {"type": "integer"}, "desc": {"type": "string"}, "product": {"type": "string"},
                            "sub": {"type": "string"}, "sub_pos": {"type": "string", "enum": ["top", "center", "bottom", "none"]},
-                           "marks": {"type": "string"}, "sub_ok": {"type": "boolean"}},
-            "required": ["index", "desc", "product", "sub", "sub_pos", "marks", "sub_ok"], "additionalProperties": False}}},
+                           "marks": {"type": "string"}, "sub_ok": {"type": "boolean"},
+                           "talking": {"type": "boolean"}},
+            "required": ["index", "desc", "product", "sub", "sub_pos", "marks", "sub_ok", "talking"],
+            "additionalProperties": False}}},
         "required": ["shots"], "additionalProperties": False,
     }
     result = _ask(content, schema, effort="low")
@@ -230,13 +234,17 @@ def label_shots(items, note=""):
 
 def _shot_line(shot, used=None):
     """Một dòng mô tả đoạn quay để gửi cho AI: nội dung, độ dài, ghi chú, chữ cháy sẵn, số lần đã dùng."""
-    line = f"{shot['id']}: {shot.get('desc') or '(chưa có mô tả, xem ảnh)'} · dài {shot['length']:.0f}s"
+    span = max(0.0, float(shot.get("scene_end") or 0) - float(shot.get("scene_start") or 0))
+    length = f"dài {shot['length']:.0f}s" + (f", kéo được tới {span:.0f}s" if span > shot["length"] + 0.6 else "")
+    line = f"{shot['id']}: {shot.get('desc') or '(chưa có mô tả, xem ảnh)'} · {length}"
     if shot.get("note"):
         line += f" · ghi chú video: {shot['note']}"
     if shot.get("sub"):
         line += f" · trên hình đã có chữ cháy sẵn \"{shot['sub']}\" ở {shot.get('sub_pos') or 'không rõ'}"
     if shot.get("marks"):
         line += f" · có nét chèn sẵn: {shot['marks']}"
+    if shot.get("talking"):
+        line += " · trong hình có người đang nói với máy quay"
     if (used or {}).get(shot["id"]):
         line += f" · đã dùng {used[shot['id']]} lần ở video khác"
     return line
@@ -368,6 +376,18 @@ def extract_scripts(doc):
 
 # ---------- Viết lại cảnh cho khớp video đã quay ----------
 
+TEXT_RULES = (
+    "Cách viết lời và chữ cho mỗi cảnh:\n"
+    "- voice là CÂU NÓI ĐẦY ĐỦ của cảnh đó, 10–25 từ, văn nói, đọc lên nghe trôi. Không bao giờ để voice là một "
+    "hai chữ cụt lủn hay một mảnh câu.\n"
+    "- text là CHỮ NGẮN HIỆN TRÊN MÀN HÌNH, 2–6 từ, rút ra từ chính câu nói của cảnh đó (ý chính, con số, từ khoá) "
+    "để người xem tắt tiếng vẫn hiểu. Không chép nguyên câu nói, không viết câu dài, không bịa thêm ý mới.\n"
+    "- Cảnh nào trong hình ĐÃ CÓ NGƯỜI ĐANG NÓI với máy quay thì để text RỖNG: người xem đã nghe và thấy người nói "
+    "rồi, chèn chữ nữa là rối.\n"
+    "- Cảnh có chữ cháy sẵn trên hình cũng để text rỗng, và tuyệt đối không chép lại chữ cháy sẵn đó.\n"
+    "- Không nhầm chỗ: câu nói dài luôn nằm ở voice, chữ ngắn luôn nằm ở text."
+)
+
 ADAPT_RULES = (
     "Quy tắc nội dung của shop: xưng 'em', gọi 'anh chị', câu ngắn, văn nói, không đọc như quảng cáo. "
     "Giá, cỡ, số tờ, chất liệu, khuyến mãi chỉ được nói khi đã có trong kịch bản gốc hoặc ghi chú video, "
@@ -408,8 +428,7 @@ def suggest_scripts(shots, count=3, note="", channel="", samples=None):
         "- Mỗi kịch bản phải khác nhau thật sự: khác hook, khác góc tiếp cận (hậu trường, cận cảnh chất liệu, "
         "cách dùng, so sánh, lời khuyên), khác thứ tự đoạn.\n"
         "- duration: bằng số từ của lời chia 4, từ 3 đến 6 giây mỗi cảnh.\n"
-        "- text: chữ trên màn hình ngắn (tối đa 8 từ) hoặc để rỗng. Đoạn nào đã có chữ cháy sẵn thì để text rỗng, "
-        "hoặc đặt text_pos ở vị trí khác chỗ chữ cũ để không chồng chữ.\n"
+        + TEXT_RULES + "\n"
         "- TUYỆT ĐỐI không dùng ô trống kiểu [kiểm tra]: chỉ viết điều đã biết chắc.\n"
         "- title: tên ngắn nêu rõ hướng tiếp cận của kịch bản đó (tối đa 8 từ). product: sản phẩm chính. "
         "why_it_works: một câu vì sao hướng này hợp với video đang có. caption và hashtag để đăng.\n"
@@ -562,12 +581,15 @@ def review_plan(script, items, shots, seconds, target=(30, 40)):
         f"4. Đủ dài: tổng lời đọc phải ra {low}–{high} giây (khoảng {low * 4}–{high * 4} từ). Thiếu thì thêm cảnh "
         "từ các đoạn chưa dùng trong kho và viết lời cho nó, hoặc nói kỹ hơn ở cảnh đang quá ngắn. "
         "Dư thì cắt bớt cảnh yếu nhất. duration mỗi cảnh bằng số từ chia 4, từ 3 đến 6 giây.\n"
-        "5. Chữ trên màn hình ngắn gọn (tối đa 8 từ), không trùng lời đọc từng chữ, đoạn đã có chữ cháy sẵn thì "
-        "để text rỗng.\n"
-        "6. Không bịa giá, thông số, đánh giá; không để ô trống kiểu [kiểm tra].\n"
+        "5. Chữ trên màn hình: mỗi cảnh có người KHÔNG nói trong hình thì phải có text ngắn 2–6 từ rút từ chính câu "
+        "nói của cảnh đó; cảnh có người đang nói trong hình, hoặc đã có chữ cháy sẵn, thì text rỗng. "
+        "Câu nói dài phải nằm ở voice chứ không nằm ở text.\n"
+        "6. Lời vừa với đoạn quay: mỗi cảnh chỉ nên dài bằng số giây ghi ở đoạn đó (xem 'dài ... s, kéo được tới ... s'). "
+        "Lời dài hơn nhiều thì video phải quay chậm hoặc đứng hình, nên hãy cắt bớt lời hoặc đổi sang đoạn dài hơn.\n"
+        "7. Không bịa giá, thông số, đánh giá; không để ô trống kiểu [kiểm tra].\n"
         "Trường changed: ghi ngắn gọn đã đổi gì (viết lại lời, đổi đoạn, đổi chỗ, thêm cảnh), để trống nếu giữ nguyên. "
         "verdict: 'ok' nếu gần như không phải sửa, 'sua' nếu có sửa, 'khong_dung_duoc' nếu kho quay không đủ để "
-        "làm một video mạch lạc. " + ADAPT_RULES)})
+        "làm một video mạch lạc.\n" + TEXT_RULES + "\n" + ADAPT_RULES)})
     schema = {**REVIEW_SCHEMA}
     schema["properties"] = {**REVIEW_SCHEMA["properties"]}
     schema["properties"]["beats"] = {**REVIEW_SCHEMA["properties"]["beats"]}

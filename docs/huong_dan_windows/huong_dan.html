@@ -200,6 +200,8 @@
   <li><b>Mạch có thuận không:</b> mở đầu bắt mắt → chi tiết, cách dùng → chốt kêu gọi bấm giỏ hàng; sắp xếp lại thứ tự nếu lộn xộn.</li>
   <li><b>Không lặp:</b> không dùng một đoạn quay hai lần, không nói lại cùng một ý.</li>
   <li><b>Đủ dài:</b> tổng phải ra <b>30–40 giây</b>. Thiếu thì thêm cảnh từ các đoạn quay chưa dùng, dư thì cắt bớt cảnh yếu nhất. Nhãn số giây hiện ngay cạnh tên video (xanh là đạt).</li>
+  <li><b>Lời vừa với đoạn quay:</b> lời dài hơn đoạn thì hình phải chậm lại hoặc đứng hình, nên AI cắt bớt lời hoặc đổi sang đoạn dài hơn. Cảnh nào vẫn phải kéo quá nhiều, app ghi chú vàng để bạn xem lại.</li>
+  <li><b>Chữ trên hình đi kèm lời:</b> mỗi cảnh có một cụm chữ ngắn 2–6 từ rút từ chính câu nói của cảnh đó, để khách tắt tiếng vẫn hiểu. <b>Cảnh nào trong hình đã có người đang nói với máy quay thì không chèn chữ</b> (nghe và nhìn người nói là đủ, chèn thêm chữ chỉ rối).</li>
 </ul>
 <p>Những chỗ đã sửa xem được bằng <b>Xem … cảnh đã soát lại</b>. Muốn dựng nhanh và đỡ tốn AI thì đổi ô <b>Soát lại trước khi dựng</b> sang <i>Dựng ngay</i>.</p>
 
@@ -208,6 +210,8 @@
 <ul>
   <li>AI xem <b>3 khung hình</b> (đầu, giữa, cuối) của từng đoạn, nên chữ chỉ hiện thoáng qua cũng bắt được.</li>
   <li>Đoạn còn <b>bất cứ chữ chèn hay nét vẽ nào</b> (dù chỉ một hai chữ nhỏ) <b>bị bỏ hẳn</b>, không dùng cho video nào. Ở Bước 1 mỗi video hiện nhãn vàng <i>“Bỏ n đoạn còn chữ hoặc nét chèn sẵn”</i>.</li>
+  <li><b>Cả file bị bỏ nếu là bản đã dựng:</b> từ một phần tư số đoạn trở lên dính chữ thì app coi như cả file đó là video đã dựng rồi và không dùng đoạn nào của nó — vì chữ rải khắp file, bắt được đoạn này vẫn sót đoạn kia. Hãy thả <b>file quay gốc</b> (từ điện thoại, chưa qua dựng) thay vì quay lại màn hình video cũ.</li>
+  <li>Nếu không còn đoạn nào sạch, app <b>dừng và báo</b> chứ không ghép ra video dính chữ cũ.</li>
   <li>Muốn tiếc đoạn quay thì đổi ô <b>Đoạn quay còn chữ hoặc sticker cũ</b> sang <i>Vẫn dùng nếu chữ ngắn</i>: khi đó chữ và phụ đề mới được <b>đặt tránh chỗ chữ cũ</b> để không chồng lên nhau.</li>
   <li>Chữ <b>in trên chính sản phẩm</b> (số ngày trên tờ lịch, chữ trên tranh, trên thời khóa biểu) không bị tính là phụ đề, nên không ảnh hưởng gì.</li>
   <li>Khi chọn đoạn bằng tay (tab Dựng video, nút <b>Chọn đoạn</b>), đoạn có chữ được đánh dấu <b>⚠ phụ đề sẵn</b> hoặc <b>có chữ sẵn</b> ở góc trên ảnh.</li>
@@ -396,7 +400,9 @@
     <td>Nhập API key ở tab Cài đặt. Nếu tài liệu đúng là có kịch bản mà vẫn báo không thấy, thử xuất lại thành file Word hoặc PDF, hoặc dán nội dung vào ô “dán nội dung kịch bản”.</td></tr>
   <tr><td>C20</td><td>Video ở trạng thái <b>Thiếu video quay</b></td>
     <td>Hơn nửa kịch bản chưa có cảnh quay phù hợp (thường chưa quay sản phẩm đó). Quay thêm theo mục “Gợi ý quay thêm”, thả vào Bước 1 rồi bấm <b>Tiếp tục</b>; hoặc bỏ qua kịch bản.</td></tr>
-  <tr><td>C21</td><td>Bấm <b>Phân tích video và viết kịch bản</b> báo <i>“Video đã quay chưa đủ phân đoạn”</i> hoặc <i>“AI chưa viết được kịch bản nào”</i></td>
+  <tr><td>C21</td><td>Trong video có chữ lạ, chữ cụt (ví dụ “nu”) hoặc chữ của video cũ</td>
+    <td>Bản mới tự bỏ mấy mẩu chữ vô nghĩa và tự đặt lại lời cho đúng ô. Nếu vẫn thấy chữ lạ, đó là chữ cháy sẵn trong file quay: thả file quay gốc thay vì file đã dựng, và để ô <b>Đoạn quay còn chữ hoặc sticker cũ</b> ở <i>Bỏ hẳn</i>.</td></tr>
+  <tr><td>C22</td><td>Bấm <b>Phân tích video và viết kịch bản</b> báo <i>“Video đã quay chưa đủ phân đoạn”</i> hoặc <i>“AI chưa viết được kịch bản nào”</i></td>
     <td>Cần ít nhất 3 đoạn quay dùng được. Thả thêm video vào Bước 1 (hoặc quay dài hơn, nhiều góc hơn), và gõ thông tin sản phẩm vào ô <b>Thông tin được phép nói</b> rồi làm lại. Nếu nhiều đoạn bị bỏ vì có phụ đề cháy sẵn, hãy quay mới thay vì quay lại màn hình video cũ.</td></tr>
 </table>
 <div class="box tip"><b>Khi cần báo lỗi cho quản lý, gửi kèm</b>

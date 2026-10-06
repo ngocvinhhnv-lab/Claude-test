@@ -61,9 +61,16 @@ class Clips(unittest.TestCase):
         self.assertGreater(out["speed"], 0.49)
 
     def test_long_enough_clip_is_trimmed_not_slowed(self):
-        out = assemble.fit_clip({"start": 0.0, "end": 12.0}, self.source, 8.0)
-        self.assertEqual((out["start"], out["end"]), (0.0, 8.0))
+        out = assemble.fit_clip({"start": 2.0, "end": 12.0, "scene_start": 2.0, "scene_end": 20.0}, self.source, 8.0)
+        self.assertEqual(round(out["end"] - out["start"], 3), 8.0)
         self.assertNotIn("speed", out)
+        # né vài khung hình ngay chỗ cắt cảnh, nơi hình hay bị nhoè
+        self.assertGreater(out["start"], 2.0)
+        self.assertEqual(round(out["start"], 3), round(2.0 + assemble.EDGE, 3))
+
+    def test_a_tight_scene_is_used_whole_instead_of_losing_frames(self):
+        out = assemble.fit_clip({"start": 3.0, "end": 6.0, "scene_start": 3.0, "scene_end": 6.0}, self.source, 3.0)
+        self.assertEqual((out["start"], out["end"]), (3.0, 6.0))
 
     def test_short_scene_gets_freeze_padding_after_max_slowdown(self):
         out = assemble.fit_clip({"start": 0.0, "end": 2.0, "scene_start": 0.0, "scene_end": 2.0}, self.source, 10.0)
@@ -393,17 +400,33 @@ class BurnedSubtitles(unittest.TestCase):
         shots = [self.shot(0), self.shot(1, "Giá chỉ 39k hôm nay thôi nha", ok=False), self.shot(2, "nụ"),
                  {**self.shot(3), "marks": "vòng tròn đỏ khoanh sản phẩm"}]
         keep, dropped = library.usable_shots(shots)
-        self.assertEqual([s["id"] for s in keep], ["s_0"])
-        self.assertEqual([s["id"] for s in dropped], ["s_1", "s_2", "s_3"])
+        self.assertEqual(keep, [])   # 3/4 đoạn dính chữ: cả file là bản đã dựng
+        self.assertEqual([s["id"] for s in dropped], ["s_0", "s_1", "s_2", "s_3"])
         # chế độ nới lỏng: chỉ bỏ đoạn AI nói là không phù hợp
         keep, dropped = library.usable_shots(shots, strict=False)
         self.assertEqual([s["id"] for s in keep], ["s_0", "s_2", "s_3"])
 
-    def test_everything_subtitled_is_kept_rather_than_producing_nothing(self):
-        shots = [self.shot(0, "một câu lời thoại dài", ok=False)]
+    def test_a_whole_file_that_looks_already_edited_is_dropped(self):
+        # video đã dựng thì chữ rải khắp file: bắt được đoạn này vẫn sót đoạn kia, nên bỏ cả file
+        shots = [self.shot(0), self.shot(1, "Giá sốc 39k"), self.shot(2, "Bấm giỏ ngay"), self.shot(3)]
         keep, dropped = library.usable_shots(shots)
-        self.assertEqual(len(keep), 1)
-        self.assertEqual(dropped, [])
+        self.assertEqual(keep, [])
+        self.assertEqual(len(dropped), 4)
+        self.assertEqual(library.edited_sources(shots), {"s": (2, 4)})
+
+    def test_one_stray_sticker_does_not_condemn_the_whole_file(self):
+        shots = [self.shot(i) for i in range(9)] + [self.shot(9, "nụ")]
+        keep, dropped = library.usable_shots(shots)
+        self.assertEqual(len(keep), 9)
+        self.assertEqual([s["id"] for s in dropped], ["s_9"])
+
+    def test_nothing_usable_blocks_the_video_instead_of_making_a_dirty_one(self):
+        shots = [self.shot(i, "một câu lời thoại dài", ok=False) for i in range(3)]
+        beats = [{"voice": f"Lời đọc số {i} đủ dài để đọc.", "text": "", "text_pos": "top", "duration": 3}
+                 for i in range(4)]
+        plan = batch.plan_beats({"title": "T"}, beats, shots, {}, False, True)
+        self.assertIn("file quay gốc", plan["blocked"])
+        self.assertEqual(plan["picks"], [])
 
     def test_matching_never_sees_the_dropped_shots_and_says_so(self):
         shots = [self.shot(i) for i in range(4)] + [self.shot(9, "Bấm giỏ hàng ngay", ok=False)]
@@ -503,6 +526,60 @@ class Suggested(unittest.TestCase):
         self.assertEqual(len(script["beats"]), 4)  # cảnh gắn đoạn không tồn tại bị bỏ
         self.assertEqual([b["shot_id"] for b in script["beats"]], ["s_0", "s_1", "s_2", "s_3"])
         self.assertTrue(all(b["clip"]["source_id"] == "s" for b in script["beats"]))
+
+
+class BeatSanity(unittest.TestCase):
+    """Lời và chữ trên màn hình phải đúng chỗ, và chữ đi kèm lời."""
+
+    def test_a_stray_fragment_in_the_voice_field_is_put_back_where_it_belongs(self):
+        # lỗi thật gặp phải: AI để "nu" vào ô lời còn câu nói thì nằm ở ô chữ
+        out = library.tidy_beat({"voice": "nu", "text": "Đừng chốt lịch bloc Tết 2027 nếu chưa soi kỹ ba điều này."})
+        self.assertTrue(out["voice"].startswith("Đừng chốt lịch bloc"))
+        self.assertLessEqual(len(out["text"].split()), library.MAX_TEXT_WORDS)
+        self.assertNotEqual(out["text"], "nu")
+
+    def test_a_fragment_with_nothing_to_swap_is_thrown_away(self):
+        self.assertEqual(library.tidy_beat({"voice": "nu", "text": ""})["voice"], "")
+        self.assertEqual(library.fix_beats([{"voice": "nu", "text": "x"}]), [])
+        # câu ngắn thật thì vẫn giữ
+        self.assertEqual(library.tidy_beat({"voice": "Bấm giỏ hàng nha!", "text": ""})["voice"], "Bấm giỏ hàng nha!")
+
+    def test_text_is_written_from_the_line_when_the_model_leaves_it_empty(self):
+        out = library.tidy_beat({"voice": "Anh chị ơi, thứ hai là kèm đủ hai con ốc vít xoắn này nha.", "text": ""})
+        self.assertTrue(out["text"])
+        self.assertLessEqual(len(out["text"].split()), 5)
+        self.assertIn(out["text"].lower().split()[0], out["voice"].lower())
+
+    def test_no_text_over_a_clip_where_someone_is_already_talking(self):
+        beat = {"voice": "Em xoay nghiêng cho anh chị thấy độ dày của bloc nha.", "text": "Độ dày bloc"}
+        self.assertEqual(library.tidy_beat(beat, {"talking": True})["text"], "")
+        self.assertTrue(library.tidy_beat(beat, {"talking": False})["text"])
+
+    def test_text_never_repeats_the_text_burned_into_the_clip(self):
+        beat = {"voice": "Lịch bloc đại khổ mười bốn phẩy năm nhân hai mươi phẩy năm nha.", "text": "Lịch 2027"}
+        out = library.tidy_beat(beat, {"sub": "LỊCH 2027 BLOC ĐẠI 14,5X20,5CM"})
+        self.assertEqual(out["text"], "")
+
+
+class CutQuality(unittest.TestCase):
+    """Cắt ghép: lời phải vừa đoạn quay, và né khung hình sát chỗ chuyển cảnh."""
+
+    def shot(self, span):
+        return {"id": "s_0", "source_id": "s", "start": 0.0, "end": min(3.0, span), "length": min(3.0, span),
+                "desc": "đoạn", "note": "", "thumb": "", "scene_start": 0.0, "scene_end": span,
+                "sub": "", "sub_pos": "none", "marks": "", "sub_ok": True, "talking": False}
+
+    def test_a_line_longer_than_its_clip_is_flagged(self):
+        long_line = " ".join(["từ"] * 40)          # khoảng 10 giây lời đọc
+        beats = [{"voice": long_line, "text": "", "text_pos": "top", "duration": 3, "shot_id": "s_0"}] * 3
+        plan = batch.plan_beats({"title": "T"}, beats, [self.shot(3.0)], {}, False, False, review=False)
+        self.assertTrue(any("lời dài hơn đoạn quay" in w for w in plan["warnings"]))
+
+    def test_a_line_that_fits_is_not_flagged(self):
+        beats = [{"voice": "Câu này đọc chừng ba giây thôi nha anh chị.", "text": "", "text_pos": "top",
+                  "duration": 3, "shot_id": "s_0"}] * 3
+        plan = batch.plan_beats({"title": "T"}, beats, [self.shot(20.0)], {}, False, False, review=False)
+        self.assertFalse(any("lời dài hơn" in w for w in plan["warnings"]))
 
 
 class Review(unittest.TestCase):

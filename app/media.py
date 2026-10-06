@@ -28,7 +28,7 @@ def grab_frame(path, info, t, out, width=320):
     return out
 
 
-def shot_strip(path, info, start, end, out, width=210):
+def shot_strip(path, info, start, end, out, width=320):
     """Ghép 3 khoảnh khắc (đầu, giữa, cuối) của một đoạn vào một ảnh.
 
     Chữ hay sticker cháy sẵn nhiều khi chỉ hiện thoáng qua, xem một khung hình giữa đoạn là bỏ sót.

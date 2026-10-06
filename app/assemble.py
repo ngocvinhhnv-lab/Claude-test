@@ -89,6 +89,12 @@ def plan_seconds(beats):
     return round(sum(beat_seconds(b) for b in beats), 1)
 
 
+def stretch_of(beat, shot):
+    """Lời phải kéo đoạn quay ra bao nhiêu lần. Trên 1 là phải quay chậm hoặc giữ khung cuối."""
+    usable = max(0.5, float(shot.get("scene_end", 0)) - float(shot.get("scene_start", 0)) or shot.get("length", 3))
+    return beat_seconds(beat) / usable
+
+
 def caption_plan(text_pos, avoid, has_sub):
     """Chỗ đặt chữ trên màn hình và độ nâng phụ đề, để chữ mới không chồng lên chữ cháy sẵn của video nguồn.
 
@@ -148,6 +154,9 @@ def make_music(seconds, out, bpm=104):
     return out
 
 
+EDGE = 0.08        # né vài khung hình ngay chỗ chuyển cảnh (hay bị nhoè, lọt hình cảnh trước)
+
+
 def fit_clip(clip, source, target):
     """Điều chỉnh đoạn cắt cho vừa độ dài cảnh: kéo dài trong nguồn, quay chậm, rồi giữ khung cuối.
 
@@ -156,6 +165,8 @@ def fit_clip(clip, source, target):
     duration = source["info"]["duration"]
     lo = max(0.0, float(clip.get("scene_start", 0.0)))
     hi = min(duration, float(clip.get("scene_end", duration)))
+    if hi - lo > target + 2 * EDGE + 0.2:
+        lo, hi = lo + EDGE, hi - EDGE      # bỏ mấy khung hình sát chỗ cắt cảnh
     start = max(lo, float(clip["start"]))
     end = min(hi, float(clip["end"]))
     if end - start >= target:

@@ -143,6 +143,7 @@ def collect_shots(source_ids):
                           "product": shot.get("product", ""), "length": shot["end"] - shot["start"],
                           "sub": shot.get("sub", ""), "sub_pos": shot.get("sub_pos", "none"),
                           "marks": shot.get("marks", ""), "sub_ok": shot.get("sub_ok", True),
+                          "talking": bool(shot.get("talking")),
                           "checked": bool(shot.get("sub_checked")), "scene": shot.get("scene"),
                           "scene_start": shot.get("scene_start", 0.0),
                           "scene_end": shot.get("scene_end", src["info"]["duration"]),
@@ -160,17 +161,42 @@ def sub_blocks(shot, strict=True):
     return dirty if strict else (dirty and shot.get("sub_ok") is False)
 
 
-def usable_shots(shots, strict=True):
-    """Bỏ các đoạn còn chữ hay nét chèn sẵn. Trả về (đoạn dùng được, đoạn đã bỏ).
+EDITED_RATIO = 0.25      # từng này đoạn có chữ chèn thì coi như cả file là video đã dựng rồi
 
-    Nếu bỏ hết thì nới lỏng rồi mới giữ nguyên cả kho, để vẫn làm được video thay vì không ra gì.
+
+def edited_sources(shots):
+    """Các video nguồn trông như bản đã dựng (nhiều đoạn còn chữ hoặc nét chèn).
+
+    Video đã dựng thì chữ rải khắp file, bắt được đoạn này vẫn sót đoạn kia, nên bỏ cả file
+    an toàn hơn nhiều so với bỏ từng đoạn.
     """
-    keep = [s for s in shots if not sub_blocks(s, strict)]
-    if keep:
-        return keep, [s for s in shots if sub_blocks(s, strict)]
-    if strict:
-        return usable_shots(shots, strict=False)
-    return shots, []
+    total, dirty = {}, {}
+    for shot in shots:
+        sid = shot.get("source_id")
+        total[sid] = total.get(sid, 0) + 1
+        if shot.get("sub") or shot.get("marks"):
+            dirty[sid] = dirty.get(sid, 0) + 1
+    return {sid: (dirty[sid], total[sid]) for sid in dirty
+            if dirty[sid] >= 2 and dirty[sid] >= total[sid] * EDITED_RATIO}
+
+
+DIRTY_MESSAGE = ("Mọi đoạn quay đều còn chữ, sticker hoặc nét vẽ của bản dựng cũ nên app không dùng được đoạn nào. "
+                 "Hãy thả file quay gốc (chưa qua dựng) vào Bước 1, hoặc đổi ô \u201cĐoạn quay còn chữ hoặc sticker cũ\u201d "
+                 "sang \u201cVẫn dùng nếu chữ ngắn\u201d nếu chấp nhận chữ cũ còn trong hình.")
+
+
+def usable_shots(shots, strict=True):
+    """Bỏ các đoạn còn chữ hay nét chèn sẵn, và bỏ cả file nếu file đó rõ ràng là bản đã dựng.
+
+    Trả về (đoạn dùng được, đoạn đã bỏ). Có thể không còn đoạn nào: thà báo cho người dùng quay lại
+    còn hơn ghép ra video dính chữ của lần dựng trước.
+    """
+    bad = set(edited_sources(shots)) if strict else set()
+
+    def drop(shot):
+        return sub_blocks(shot, strict) or shot.get("source_id") in bad
+
+    return [s for s in shots if not drop(s)], [s for s in shots if drop(s)]
 
 
 def clip_from_shot(shot, reason=""):
@@ -179,10 +205,13 @@ def clip_from_shot(shot, reason=""):
     if shot.get("sub") and shot.get("sub_pos") in ("top", "center", "bottom"):
         # chữ mới sẽ tránh chỗ đã có chữ cháy sẵn trong video nguồn
         clip["avoid"] = [shot["sub_pos"]]
+    if shot.get("talking"):
+        clip["talking"] = True
     return clip
 
 
 LABEL_FIELDS = ("desc", "product", "sub", "sub_pos", "marks")
+BOOL_FIELDS = ("sub_ok", "talking")
 
 
 def _strip(src, k):
@@ -219,7 +248,7 @@ def ensure_shot_labels(source_ids, log=print, chunk=20):
                 if label:
                     shot = src["shots"][k]
                     shot.update({f: label.get(f, "") for f in LABEL_FIELDS if f in label})
-                    shot["sub_ok"] = bool(label.get("sub_ok", True))
+                    shot.update({f: bool(label.get(f, f == "sub_ok")) for f in BOOL_FIELDS})
                     shot["sub_checked"] = True
             store.sources.save(src)
         done += len(part)
@@ -448,6 +477,67 @@ def music_path(name):
 
 TARGET_SECONDS = (30, 40)
 
+MAX_TEXT_WORDS = 7       # chữ trên màn hình dài hơn thế là đọc không kịp
+# từ nối, đứng cuối cụm chữ thì câu bị cụt
+TRAILING = {"cho", "của", "và", "với", "là", "thì", "mà", "ở", "để", "từ", "trong", "ra", "vào", "nên",
+            "cái", "con", "này", "đó", "nha", "nhé", "ạ", "em", "anh", "chị", "có", "bị", "được", "rất"}
+FILLER = re.compile(r"^(?:anh chị ơi|anh chị|các bạn|mọi người|em nói|em xin|dạ|à|ừ|nè|này)[\s,:-]+", re.I)
+
+
+def is_fragment(text):
+    """Mẩu chữ vô nghĩa (ví dụ "nu") chứ không phải một câu nói."""
+    return len(text.split()) < 2 and len(text) <= 6
+
+
+def key_phrase(voice, limit=5):
+    """Rút một cụm ngắn từ câu nói để làm chữ trên màn hình (khi AI quên điền)."""
+    text = assemble.speakable(voice)
+    text = FILLER.sub("", text).strip()
+    part = re.split(r"[,.!?;:…]", text)[0].strip() or text
+    words = part.split()
+    if len(words) > limit:
+        words = words[:limit]
+    while len(words) > 2 and words[-1].lower().strip(",.") in TRAILING:
+        words.pop()      # không kết thúc giữa chừng kiểu "xem kỹ đoạn cho"
+    out = " ".join(words).strip(" ,.;:-")
+    return (out[:1].upper() + out[1:]) if out else ""
+
+
+def tidy_beat(beat, shot=None):
+    """Sửa những lỗi hay gặp ở đầu ra của AI trước khi dùng: đặt nhầm chỗ, chữ cụt, chữ thừa.
+
+    - Câu nói dài nằm nhầm ở text còn voice chỉ một hai chữ ("nu") thì đổi lại cho đúng chỗ.
+    - Chữ trên màn hình cụt lủn, trùng chữ cháy sẵn trong video, hay dài quá thì bỏ hoặc rút gọn.
+    - Cảnh có người đang nói trong hình thì bỏ chữ; cảnh còn lại thiếu chữ thì rút từ chính câu nói.
+    """
+    voice = " ".join(str(beat.get("voice") or "").split())
+    text = " ".join(str(beat.get("text") or "").split())
+    if is_fragment(voice) and len(text.split()) >= 4:
+        voice, text = text, voice          # AI đặt nhầm chỗ: câu nói nằm ở ô chữ
+    if is_fragment(voice):
+        voice = ""                         # mẩu chữ vô nghĩa như "nu", không đọc lên
+    sub = " ".join(str((shot or {}).get("sub") or "").split()).lower()
+    if len(text) <= 2 or (sub and text.lower() in sub):
+        text = ""                          # chữ cụt hoặc chép lại chữ cháy sẵn trong video
+    if len(text.split()) > MAX_TEXT_WORDS:
+        text = key_phrase(text, MAX_TEXT_WORDS)
+    if shot and (shot.get("talking") or shot.get("sub")):
+        text = ""                          # trong hình đã có người nói hoặc đã có chữ
+    elif voice and not text:
+        text = key_phrase(voice)
+    return {**beat, "voice": voice, "text": text}
+
+
+def fix_beats(beats, by_id=None):
+    """Chuẩn lại cả kịch bản và bỏ những cảnh không còn lời đọc."""
+    by_id = by_id or {}
+    out = []
+    for beat in beats:
+        fixed = tidy_beat(beat, by_id.get(beat.get("shot_id")))
+        if fixed["voice"]:
+            out.append(fixed)
+    return out
+
 
 def review_beats(script, beats, shots, log=print, rounds=2):
     """Soát lại từng cảnh với đoạn quay đã chọn: lời có đúng hình không, mạch có hợp lý không, đủ 30–40 giây chưa.
@@ -455,6 +545,8 @@ def review_beats(script, beats, shots, log=print, rounds=2):
     Trả về {"beats", "changes", "note", "blocked"}. Mỗi vòng là một lượt hỏi AI; dừng sớm khi đã đạt.
     """
     changes, note, blocked = [], "", ""
+    by_id = {s["id"]: s for s in shots}
+    beats = fix_beats(beats, by_id)
     for attempt in range(max(1, rounds)):
         seconds = assemble.plan_seconds(beats)
         low, high = TARGET_SECONDS
@@ -465,7 +557,6 @@ def review_beats(script, beats, shots, log=print, rounds=2):
         except ai.AIError as err:
             note = f"Không soát lại được bằng AI ({err}), giữ nguyên kịch bản"
             break
-        by_id = {s["id"]: s for s in shots}
         new_beats = []
         for item in result.get("beats") or []:
             if item.get("shot_id") not in by_id or not (item.get("voice") or "").strip():
@@ -484,6 +575,7 @@ def review_beats(script, beats, shots, log=print, rounds=2):
         if result.get("verdict") == "khong_dung_duoc":
             blocked = note or "Kho video quay chưa đủ để làm một video mạch lạc cho kịch bản này."
             break
+        new_beats = fix_beats(new_beats, by_id)
         if len(new_beats) >= 3:
             beats = new_beats
         if result.get("verdict") == "ok":
@@ -503,7 +595,10 @@ def suggest_from_sources(spec, log=print):
     if not source_ids:
         raise docs.DocError("Chưa có video nguồn nào xử lý xong. Thả video đã quay vào Bước 1 trước.")
     ensure_shot_labels(source_ids, log=log)
-    shots, dropped = usable_shots(collect_shots(source_ids))
+    all_shots = collect_shots(source_ids)
+    shots, dropped = usable_shots(all_shots, strict=spec.get("strict", True))
+    if not shots and dropped:
+        raise docs.DocError(DIRTY_MESSAGE)
     if len(shots) < 3:
         raise docs.DocError("Video đã quay chưa đủ phân đoạn để viết kịch bản (cần ít nhất 3 đoạn khác nhau).")
     count = max(1, min(5, int(spec.get("count") or 3)))
@@ -521,6 +616,8 @@ def suggest_from_sources(spec, log=print):
             continue
         log(f"AI đang soát lại kịch bản {index + 1}/{len(scripts)} cho khớp cảnh quay")
         picked = review_beats(raw, picked, shots, log=log)["beats"]
+        if len(picked) < 3:
+            continue
         item = finalize_script({**raw, "beats": picked, "origin": "auto",
                                 "channel": raw.get("channel") or spec.get("channel", ""),
                                 "key": f"auto:{int(base)}-{index}"}, batch_name)
