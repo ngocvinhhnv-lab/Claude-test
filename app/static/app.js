@@ -9,7 +9,7 @@ const fmt = (t) => (t == null ? "–" : `${Math.floor(t / 60)}:${(t % 60).toFixe
 const S = { settings: {}, voices: {}, providers: {}, scripts: [], sources: [], projects: [],
   scriptId: null, script: null, project: null, jobs: new Map() };
 
-const ORIGIN = { competitor: "Đối thủ", template: "Mẫu", rewrite: "Đã viết lại", manual: "Tự viết", weekly: "Kế hoạch tuần", imported: "Nhập tài liệu" };
+const ORIGIN = { competitor: "Đối thủ", template: "Mẫu", rewrite: "Đã viết lại", manual: "Tự viết", weekly: "Kế hoạch tuần", imported: "Nhập tài liệu", auto: "Từ video của bạn" };
 const PLACEHOLDER = /\[[^\]]+\]/g;
 const plain = (t) => String(t || "").normalize("NFD").replace(/\p{M}/gu, "").replace(/đ/g, "d").toLowerCase();
 const POS = { top: "Trên", center: "Giữa", bottom: "Dưới" };
@@ -482,6 +482,7 @@ function beatCard(b, i, cfg) {
         </div>
       </div>
       ${b.clip && b.clip.note ? `<div class="muted small">AI: ${esc(b.clip.note)}</div>` : ""}
+      ${b.clip && (b.clip.avoid || []).length ? `<div class="muted small">Đoạn này đã có chữ sẵn ở ${(b.clip.avoid || []).map((p) => POS[p] || p).join(", ")}: chữ và phụ đề mới sẽ được đặt tránh chỗ đó.</div>` : ""}
       <div class="row"><button class="btn sm" data-act="listen" ${b.voice && cfg.voice_on ? "" : "disabled"}>Nghe thử lời đọc</button><audio hidden></audio></div>
     </div></div>`;
 }
@@ -596,7 +597,8 @@ function renderShots() {
   const src = S.sources.find((s) => s.id === pk.sourceId);
   const st = parseFloat($("#pk-start").value);
   $("#pk-shots").innerHTML = (src.shots || []).map((sh, k) => `<button data-k="${k}" class="${Math.abs(sh.start - st) < 0.05 ? "on" : ""}">
-    <img src="${esc(sh.thumb)}" alt=""><span>${sh.start.toFixed(1)}–${sh.end.toFixed(1)}s</span></button>`).join("");
+    <img src="${esc(sh.thumb)}" alt=""><span>${sh.start.toFixed(1)}–${sh.end.toFixed(1)}s</span>
+    ${sh.sub ? `<span class="sub-badge ${sh.sub_ok === false ? "bad" : ""}" title="${esc(sh.sub)}">${sh.sub_ok === false ? "⚠ phụ đề sẵn" : "có chữ sẵn"}</span>` : ""}</button>`).join("");
 }
 
 $("#pk-source").addEventListener("change", (e) => { pk.sourceId = e.target.value; loadPickerSource(null); });
@@ -685,13 +687,15 @@ function renderBatchSources() {
   if (!box) return;
   box.innerHTML = S.sources.length ? S.sources.map((s) => {
     const shots = s.shots || [], labelled = shots.filter((x) => x.desc).length;
+    const burned = shots.filter((x) => x.sub && x.sub_ok === false);
     return `<div class="src-row" data-id="${s.id}">
       ${s.poster ? `<img src="${esc(s.poster)}" alt="">` : `<div class="thumb-ph" style="width:36px;height:62px"></div>`}
       <div class="grow"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.name)}</div>
         <div class="row small muted" style="gap:6px">
           ${s.status === "processing" ? `<span class="chip processing">Đang xử lý</span>` : ""}
           ${s.status === "error" ? `<span class="chip error" title="${esc(s.error)}">Lỗi</span>` : ""}
-          ${s.info ? `<span>${fmt(s.info.duration)} · ${shots.length} đoạn${labelled ? ` · AI đã mô tả ${labelled}` : ""}</span>` : ""}</div></div>
+          ${s.info ? `<span>${fmt(s.info.duration)} · ${shots.length} đoạn${labelled ? ` · AI đã mô tả ${labelled}` : ""}</span>` : ""}
+          ${burned.length ? `<span class="chip warn" title="${esc(burned.map((x) => x.sub).join(" · "))}">Bỏ ${burned.length} đoạn có phụ đề cháy sẵn</span>` : ""}</div></div>
       <input type="text" data-note="${s.id}" value="${esc(s.note || "")}" placeholder="Ghi chú sản phẩm: VD lịch bloc 14,5×20,5">
       <button class="btn ghost sm" data-del="${s.id}" title="Xoá">✕</button></div>`;
   }).join("") : `<div class="empty small">Chưa có video nguồn. Thả video vào khung trên.</div>`;
@@ -723,17 +727,47 @@ function renderBatchScripts() {
   const channels = [...new Set(S.scripts.map((s) => s.channel).filter(Boolean))];
   $("#bt-channels").innerHTML = ["", ...channels].map((c) =>
     `<button class="chip ${S.btChannel === c ? "on" : ""}" data-ch="${esc(c)}">${c ? esc(c) : "Tất cả kênh"}</button>`).join("");
+  const sel = $("#gen-channel");
+  if (sel && sel.dataset.list !== channels.join("|")) {
+    sel.dataset.list = channels.join("|");
+    sel.innerHTML = [`<option value="">Chưa chọn</option>`, ...channels.map((c) => `<option value="${esc(c)}">${esc(c)}</option>`)].join("");
+  }
   const list = btVisibleScripts();
   $("#bt-scripts").innerHTML = list.length ? list.map((s) => {
     const blanks = blanksOfScript(s);
-    return `<label class="item" data-id="${s.id}"><input type="checkbox" ${S.btSel.has(s.id) ? "checked" : ""}>
+    const fresh = S.btFresh && S.btFresh.has(s.id);
+    return `<label class="item ${fresh ? "fresh" : ""}" data-id="${s.id}"><input type="checkbox" ${S.btSel.has(s.id) ? "checked" : ""}>
       <div class="grow"><div class="t">${esc(s.title)}</div>
-        <div class="small muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.product || s.summary || "")}${s.batch ? ` · ${esc(batchLabel(s.batch))}` : ""}</div></div>
+        <div class="small muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.product || s.summary || "")}${s.batch ? ` · ${esc(batchLabel(s.batch))}` : ""}</div>
+        ${s.origin === "auto" ? `<div class="small muted">${(s.beats || []).length} cảnh đã gắn sẵn đoạn quay${s.why_it_works ? ` · ${esc(s.why_it_works)}` : ""}</div>` : ""}</div>
       ${blanks.length ? `<span class="chip warn" title="${esc(blanks.join(" "))}">Còn ${blanks.length} ô trống</span>` : ""}
       <span class="chip ${s.origin}">${s.channel ? esc(s.channel) + " · " : ""}${ORIGIN[s.origin] || ""}</span></label>`;
   }).join("") : `<div class="empty small">Không có kịch bản khớp</div>`;
   renderBatchEstimate();
 }
+
+// ---------- AI tự viết kịch bản từ video đã quay ----------
+$("#gen-go").addEventListener("click", async () => {
+  $("#gen-err").textContent = "";
+  if (!S.settings.ai_ready) { $("#gen-err").textContent = "Cần nhập Anthropic API key trong Cài đặt trước."; return; }
+  if (!S.sources.some((s) => s.status === "ready")) { $("#gen-err").textContent = "Chưa có video nguồn nào xử lý xong. Thả video vào Bước 1 trước."; return; }
+  const btn = $("#gen-go");
+  btn.disabled = true;
+  $("#gen-hint").textContent = "AI đang xem từng phân đoạn, việc này mất vài phút…";
+  try {
+    const job = await api("POST", "/api/scripts/suggest", { count: parseInt($("#gen-count").value) || 3,
+      note: $("#gen-note").value, channel: $("#gen-channel").value });
+    watchJob(job, "Viết kịch bản từ video", async (res) => {
+      btn.disabled = false; $("#gen-hint").textContent = "";
+      S.btFresh = new Set(res.ids || []);
+      $("#bt-search").value = ""; S.btChannel = "";
+      await Promise.all([loadScripts(), loadSources()]);  // tải lại nguồn để hiện đoạn AI vừa xem và vừa bỏ
+      $("#bt-scripts").scrollIntoView({ behavior: "smooth", block: "center" });
+      toast(`Đã viết ${res.added} kịch bản từ ${res.shots} đoạn quay của bạn` +
+        (res.dropped ? ` (bỏ ${res.dropped} đoạn có phụ đề cháy sẵn)` : "") + " — chọn kịch bản bạn thích.");
+    }, (err) => { btn.disabled = false; $("#gen-hint").textContent = ""; $("#gen-err").textContent = err; });
+  } catch (err) { btn.disabled = false; $("#gen-hint").textContent = ""; $("#gen-err").textContent = err.message; }
+});
 
 function renderBatchEstimate() {
   const n = S.btSel.size;

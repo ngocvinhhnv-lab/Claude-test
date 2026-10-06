@@ -73,7 +73,7 @@
   <li>Phần A · Cài đặt (làm 1 lần)
     <ol><li>Cài Python</li><li>Cài ffmpeg</li><li>Giải nén app</li><li>Chạy app lần đầu</li><li>Cài đặt trong app</li></ol></li>
   <li>Phần B · Làm video hằng ngày
-    <ol><li>Mở app</li><li>Tạo video hàng loạt (cách nhanh)</li><li>Cập nhật thư viện kịch bản</li><li>Cách thủ công: lấy kịch bản</li><li>Quay và upload video nguồn</li><li>Dựng và xuất video</li><li>Tắt app, sao lưu</li></ol></li>
+    <ol><li>Mở app</li><li>Tạo video hàng loạt (cách nhanh)</li><li>Để AI tự viết kịch bản từ video của bạn</li><li>Video quay có sẵn chữ hoặc phụ đề</li><li>Cập nhật thư viện kịch bản</li><li>Cách thủ công: lấy kịch bản</li><li>Quay và upload video nguồn</li><li>Dựng và xuất video</li><li>Tắt app, sao lưu</li></ol></li>
   <li>Phần C · Xử lý lỗi thường gặp</li>
   <li>Phần D · Dùng chung 1 máy cho cả nhóm (tuỳ chọn)</li>
 </ol>
@@ -182,6 +182,26 @@
 <figure><img src="s_batch_setup.png" alt=""><figcaption>Hình 2. Tab Tạo hàng loạt: thả video (Bước 1), chọn kịch bản (Bước 2), chọn giọng và nhạc rồi bấm tạo (Bước 3).</figcaption></figure>
 <p><b>Kết quả:</b> danh sách từng video hiện ngay bên dưới. Mỗi video có nút <span class="btn">Xem</span>, <span class="btn">Tải về</span> và <span class="btn">Mở để chỉnh</span> (chuyển sang tab Dựng video để đổi cảnh hoặc lời đọc rồi xuất lại). Nút <span class="btn red">Tải tất cả (ZIP)</span> tải gói gồm các video cùng file <code>noi_dung_dang.txt</code> (caption, hashtag, điều cần kiểm tra) và <code>can_quay_them.txt</code>.</p>
 <figure><img src="s_batch_run.png" alt=""><figcaption>Hình 3. Kết quả một đợt: video xong, video bị giữ lại vì còn ô trống, và danh sách cảnh cần quay thêm.</figcaption></figure>
+<h3>Chưa có kịch bản hợp? Để AI xem video của bạn rồi tự viết kịch bản</h3>
+<p>Ở <b>Bước 2</b>, bấm dòng <b>✨ Để AI xem video bạn vừa thả rồi tự viết kịch bản cho đúng video đó</b>. Chọn <b>số kịch bản</b> (2–5), <b>kênh sẽ đăng</b>, và gõ vào ô <b>Thông tin được phép nói</b> những gì AI được phép nhắc tới (giá, khổ, số tờ, chất liệu, nơi in). Bấm <span class="btn red">Phân tích video và viết kịch bản</span> rồi đợi vài phút.</p>
+<ol>
+  <li>AI xem từng phân đoạn trong video bạn vừa thả, rồi viết các kịch bản <b>khác hướng nhau</b> (hậu trường, cận cảnh chất liệu, cách dùng, so sánh, lời khuyên) để bạn chọn.</li>
+  <li>Mỗi cảnh của kịch bản <b>đã gắn sẵn một đoạn quay thật</b> của bạn, nên lời đọc và hình luôn khớp nhau; lúc dựng app dùng đúng đoạn đó chứ không ghép lại.</li>
+  <li>Kịch bản mới hiện ở đầu danh sách, nhãn <b>Từ video của bạn</b>, được tô sáng. <b>Tick chọn cái bạn thích</b> rồi làm tiếp Bước 3 như bình thường. Muốn sửa lời thì vào tab <b>1. Kịch bản</b>.</li>
+</ol>
+<div class="box warn"><b>AI chỉ nói những gì nhìn thấy</b> trong đoạn quay, cộng với thông tin bạn gõ ở ô trên. Không bịa giá, thông số, đánh giá của khách. Dù vậy <b>vẫn phải đọc lại lời</b> trước khi đăng, nhất là giá và số liệu.</div>
+<figure><img src="s_batch_gen.png" alt=""><figcaption>Hình 4. AI tự viết kịch bản từ chính video bạn quay; các kịch bản mới được tô sáng, chọn cái bạn thích.</figcaption></figure>
+
+<h3>Video quay có sẵn chữ hoặc phụ đề cháy trong hình</h3>
+<p>Nhiều đoạn quay lại từ video cũ đã có chữ cháy sẵn trong hình (phụ đề lời nói, chữ chạy, giá, tên kênh). App tự xử lý, bạn không phải làm gì:</p>
+<ul>
+  <li>Đoạn có chữ <b>không phù hợp</b> (một câu lời thoại, nhiều dòng, nói giá hay khuyến mãi, kêu gọi bấm giỏ, có tên shop khác) <b>bị bỏ hẳn</b>, không dùng cho video nào. Ở Bước 1 mỗi video hiện nhãn vàng <i>“Bỏ n đoạn có phụ đề cháy sẵn”</i>.</li>
+  <li>Đoạn chữ ngắn và trung tính (tên sản phẩm, năm) <b>vẫn dùng</b>, nhưng chữ và phụ đề mới được <b>đặt tránh chỗ chữ cũ</b> để không chồng lên nhau.</li>
+  <li>Chữ <b>in trên chính sản phẩm</b> (số ngày trên tờ lịch, chữ trên tranh, trên thời khóa biểu) không bị tính là phụ đề, nên không ảnh hưởng gì.</li>
+  <li>Khi chọn đoạn bằng tay (tab Dựng video, nút <b>Chọn đoạn</b>), đoạn có chữ được đánh dấu <b>⚠ phụ đề sẵn</b> hoặc <b>có chữ sẵn</b> ở góc trên ảnh.</li>
+</ul>
+<figure><img src="s_subs.png" alt=""><figcaption>Hình 5. Chọn đoạn bằng tay: đoạn có chữ cháy sẵn được đánh dấu ở góc trên.</figcaption></figure>
+
 <h3>Kịch bản chỉ để tham khảo: app tự viết lại cảnh chưa có video khớp</h3>
 <p>Thư viện kịch bản không bắt bạn phải quay đúng từng cảnh. Với mỗi kịch bản, app ghép cảnh quay của bạn vào từng cảnh. Cảnh nào <b>chưa có video khớp</b>, AI viết lại cảnh đó theo video bạn đã quay: chọn đoạn quay có sẵn, rồi chỉ nói và chỉ hiện những gì thấy được trong đoạn đó, hoặc thông tin đã có trong kịch bản gốc và ghi chú video (giá, cỡ, số tờ...). AI <b>không được bịa</b> giá, thông số, đánh giá hay công dụng.</p>
 <ul>
@@ -190,7 +210,7 @@
   <li>Nếu hơn nửa kịch bản không có video quay cho sản phẩm đó, kịch bản được <b>giữ lại với nhãn “Thiếu video quay”</b> thay vì làm ra một video vô nghĩa. Quay thêm rồi bấm <b>Tiếp tục</b>, hoặc bỏ qua kịch bản.</li>
   <li><b>Luôn bấm “Xem … cảnh đã viết lại”</b> để đọc lời gốc và lời mới của từng cảnh trước khi đăng. Muốn sửa thì bấm <b>Mở để chỉnh</b>: trong tab Dựng video, cảnh đã viết lại có ghi lời gốc bên dưới.</li>
 </ul>
-<figure><img src="s_batch_adapt.png" alt=""><figcaption>Hình 4. Video “Đã chỉnh kịch bản”: xem lời gốc và lời mới của từng cảnh; kịch bản thiếu video quay bị giữ lại, kèm lý do.</figcaption></figure>
+<figure><img src="s_batch_adapt.png" alt=""><figcaption>Hình 6. Video “Đã chỉnh kịch bản”: xem lời gốc và lời mới của từng cảnh; kịch bản thiếu video quay bị giữ lại, kèm lý do.</figcaption></figure>
 <table>
   <tr><th style="width:24%">Nhãn</th><th>Ý nghĩa và cách xử lý</th></tr>
   <tr><td><b>Ghép cảnh tốt</b></td><td>AI thấy cảnh quay đúng sản phẩm và đúng việc cần quay. Vẫn nên xem nhanh trước khi đăng.</td></tr>
@@ -241,8 +261,8 @@
   <p><b>Viết lại cho sản phẩm nhà:</b> mở kịch bản, kéo xuống phần <b>Viết lại cho sản phẩm của tôi</b>, điền tên sản phẩm, giá, quy cách, điểm nổi bật, rồi bấm <span class="btn red">Viết lại bằng AI</span>. Bản mới có nhãn <b>Đã viết lại</b>. Nếu AI báo <b>Cần bổ sung</b> (ví dụ thiếu giá), hãy điền thêm thông tin.</p>
   <p>Có thể sửa tay mọi ô trong bảng các cảnh rồi bấm <span class="btn">Lưu thay đổi</span>.</p>
 </div></div>
-<figure><img src="s_scripts.png" alt=""><figcaption>Hình 5. Tab Kịch bản: bóc kịch bản đối thủ (trái trên), thư viện kịch bản (trái dưới), chi tiết từng cảnh (phải).</figcaption></figure>
-<figure><img src="s_rewrite.png" alt=""><figcaption>Hình 6. Viết lại kịch bản cho sản phẩm nhà. Chỉ điền thông tin đúng sự thật; ô nào để trống thì AI sẽ không bịa ra.</figcaption></figure>
+<figure><img src="s_scripts.png" alt=""><figcaption>Hình 7. Tab Kịch bản: bóc kịch bản đối thủ (trái trên), thư viện kịch bản (trái dưới), chi tiết từng cảnh (phải).</figcaption></figure>
+<figure><img src="s_rewrite.png" alt=""><figcaption>Hình 8. Viết lại kịch bản cho sản phẩm nhà. Chỉ điền thông tin đúng sự thật; ô nào để trống thì AI sẽ không bịa ra.</figcaption></figure>
 <div class="box warn"><b>Quy tắc nội dung</b>
   <ul>
     <li>Không chép nguyên văn lời đối thủ; luôn bấm “Viết lại”.</li>
@@ -262,7 +282,7 @@
   <p><b>Chuyển video từ điện thoại sang máy tính</b> bằng cáp, Google Drive, hoặc Zalo PC. Nếu dùng Zalo, phải gửi <b>dạng file</b>: gửi dạng video thì Zalo nén làm mờ.</p>
   <p><b>Upload:</b> ở tab <b>2. Video nguồn</b>, kéo thả các video vào khung (chọn được nhiều file cùng lúc). Mỗi video hiện nhãn <b>Đang xử lý</b>; khoảng vài chục giây sau sẽ hiện ảnh và số đoạn. App tự chia video thành các đoạn ngắn để chọn cảnh. Video quay bằng iPhone (HDR) được chỉnh màu tự động.</p>
 </div></div>
-<figure><img src="s_sources.png" alt=""><figcaption>Hình 7. Tab Video nguồn sau khi upload: mỗi video hiện ảnh, độ dài và số đoạn đã chia.</figcaption></figure>
+<figure><img src="s_sources.png" alt=""><figcaption>Hình 9. Tab Video nguồn sau khi upload: mỗi video hiện ảnh, độ dài và số đoạn đã chia.</figcaption></figure>
 
 <div class="step"><div class="num">6</div><div>
   <h3>Dựng và xuất video (tab “3. Dựng video”)</h3>
@@ -288,8 +308,8 @@
       <li>Nhạc tự nhỏ lại khi có giọng đọc.</li>
     </ul></div>
 </div></div>
-<figure><img src="s_studio.png" alt=""><figcaption>Hình 8. Tab Dựng video. Thanh trên cùng là nút AI ghép cảnh, Xuất video và các lựa chọn giọng đọc, nhạc, khung hình; bên dưới là từng cảnh.</figcaption></figure>
-<figure><img src="s_picker.png" alt=""><figcaption>Hình 9. Hộp chọn đoạn video: bấm một ảnh đoạn (viền đỏ) rồi bấm “Dùng đoạn này”.</figcaption></figure>
+<figure><img src="s_studio.png" alt=""><figcaption>Hình 10. Tab Dựng video. Thanh trên cùng là nút AI ghép cảnh, Xuất video và các lựa chọn giọng đọc, nhạc, khung hình; bên dưới là từng cảnh.</figcaption></figure>
+<figure><img src="s_picker.png" alt=""><figcaption>Hình 11. Hộp chọn đoạn video: bấm một ảnh đoạn (viền đỏ) rồi bấm “Dùng đoạn này”.</figcaption></figure>
 <div class="box"><b>Làm nhiều video từ 1 kịch bản</b>
   <ul>
     <li>Ở tab Dựng video có dòng <b>Hook khác cho cảnh 1</b>: bấm một hook để thay, rồi xuất thêm bản mới.</li>
@@ -350,6 +370,8 @@
     <td>Nhập API key ở tab Cài đặt. Nếu tài liệu đúng là có kịch bản mà vẫn báo không thấy, thử xuất lại thành file Word hoặc PDF, hoặc dán nội dung vào ô “dán nội dung kịch bản”.</td></tr>
   <tr><td>C20</td><td>Video ở trạng thái <b>Thiếu video quay</b></td>
     <td>Hơn nửa kịch bản chưa có cảnh quay phù hợp (thường chưa quay sản phẩm đó). Quay thêm theo mục “Gợi ý quay thêm”, thả vào Bước 1 rồi bấm <b>Tiếp tục</b>; hoặc bỏ qua kịch bản.</td></tr>
+  <tr><td>C21</td><td>Bấm <b>Phân tích video và viết kịch bản</b> báo <i>“Video đã quay chưa đủ phân đoạn”</i> hoặc <i>“AI chưa viết được kịch bản nào”</i></td>
+    <td>Cần ít nhất 3 đoạn quay dùng được. Thả thêm video vào Bước 1 (hoặc quay dài hơn, nhiều góc hơn), và gõ thông tin sản phẩm vào ô <b>Thông tin được phép nói</b> rồi làm lại. Nếu nhiều đoạn bị bỏ vì có phụ đề cháy sẵn, hãy quay mới thay vì quay lại màn hình video cũ.</td></tr>
 </table>
 <div class="box tip"><b>Khi cần báo lỗi cho quản lý, gửi kèm</b>
   <ol>

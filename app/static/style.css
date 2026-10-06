@@ -108,6 +108,8 @@ dialog::backdrop { background: rgba(0,0,0,.45); }
 .shots button.on { border-color: var(--ac); }
 .shots img { width: 100%; aspect-ratio: 9/14; object-fit: cover; display: block; }
 .shots span { position: absolute; bottom: 0; left: 0; right: 0; font-size: 11px; background: rgba(0,0,0,.6); color: #fff; padding: 1px 4px; }
+.shots .sub-badge { top: 0; bottom: auto; background: rgba(0,0,0,.72); }
+.shots .sub-badge.bad { background: var(--dn); }
 @media (max-width: 760px) { .picker { grid-template-columns: 1fr; } }
 
 .spin { width: 14px; height: 14px; border: 2px solid var(--bd); border-top-color: var(--ac); border-radius: 50%; animation: sp 0.8s linear infinite; display: inline-block; vertical-align: -2px; }
@@ -122,6 +124,10 @@ dialog::backdrop { background: rgba(0,0,0,.45); }
 .bt-scripts { max-height: 46vh; overflow-y: auto; border: 1px solid var(--bd); border-radius: 10px; padding: 4px; gap: 2px; }
 .bt-scripts .item { padding: 6px 8px; gap: 8px; cursor: pointer; }
 .bt-scripts .item input { flex: none; }
+.bt-scripts .item.fresh { background: color-mix(in srgb, var(--ac) 9%, transparent); border-color: var(--ac); }
+.chip.auto { border-color: var(--ok); color: var(--ok); }
+.gen { border: 1px dashed var(--ac); border-radius: 10px; padding: 10px 12px; }
+.gen > summary { cursor: pointer; color: var(--ac); font-weight: 600; font-size: 13.5px; }
 .chip.on { background: var(--ac); border-color: var(--ac); color: var(--ac-ink); }
 button.chip { cursor: pointer; background: none; }
 .chip.ok { border-color: var(--ok); color: var(--ok); }

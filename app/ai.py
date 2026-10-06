@@ -199,17 +199,41 @@ def label_shots(items, note=""):
         "Với mỗi đoạn, viết mô tả ngắn bằng tiếng Việt (tối đa 20 từ) cho biết: có sản phẩm gì (loại, màu, cỡ nếu thấy), "
         "góc máy (toàn cảnh, cận, từ trên xuống), hành động (tay cầm, lật, treo, bóc hộp, máy đang chạy...), "
         "bối cảnh. Chỉ tả điều nhìn thấy, không đoán. Trường product là tên sản phẩm chính nhìn thấy, "
-        "để trống nếu không có.")})
+        "để trống nếu không có.\n\n"
+        "Ngoài ra cho biết đoạn này có CHỮ CHÁY SẴN hay không, tức chữ do người dựng chèn thêm vào hình: phụ đề lời nói, "
+        "chữ chạy, chữ quảng cáo, giá, tên kênh, watermark, sticker chữ. "
+        "KHÔNG tính chữ in trên chính sản phẩm (số ngày trên tờ lịch, chữ trên tranh, trên bao bì, trên thời khóa biểu) "
+        "và không tính chữ của máy quay (giờ, ngày).\n"
+        "- sub: chép lại chữ chèn đó, rỗng nếu không có.\n"
+        "- sub_pos: chữ chèn nằm ở phần nào của khung hình (top, center, bottom); 'none' nếu không có.\n"
+        "- sub_ok: true nếu đoạn vẫn dùng lại được khi app lồng phụ đề mới (không có chữ chèn, hoặc chữ chèn rất ngắn "
+        "và trung tính như tên sản phẩm). false nếu chữ chèn là một câu lời thoại, nhiều dòng, choán phần lớn khung hình, "
+        "nói giá hay khuyến mãi, kêu gọi bấm giỏ hàng, hoặc có tên shop/kênh khác — vì phụ đề mới sẽ chồng lên "
+        "hoặc nói khác với chữ đang hiện.")})
     schema = {
         "type": "object",
         "properties": {"shots": {"type": "array", "items": {
             "type": "object",
-            "properties": {"index": {"type": "integer"}, "desc": {"type": "string"}, "product": {"type": "string"}},
-            "required": ["index", "desc", "product"], "additionalProperties": False}}},
+            "properties": {"index": {"type": "integer"}, "desc": {"type": "string"}, "product": {"type": "string"},
+                           "sub": {"type": "string"}, "sub_pos": {"type": "string", "enum": ["top", "center", "bottom", "none"]},
+                           "sub_ok": {"type": "boolean"}},
+            "required": ["index", "desc", "product", "sub", "sub_pos", "sub_ok"], "additionalProperties": False}}},
         "required": ["shots"], "additionalProperties": False,
     }
     result = _ask(content, schema, effort="low")
     return {s["index"]: s for s in result["shots"]}
+
+
+def _shot_line(shot, used=None):
+    """Một dòng mô tả đoạn quay để gửi cho AI: nội dung, độ dài, ghi chú, chữ cháy sẵn, số lần đã dùng."""
+    line = f"{shot['id']}: {shot.get('desc') or '(chưa có mô tả, xem ảnh)'} · dài {shot['length']:.0f}s"
+    if shot.get("note"):
+        line += f" · ghi chú video: {shot['note']}"
+    if shot.get("sub"):
+        line += f" · trên hình đã có chữ cháy sẵn \"{shot['sub']}\" ở {shot.get('sub_pos') or 'không rõ'}"
+    if (used or {}).get(shot["id"]):
+        line += f" · đã dùng {used[shot['id']]} lần ở video khác"
+    return line
 
 
 def match_clips(beats, shots, script=None, used=None):
@@ -221,12 +245,7 @@ def match_clips(beats, shots, script=None, used=None):
     script, used = script or {}, used or {}
     content = [{"type": "text", "text": "Kho đoạn video shop đã quay:"}]
     for shot in shots:
-        line = f"{shot['id']}: {shot['desc'] or '(chưa có mô tả, xem ảnh)'} · dài {shot['length']:.0f}s"
-        if shot.get("note"):
-            line += f" · ghi chú video: {shot['note']}"
-        if used.get(shot["id"]):
-            line += f" · đã dùng {used[shot['id']]} lần ở video khác"
-        content.append({"type": "text", "text": line})
+        content.append({"type": "text", "text": _shot_line(shot, used)})
         if not shot["desc"]:
             content.append(_image(shot["thumb"]))
     lines = "\n".join(
@@ -240,6 +259,8 @@ def match_clips(beats, shots, script=None, used=None):
         "và không dùng cùng một đoạn cho hai cảnh trong cùng kịch bản nếu còn lựa chọn. "
         "fit: 'tot' nếu đoạn đúng sản phẩm và đúng việc cần quay; 'tam' nếu chỉ dùng tạm được "
         "(đúng sản phẩm nhưng khác góc hoặc hành động); 'khong' nếu kho không có đoạn nào hợp thì chọn 'none'. "
+        "Đoạn đã có chữ cháy sẵn trên hình: chỉ chọn khi lời của cảnh không nói khác với chữ đó, và ưu tiên "
+        "đoạn không có chữ nếu có lựa chọn ngang nhau. "
         "Mục missing: mô tả cảnh cần quay bổ sung, ngắn gọn, đủ để người khác quay được.")})
     ids = [s["id"] for s in shots] + ["none"]
     schema = {
@@ -349,6 +370,73 @@ ADAPT_RULES = (
 )
 
 
+def suggest_scripts(shots, count=3, note="", channel="", samples=None):
+    """Xem các phân đoạn shop vừa quay rồi viết nhiều kịch bản khác nhau, mỗi cảnh gắn sẵn một đoạn có thật.
+
+    Vì mỗi cảnh phải chọn shot_id trong kho nên lời đọc và hình luôn khớp nhau sau khi dựng.
+    """
+    content = [{"type": "text", "text": (
+        "Đây là tất cả phân đoạn trong video shop vừa quay, liệt kê theo đúng thứ tự quay "
+        "(hai đoạn cạnh nhau cùng video là liên tiếp nhau trong thực tế):")}]
+    for shot in shots:
+        line = _shot_line(shot)
+        if shot.get("product"):
+            line += f" · sản phẩm: {shot['product']}"
+        content.append({"type": "text", "text": line})
+    style = "\n".join(f"- {s.get('title', '')} (hook: {s.get('hook_type') or '-'})" for s in (samples or []))
+    content.append({"type": "text", "text": (
+        f"Thông tin shop cho phép nói (giá, khổ, số tờ, bối cảnh): {note or '(không có)'}\n"
+        f"Kênh sẽ đăng: {channel or '(chưa rõ)'}\n"
+        + (f"Kịch bản shop đang dùng, để bắt đúng giọng (đừng chép lại):\n{style}\n" if style else "")
+        + f"\nHãy phân tích các phân đoạn trên rồi viết {count} kịch bản KHÁC NHAU chỉ dùng chính các đoạn này, "
+        "để người bán chọn một cái. Yêu cầu:\n"
+        "- Mỗi kịch bản 5–7 cảnh, tổng 20–35 giây. Mỗi cảnh gắn shot_id của một đoạn có thật trong danh sách, "
+        "không dùng lại một đoạn hai lần trong cùng kịch bản.\n"
+        "- LỜI VÀ HÌNH PHẢI KHỚP: lời của cảnh chỉ được nói về đúng thứ đang thấy trong đoạn đã chọn, hoặc "
+        "thông tin shop cho phép nói ở trên. Không nói về cảnh không có trong video.\n"
+        "- Mạch phải logic: cảnh đầu là hook từ đoạn bắt mắt nhất, giữa là chi tiết hoặc cách dùng, cảnh cuối chốt "
+        "kêu gọi bấm giỏ hàng. Thứ tự các cảnh phải tự nhiên như một video liền mạch, ưu tiên các đoạn liên tiếp "
+        "trong cùng video khi chúng kể cùng một việc.\n"
+        "- Mỗi kịch bản phải khác nhau thật sự: khác hook, khác góc tiếp cận (hậu trường, cận cảnh chất liệu, "
+        "cách dùng, so sánh, lời khuyên), khác thứ tự đoạn.\n"
+        "- duration: khoảng số từ của lời chia 4, từ 2 đến 6 giây, không dài hơn đoạn quay quá nhiều.\n"
+        "- text: chữ trên màn hình ngắn (tối đa 8 từ) hoặc để rỗng. Đoạn nào đã có chữ cháy sẵn thì để text rỗng, "
+        "hoặc đặt text_pos ở vị trí khác chỗ chữ cũ để không chồng chữ.\n"
+        "- TUYỆT ĐỐI không dùng ô trống kiểu [kiểm tra]: chỉ viết điều đã biết chắc.\n"
+        "- title: tên ngắn nêu rõ hướng tiếp cận của kịch bản đó (tối đa 8 từ). product: sản phẩm chính. "
+        "why_it_works: một câu vì sao hướng này hợp với video đang có. caption và hashtag để đăng.\n"
+        + ADAPT_RULES)})
+    ids = [s["id"] for s in shots]
+    beat = {
+        "type": "object",
+        "properties": {
+            "part": {"type": "string", "description": "Vai trò của cảnh: Mở đầu, Chi tiết, Cách dùng, Chốt..."},
+            "shot_id": {"type": "string", "enum": ids},
+            "voice": {"type": "string"},
+            "text": {"type": "string"},
+            "text_pos": {"type": "string", "enum": ["top", "center", "bottom"]},
+            "duration": {"type": "number"},
+        },
+        "required": ["part", "shot_id", "voice", "text", "text_pos", "duration"],
+        "additionalProperties": False,
+    }
+    schema = {
+        "type": "object",
+        "properties": {"scripts": {"type": "array", "items": {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string"}, "product": {"type": "string"}, "summary": {"type": "string"},
+                "hook_type": {"type": "string"}, "why_it_works": {"type": "string"},
+                "caption": {"type": "string"}, "hashtags": {"type": "array", "items": {"type": "string"}},
+                "beats": {"type": "array", "items": beat},
+            },
+            "required": ["title", "product", "summary", "hook_type", "why_it_works", "caption", "hashtags", "beats"],
+            "additionalProperties": False}}},
+        "required": ["scripts"], "additionalProperties": False,
+    }
+    return _ask(content, schema, long_output=True)
+
+
 def adapt_beats(script, beats, shots, used, fix):
     """Viết lại các cảnh chưa có cảnh quay phù hợp để khớp với video shop đã quay.
 
@@ -359,12 +447,7 @@ def adapt_beats(script, beats, shots, used, fix):
     by_id = {}
     for shot in shots:
         by_id[shot["id"]] = shot
-        line = f"{shot['id']}: {shot['desc'] or '(chưa có mô tả)'} · dài {shot['length']:.0f}s"
-        if shot.get("note"):
-            line += f" · ghi chú video: {shot['note']}"
-        if used.get(shot["id"]):
-            line += f" · đã dùng {used[shot['id']]} lần ở video khác"
-        content.append({"type": "text", "text": line})
+        content.append({"type": "text", "text": _shot_line(shot, used)})
     lines = []
     for i, beat in enumerate(beats):
         head = f"Cảnh {i} ({beat.get('part') or '-'}, ~{beat.get('duration') or 3:.0f}s)"

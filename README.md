@@ -20,13 +20,23 @@ App mở tại http://127.0.0.1:8000. Để máy khác trong mạng nội bộ d
 
 Tab **Tạo hàng loạt** (mở sẵn): thả video đã quay, chọn nhiều kịch bản, bấm một nút. App tự làm toàn bộ và dựng lần lượt từng video ở nền:
 
-1. AI mô tả từng đoạn video bạn quay (một lần, kết quả được lưu lại), nên ghép cảnh cho cả chục kịch bản chỉ cần gửi chữ.
+1. AI mô tả từng đoạn video bạn quay (một lần, kết quả được lưu lại), nên ghép cảnh cho cả chục kịch bản chỉ cần gửi chữ. Cùng lúc đó AI ghi lại đoạn nào **đã có chữ cháy sẵn trong hình** (phụ đề, chữ chèn, giá, tên kênh khác — không tính chữ in trên chính sản phẩm).
 2. Mỗi kịch bản được ghép cảnh quay phù hợp (ưu tiên đoạn ít được dùng ở video khác), tạo giọng đọc, chữ, phụ đề, nhạc rồi dựng. Mỗi video là một dự án bình thường nên mở ra chỉnh tay được.
 3. **Thư viện kịch bản chỉ để tham khảo.** Cảnh nào chưa có video quay khớp thì app (mặc định) nhờ AI **viết lại cảnh đó cho khớp video đã quay**: chọn đoạn quay có sẵn rồi chỉ nói và chỉ hiện những gì thấy được hoặc thông tin đã có trong kịch bản gốc và ghi chú video, không bịa giá hay thông số. Cảnh đã khớp tốt luôn giữ nguyên lời gốc. Cảnh không thể nói trung thực điều gì thì bị bỏ (trừ mở đầu và chốt). Nếu hơn nửa kịch bản không có video quay cho sản phẩm thì kịch bản được giữ lại với nhãn **Thiếu video quay**. Mọi thay đổi xem được bằng **Xem … cảnh đã viết lại** (lời gốc và lời mới). Có thể tắt ở ô "Khi thiếu cảnh quay phù hợp".
    Kịch bản còn ô `[kiểm tra]` trong lời đọc bị giữ lại để sửa rồi **Tiếp tục**.
-4. **Tải tất cả (ZIP)** gồm các video, `noi_dung_dang.txt` (caption, hashtag, điều cần kiểm tra) và `can_quay_them.txt`.
+4. **Video nguồn có phụ đề cháy sẵn:** đoạn nào có chữ chèn không phù hợp (một câu lời thoại, nhiều dòng, nói giá hay khuyến mãi, kêu gọi bấm giỏ, có tên shop khác) **bị bỏ hẳn** khỏi kho ghép cảnh — app ghi rõ bỏ bao nhiêu đoạn. Đoạn chữ ngắn và trung tính (tên sản phẩm) vẫn dùng, nhưng chữ và phụ đề mới được **đặt tránh chỗ chữ cũ** để không chồng lên nhau.
+5. **Tải tất cả (ZIP)** gồm các video, `noi_dung_dang.txt` (caption, hashtag, điều cần kiểm tra) và `can_quay_them.txt`.
 
 Tiến độ lưu trong `data/batches`, đóng trình duyệt hay tắt app đều tiếp tục được. Không có API key thì vẫn tạo được video nhưng chỉ ghép cảnh đơn giản.
+
+### Để AI tự viết kịch bản từ video bạn vừa quay
+
+Ở **Bước 2 · Chọn kịch bản**, mở **✨ Để AI xem video bạn vừa thả rồi tự viết kịch bản cho đúng video đó**: chọn số kịch bản (2–5), kênh sẽ đăng và những thông tin được phép nói (giá, khổ, số tờ). AI phân tích từng phân đoạn trong video của bạn rồi viết nhiều kịch bản **khác hướng nhau** (hậu trường, cận cảnh chất liệu, cách dùng, so sánh, lời khuyên) để bạn chọn một cái.
+
+- Mỗi cảnh của kịch bản **gắn sẵn một đoạn quay thật**, nên lời đọc và hình luôn khớp nhau sau khi dựng; đến lượt dựng app dùng đúng đoạn đó, không ghép lại nữa.
+- Lời chỉ nói những gì thấy trong đoạn đã chọn hoặc thông tin bạn ghi ở ô trên — không bịa giá, thông số, đánh giá; không có ô `[kiểm tra]` nào.
+- Các đoạn có phụ đề cháy sẵn không phù hợp được loại trước khi viết.
+- Kịch bản mới nằm trong thư viện với nhãn **Từ video của bạn**, mở ở tab **1. Kịch bản** để sửa lời, hoặc bấm **Dựng video từ kịch bản này** (các cảnh đã có đoạn, chỉ cần xuất).
 
 ### Cập nhật thư viện kịch bản
 

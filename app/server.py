@@ -231,6 +231,14 @@ def import_doc(file: Optional[UploadFile] = File(None), url: str = Form(""), tex
     return jobs.submit("import", library.import_job, spec)
 
 
+@app.post("/api/scripts/suggest")
+def suggest_scripts(data: dict = Body(default={})):
+    """AI xem các phân đoạn trong video đã quay rồi viết vài kịch bản khớp sẵn với video đó."""
+    return jobs.submit("suggest", library.suggest_from_sources,
+                       {"count": data.get("count"), "note": str(data.get("note", ""))[:2000],
+                        "channel": str(data.get("channel", ""))[:40]})
+
+
 @app.get("/api/scripts/{script_id}")
 def get_script(script_id: str):
     return urlify(_get(store.scripts, script_id))
@@ -275,7 +283,8 @@ def create_project(data: dict = Body(...)):
             "hashtags": script.get("hashtags", []),
             "alt_hooks": script.get("alt_hooks", []),
             "needs_info": script.get("needs_info", []),
-            "beats": [{**b, "clip": None} for b in script.get("beats", [])],
+            # kịch bản app tự viết từ video đã quay đã gắn sẵn đoạn cho từng cảnh, giữ lại để khỏi chọn tay
+            "beats": [{**b, "clip": b.get("clip") or None} for b in script.get("beats", [])],
         })
     if not project["beats"]:
         project["beats"] = [{"shot": "", "voice": "", "text": "", "text_pos": "top", "duration": 3, "clip": None}]

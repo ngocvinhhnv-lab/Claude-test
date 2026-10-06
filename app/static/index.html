@@ -39,6 +39,24 @@
           <button class="btn sm" id="bt-import">+ Nhập kịch bản mới</button>
           <button class="btn sm" id="bt-all">Chọn tất cả đang hiện</button>
           <button class="btn sm" id="bt-none">Bỏ chọn</button></div>
+        <details class="gen" id="bt-gen">
+          <summary>✨ Để AI xem video bạn vừa thả rồi tự viết kịch bản cho đúng video đó</summary>
+          <div class="stack" style="margin-top:10px">
+            <p class="muted small" style="margin:0">AI phân tích từng phân đoạn trong video của bạn, rồi viết vài kịch bản khác hướng nhau —
+              mỗi cảnh gắn sẵn một đoạn quay thật nên lời đọc và hình luôn khớp. Bạn chọn kịch bản mình thích ở danh sách dưới.
+              Đoạn nào có phụ đề cháy sẵn không phù hợp sẽ được bỏ ra.</p>
+            <div class="fields">
+              <label class="f">Số kịch bản<select id="gen-count">
+                <option>2</option><option selected>3</option><option>4</option><option>5</option></select></label>
+              <label class="f">Kênh sẽ đăng<select id="gen-channel"></select></label>
+            </div>
+            <label class="f">Thông tin được phép nói (AI không bịa thêm gì ngoài đây)
+              <textarea id="gen-note" rows="2" placeholder="VD: Lịch bloc 14,5×20,5 giá 48k, 365 tờ. Liễn in tại xưởng, nền đỏ chữ nhũ vàng."></textarea></label>
+            <div class="row"><button class="btn primary" id="gen-go">Phân tích video và viết kịch bản</button>
+              <span class="muted small" id="gen-hint"></span></div>
+            <div class="err" id="gen-err"></div>
+          </div>
+        </details>
         <div class="row">
           <input type="search" id="bt-search" class="grow" placeholder="Tìm: mã (L1, K3), sản phẩm, kênh (NS, TV)…" autocomplete="off">
           <div class="row" id="bt-channels" style="gap:6px"></div>

@@ -32,6 +32,9 @@ DEFAULT_PROJECT_SETTINGS = {
 }
 
 
+POSITIONS = ("top", "center", "bottom")
+SUB_LIFT = 0.15    # nâng chữ lên 15% chiều cao khung để không chồng lên chữ đã cháy trong video nguồn
+
 PLACEHOLDER = re.compile(r"\[[^\]]+\]")
 SPEAKER_LABEL = re.compile(r"(?:^|(?<=[\s.!?]))(?:Khách|Shop|Chủ shop|Mẹ|Con|Bố|Em|Anh|Chị)\s*:\s*")
 
@@ -65,6 +68,22 @@ def split_subtitle(text, max_words=6):
             chunks.append(" ".join(words[:n]))
             words = words[n:]
     return [c for c in chunks if c]
+
+
+def caption_plan(text_pos, avoid, has_sub):
+    """Chỗ đặt chữ trên màn hình và độ nâng phụ đề, để chữ mới không chồng lên chữ cháy sẵn của video nguồn.
+
+    avoid: các vị trí trong khung đã có chữ cháy sẵn. has_sub: cảnh này có phụ đề chạy theo lời đọc (ở đáy khung).
+    Trả về (vị trí chữ, nâng chữ, nâng phụ đề) — nâng tính theo tỉ lệ chiều cao khung.
+    """
+    avoid = [p for p in (avoid or []) if p in POSITIONS]
+    sub_lift = SUB_LIFT if "bottom" in avoid else 0.0
+    pos = text_pos if text_pos in POSITIONS else "top"
+    if pos in avoid:
+        pos = next((p for p in POSITIONS if p not in avoid), pos)
+    # chữ nằm cùng đáy khung với phụ đề (và với chữ cháy sẵn) thì nâng lên cho khỏi đè nhau
+    lift = sub_lift + (SUB_LIFT if has_sub else 0.0) if pos == "bottom" else 0.0
+    return pos, lift, sub_lift
 
 
 def _silence_wav(path, seconds, sr=44100):
@@ -168,16 +187,17 @@ def render_project(project, log=print):
         clips.append(fit_clip(clip, source, length))
         parts.append((voice_path, length))
 
+        has_sub = bool(voice_path and ps["subtitles"])
+        pos, lift, sub_lift = caption_plan(beat.get("text_pos") or "top", clip.get("avoid"), has_sub)
         if (beat.get("text") or "").strip():
-            captions.append({"start": t, "end": t + length, "text": beat["text"],
-                             "pos": beat.get("text_pos") or "top"})
-        if voice_path and ps["subtitles"]:
+            captions.append({"start": t, "end": t + length, "text": beat["text"], "pos": pos, "lift": lift})
+        if has_sub:
             chunks = split_subtitle(line)
             total_chars = sum(len(c) for c in chunks) or 1
             ct = t + LEAD
             for chunk in chunks:
                 span = voice_len * len(chunk) / total_chars
-                captions.append({"start": ct, "end": ct + span, "text": chunk, "pos": "sub"})
+                captions.append({"start": ct, "end": ct + span, "text": chunk, "pos": "sub", "lift": sub_lift})
                 ct += span
         t += length
 

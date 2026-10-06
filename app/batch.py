@@ -172,14 +172,44 @@ def _run(batch_id):
         _cancel.discard(batch_id)
 
 
+def _pick(shot, beat, fit, reason):
+    return {"shot": shot, "fit": fit, "reason": reason, "voice": beat.get("voice", ""),
+            "text": beat.get("text", ""), "text_pos": beat.get("text_pos", "top"),
+            "orig_voice": beat.get("voice", ""), "adapted": False, "drop": False}
+
+
+def _finish(picks, beats, warnings, changes, missing):
+    """Kiểm tra lần cuối rồi trả kế hoạch: bỏ cảnh đã drop, chặn nếu còn quá ít cảnh hoặc còn ô chưa điền."""
+    kept = [(p, b) for p, b in zip(picks, beats) if not p["drop"]]
+    base = {"warnings": warnings, "missing": missing, "changes": changes, "picks": [], "beats": []}
+    if len(kept) < 3:
+        return {**base, "blocked": "Sau khi bỏ các cảnh không có video quay thì kịch bản còn quá ít cảnh. "
+                                   "Quay thêm rồi bấm Tiếp tục."}
+    blanks = script_blanks({"beats": [{"voice": p["voice"], "text": p["text"]} for p, _ in kept]})
+    if blanks:
+        return {**base, "blocked": "Còn ô chưa điền trong lời đọc: " + " ".join(blanks) + ". Sửa kịch bản rồi bấm Tiếp tục."}
+    return {"blocked": "", "warnings": warnings, "missing": missing, "changes": changes,
+            "picks": [p for p, _ in kept], "beats": [b for _, b in kept]}
+
+
 def plan_beats(script, beats, shots, used, use_ai, adapt, note=lambda m: None):
     """Chọn đoạn quay cho từng cảnh; cảnh nào chưa khớp thì (nếu bật adapt) nhờ AI viết lại cho khớp video đã quay.
 
     Cảnh đã khớp tốt luôn được giữ nguyên lời gốc. Kịch bản chỉ là tham khảo: cảnh không có video quay phù hợp
     được viết lại theo cảnh quay có sẵn, hoặc bỏ nếu không thể nói trung thực điều gì. Nếu phần lớn kịch bản không
     có video quay cho sản phẩm thì trả về blocked để người dùng quay thêm.
+
+    Đoạn quay có phụ đề cháy sẵn không phù hợp bị bỏ ra khỏi kho trước khi ghép. Kịch bản do app viết từ chính
+    kho video này (mỗi cảnh đã có shot_id) thì dùng luôn đoạn đã gắn, không ghép lại nữa.
     """
     warnings, changes, missing = [], [], []
+    shots, dropped = library.usable_shots(shots)
+    if dropped:
+        warnings.append(f"Đã bỏ {len(dropped)} đoạn quay có phụ đề cháy sẵn không phù hợp với lời mới")
+    bound = [next((s for s in shots if s["id"] == (b.get("shot_id") or "")), None) for b in beats]
+    if beats and all(bound):
+        return _finish([_pick(shot, beat, "tot", "kịch bản viết từ chính đoạn quay này")
+                        for shot, beat in zip(bound, beats)], beats, warnings, changes, missing)
     try:
         result = ai.match_clips(beats, shots, script, used) if use_ai else ai.simple_match(beats, shots, used)
     except ai.AIError as err:
@@ -196,9 +226,7 @@ def plan_beats(script, beats, shots, used, use_ai, adapt, note=lambda m: None):
             match = {**ai.simple_match([beat], shots, local)["matches"][0], "fit": "khong", "reason": ""}
         shot = by_id[match["shot_id"]]
         local[shot["id"]] += 1
-        picks.append({"shot": shot, "fit": match["fit"], "reason": match.get("reason", ""), "voice": beat.get("voice", ""),
-                      "text": beat.get("text", ""), "text_pos": beat.get("text_pos", "top"),
-                      "orig_voice": beat.get("voice", ""), "adapted": False, "drop": False})
+        picks.append(_pick(shot, beat, match["fit"], match.get("reason", "")))
     missing = result.get("missing", [])
 
     fix = {i: {"shot_id": p["shot"]["id"] if p["fit"] != "khong" else None, "fit": p["fit"]}
@@ -231,20 +259,11 @@ def plan_beats(script, beats, shots, used, use_ai, adapt, note=lambda m: None):
     for i in sorted(unresolved):
         warnings.append(f"Cảnh {i + 1}: chưa có cảnh quay phù hợp, dùng tạm một đoạn có sẵn")
 
-    kept = [(p, b) for p, b in zip(picks, beats) if not p["drop"]]
     if adapt and use_ai and (len(unresolved) + len(changes) - sum(c["kind"] == "rewrite" for c in changes)) * 2 >= len(beats):
         return {"blocked": "Chưa có video quay cho sản phẩm này (hơn nửa số cảnh không có cảnh quay phù hợp). "
                            "Quay thêm theo gợi ý rồi bấm Tiếp tục, hoặc bỏ qua kịch bản này.",
                 "warnings": warnings, "missing": missing, "changes": changes, "picks": [], "beats": []}
-    if len(kept) < 3:
-        return {"blocked": "Sau khi bỏ các cảnh không có video quay thì kịch bản còn quá ít cảnh. Quay thêm rồi bấm Tiếp tục.",
-                "warnings": warnings, "missing": missing, "changes": changes, "picks": [], "beats": []}
-    blanks = script_blanks({"beats": [{"voice": p["voice"], "text": p["text"]} for p, _ in kept]})
-    if blanks:
-        return {"blocked": "Còn ô chưa điền trong lời đọc: " + " ".join(blanks) + ". Sửa kịch bản rồi bấm Tiếp tục.",
-                "warnings": warnings, "missing": missing, "changes": changes, "picks": [], "beats": []}
-    return {"blocked": "", "warnings": warnings, "missing": missing, "changes": changes,
-            "picks": [p for p, _ in kept], "beats": [b for _, b in kept]}
+    return _finish(picks, beats, warnings, changes, missing)
 
 
 def _process(batch_id, index, shots, used, voice_for, use_ai):

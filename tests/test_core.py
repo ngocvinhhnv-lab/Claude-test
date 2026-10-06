@@ -380,5 +380,121 @@ class Adaptation(unittest.TestCase):
         self.assertTrue(any("viết lại cảnh lỗi" in w for w in plan["warnings"]))
 
 
+class BurnedSubtitles(unittest.TestCase):
+    """Đoạn quay đã có phụ đề cháy sẵn: không phù hợp thì bỏ, phù hợp thì giữ nhưng chữ mới tránh chỗ đó."""
+
+    def shot(self, i, sub="", ok=True, pos="bottom"):
+        return {"id": f"s_{i}", "source_id": "s", "start": i * 3.0, "end": i * 3.0 + 3, "length": 3.0,
+                "desc": f"đoạn {i}", "note": "", "thumb": "", "scene_start": 0.0, "scene_end": 30.0,
+                "sub": sub, "sub_pos": pos if sub else "none", "sub_ok": ok}
+
+    def test_unsuitable_burned_subtitles_are_dropped_suitable_ones_kept(self):
+        shots = [self.shot(0), self.shot(1, "Giá chỉ 39k hôm nay thôi nha", ok=False), self.shot(2, "Lịch bloc 2026")]
+        keep, dropped = library.usable_shots(shots)
+        self.assertEqual([s["id"] for s in keep], ["s_0", "s_2"])
+        self.assertEqual([s["id"] for s in dropped], ["s_1"])
+
+    def test_everything_subtitled_is_kept_rather_than_producing_nothing(self):
+        shots = [self.shot(0, "một câu lời thoại dài", ok=False)]
+        keep, dropped = library.usable_shots(shots)
+        self.assertEqual(len(keep), 1)
+        self.assertEqual(dropped, [])
+
+    def test_matching_never_sees_the_dropped_shots_and_says_so(self):
+        shots = [self.shot(i) for i in range(4)] + [self.shot(9, "Bấm giỏ hàng ngay", ok=False)]
+        beats = [{"voice": f"Lời {i}.", "text": "", "text_pos": "top", "duration": 3} for i in range(4)]
+        seen = []
+
+        def fake(beats_, shots_, used_=None):
+            seen.extend(s["id"] for s in shots_)
+            return {"matches": [{"beat": i, "shot_id": f"s_{i}", "fit": "tot", "reason": ""} for i in range(len(beats_))],
+                    "missing": []}
+        real = ai.simple_match
+        ai.simple_match = fake
+        try:
+            plan = batch.plan_beats({"title": "T"}, beats, shots, {}, False, True)
+        finally:
+            ai.simple_match = real
+        self.assertNotIn("s_9", seen)
+        self.assertTrue(any("phụ đề cháy sẵn" in w for w in plan["warnings"]))
+
+    def test_new_text_moves_away_from_the_burned_in_text(self):
+        # chữ cháy sẵn ở đáy: chữ trên màn hình giữ chỗ cũ, phụ đề lời đọc được nâng lên
+        self.assertEqual(assemble.caption_plan("top", ["bottom"], True), ("top", 0.0, assemble.SUB_LIFT))
+        # chữ cháy sẵn đúng chỗ chữ mới: chữ mới dời sang chỗ còn trống
+        pos, lift, sub_lift = assemble.caption_plan("top", ["top"], False)
+        self.assertEqual((pos, lift, sub_lift), ("center", 0.0, 0.0))
+        # không có chữ cháy sẵn thì giữ nguyên như trước, chỉ nâng chữ nếu nó nằm cùng đáy với phụ đề
+        self.assertEqual(assemble.caption_plan("center", [], True), ("center", 0.0, 0.0))
+        self.assertEqual(assemble.caption_plan("bottom", [], True)[1], assemble.SUB_LIFT)
+
+    def test_lift_pushes_the_subtitle_line_up_in_the_ass_file(self):
+        path = os.path.join(_TMP, "lift.ass")
+        make_videos.build_ass({**make_videos.DEFAULTS, "captions": [
+            {"start": 0, "end": 1, "text": "thường", "pos": "sub"},
+            {"start": 1, "end": 2, "text": "nâng lên", "pos": "sub", "lift": 0.15}]}, 1080, 1920, 2.0, path)
+        with open(path, encoding="utf-8") as f:
+            rows = [line for line in f if line.startswith("Dialogue")]
+        margins = [int(l.split(",")[7]) for l in rows]
+        self.assertEqual(margins[0], 0)              # dùng lề của style
+        self.assertGreater(margins[1], round(1920 * 0.15))
+
+
+class Suggested(unittest.TestCase):
+    """Kịch bản app tự viết từ chính video đã quay: mỗi cảnh gắn sẵn đoạn, không ghép lại nữa."""
+
+    def setUp(self):
+        shutil.rmtree(os.path.join(store.DATA_DIR, "scripts"), ignore_errors=True)
+        os.makedirs(os.path.join(store.DATA_DIR, "scripts"))
+        self.shots = [{"id": f"s_{i}", "source_id": "s", "start": i * 4.0, "end": i * 4.0 + 4, "length": 4.0,
+                       "desc": f"đoạn {i}", "note": "", "thumb": "", "scene_start": 0.0, "scene_end": 40.0,
+                       "sub": "", "sub_pos": "none", "sub_ok": True} for i in range(5)]
+
+    def test_bound_beats_use_their_own_shot_without_asking_ai_again(self):
+        beats = [{"voice": f"Lời {i}.", "text": "", "text_pos": "top", "duration": 3, "shot_id": f"s_{i}"}
+                 for i in range(4)]
+        real = ai.match_clips
+        ai.match_clips = lambda *a, **k: self.fail("kịch bản đã gắn đoạn thì không được ghép lại")
+        try:
+            plan = batch.plan_beats({"title": "T"}, beats, self.shots, {}, True, True)
+        finally:
+            ai.match_clips = real
+        self.assertEqual([p["shot"]["id"] for p in plan["picks"]], ["s_0", "s_1", "s_2", "s_3"])
+        self.assertEqual([p["voice"] for p in plan["picks"]], [f"Lời {i}." for i in range(4)])
+        self.assertEqual(plan["blocked"], "")
+
+    def test_a_deleted_source_falls_back_to_normal_matching(self):
+        beats = [{"voice": f"Lời {i}.", "text": "", "text_pos": "top", "duration": 3, "shot_id": "mat_roi"}
+                 for i in range(4)]
+        plan = batch.plan_beats({"title": "T"}, beats, self.shots, {}, False, False)
+        self.assertEqual(len(plan["picks"]), 4)
+        self.assertTrue(all(p["shot"]["id"] in {s["id"] for s in self.shots} for p in plan["picks"]))
+
+    def test_written_scripts_are_stored_with_their_clips(self):
+        real = (ai.is_ready, ai.suggest_scripts, library.ensure_shot_labels, library.collect_shots)
+        source = store.sources.save({"name": "quay.mov", "status": "ready", "path": "x.mov",
+                                     "info": {"duration": 20.0}, "shots": []})
+        ai.is_ready = lambda: True
+        library.ensure_shot_labels = lambda ids, log=print: 0
+        library.collect_shots = lambda ids: self.shots
+        ai.suggest_scripts = lambda shots, count, note, channel, samples: {"scripts": [{
+            "title": "Hậu trường xưởng in", "product": "Liễn", "summary": "", "hook_type": "Hậu trường",
+            "why_it_works": "", "caption": "", "hashtags": [],
+            "beats": [{"part": "Mở đầu", "shot_id": f"s_{i}", "voice": f"Câu {i}.", "text": "", "text_pos": "top",
+                       "duration": 3} for i in range(4)] + [{"part": "Chốt", "shot_id": "khong_co",
+                       "voice": "Bỏ cảnh này.", "text": "", "text_pos": "center", "duration": 3}]}]}
+        try:
+            result = library.suggest_from_sources({"count": 1, "note": "Liễn 39k"})
+        finally:
+            ai.is_ready, ai.suggest_scripts, library.ensure_shot_labels, library.collect_shots = real
+            store.sources.delete(source["id"])
+        self.assertEqual(result["added"], 1)
+        (script,) = store.scripts.list()
+        self.assertEqual(script["origin"], "auto")
+        self.assertEqual(len(script["beats"]), 4)  # cảnh gắn đoạn không tồn tại bị bỏ
+        self.assertEqual([b["shot_id"] for b in script["beats"]], ["s_0", "s_1", "s_2", "s_3"])
+        self.assertTrue(all(b["clip"]["source_id"] == "s" for b in script["beats"]))
+
+
 if __name__ == "__main__":
     unittest.main()

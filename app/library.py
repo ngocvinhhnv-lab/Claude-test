@@ -140,24 +140,49 @@ def collect_shots(source_ids):
         for k, shot in enumerate(src.get("shots") or []):
             shots.append({"id": f"{sid}_{k}", "source_id": sid, "start": shot["start"], "end": shot["end"],
                           "thumb": shot["thumb"], "desc": shot.get("desc", ""), "note": src.get("note", ""),
-                          "length": shot["end"] - shot["start"], "scene": shot.get("scene"),
+                          "product": shot.get("product", ""), "length": shot["end"] - shot["start"],
+                          "sub": shot.get("sub", ""), "sub_pos": shot.get("sub_pos", "none"),
+                          "sub_ok": shot.get("sub_ok", True), "scene": shot.get("scene"),
                           "scene_start": shot.get("scene_start", 0.0),
                           "scene_end": shot.get("scene_end", src["info"]["duration"]),
                           "label": f"{src.get('name', sid)} · {shot['start']:.1f}–{shot['end']:.1f}s"})
     return shots
 
 
+def sub_blocks(shot):
+    """Đoạn quay có phụ đề cháy sẵn không dùng lại được (phụ đề mới sẽ chồng lên hoặc nói khác chữ đang hiện)."""
+    return bool(shot.get("sub")) and shot.get("sub_ok") is False
+
+
+def usable_shots(shots):
+    """Bỏ các đoạn có phụ đề cháy sẵn không phù hợp. Trả về (đoạn dùng được, đoạn đã bỏ).
+
+    Nếu bỏ hết thì giữ nguyên cả kho (thà có video để xem lại còn hơn không tạo được gì).
+    """
+    keep = [s for s in shots if not sub_blocks(s)]
+    dropped = [s for s in shots if sub_blocks(s)]
+    return (keep, dropped) if keep else (shots, [])
+
+
 def clip_from_shot(shot, reason=""):
-    return {"source_id": shot["source_id"], "start": shot["start"], "end": shot["end"],
+    clip = {"source_id": shot["source_id"], "start": shot["start"], "end": shot["end"],
             "scene_start": shot["scene_start"], "scene_end": shot["scene_end"], "note": reason}
+    if shot.get("sub") and shot.get("sub_pos") in ("top", "center", "bottom"):
+        # chữ mới sẽ tránh chỗ đã có chữ cháy sẵn trong video nguồn
+        clip["avoid"] = [shot["sub_pos"]]
+    return clip
+
+
+LABEL_FIELDS = ("desc", "product", "sub", "sub_pos", "sub_ok")
 
 
 def ensure_shot_labels(source_ids, log=print, chunk=20):
-    """Nhờ AI mô tả các đoạn quay chưa có mô tả (chạy một lần cho mỗi đoạn, kết quả được lưu lại)."""
+    """Nhờ AI mô tả các đoạn quay chưa được xem (chạy một lần cho mỗi đoạn, kết quả được lưu lại)."""
     todo = []
     for sid in source_ids:
         src = store.sources.get(sid)
-        todo += [(sid, k) for k, sh in enumerate(src.get("shots") or []) if not sh.get("desc")]
+        todo += [(sid, k) for k, sh in enumerate(src.get("shots") or [])
+                 if not sh.get("desc") or not sh.get("sub_checked")]
     done = 0
     for i in range(0, len(todo), chunk):
         part = todo[i:i + chunk]
@@ -171,8 +196,10 @@ def ensure_shot_labels(source_ids, log=print, chunk=20):
             for k in ks:
                 label = result.get(k)
                 if label:
-                    src["shots"][k]["desc"] = label["desc"]
-                    src["shots"][k]["product"] = label.get("product", "")
+                    shot = src["shots"][k]
+                    shot.update({f: label.get(f, "") for f in LABEL_FIELDS if f in label})
+                    shot["sub_ok"] = bool(label.get("sub_ok", True))
+                    shot["sub_checked"] = True
             store.sources.save(src)
         done += len(part)
     return len(todo)
@@ -183,6 +210,11 @@ def auto_match(project_id, source_ids, log=print):
     shots = collect_shots(source_ids)
     if not shots:
         raise ValueError("Chưa có video nguồn nào đã xử lý xong")
+    if ai.is_ready():
+        log("AI đang xem từng đoạn quay")
+        ensure_shot_labels(source_ids, log=log)
+        shots = collect_shots(source_ids)
+    shots, _ = usable_shots(shots)  # bỏ đoạn có phụ đề cháy sẵn không phù hợp
     log("AI đang xem các đoạn video nguồn")
     result = ai.match_clips(project["beats"], shots)
     by_id = {s["id"]: s for s in shots}
@@ -294,9 +326,14 @@ def finalize_script(raw, batch=""):
             duration = 0
         pos = b.get("text_pos") if b.get("text_pos") in POSITIONS else (
             "top" if i == 0 else "center" if i == len(raw_beats) - 1 else "bottom")
-        beats.append({"shot": shot if not part or shot.startswith(part) else f"{part} · {shot}",
-                      "voice": voice, "text": (b.get("text") or "").strip(), "text_pos": pos,
-                      "duration": round(max(1.0, duration or len(voice.split()) / 4 or 3.0), 1), "part": part})
+        beat = {"shot": shot if not part or shot.startswith(part) else f"{part} · {shot}",
+                "voice": voice, "text": (b.get("text") or "").strip(), "text_pos": pos,
+                "duration": round(max(1.0, duration or len(voice.split()) / 4 or 3.0), 1), "part": part}
+        if b.get("shot_id"):  # kịch bản viết từ chính kho video: giữ đoạn quay đã gắn cho cảnh
+            beat["shot_id"] = str(b["shot_id"])
+        if isinstance(b.get("clip"), dict):
+            beat["clip"] = b["clip"]
+        beats.append(beat)
     if not beats:
         raise docs.DocError(f"Kịch bản '{raw.get('title') or raw.get('code') or '?'}' không có cảnh nào")
     code = (raw.get("code") or "").strip()
@@ -305,7 +342,7 @@ def finalize_script(raw, batch=""):
     summary = " · ".join(x for x in (raw.get("channel_name") or raw.get("channel"), raw.get("product"), raw.get("summary")) if x)
     return {
         "key": raw.get("key") or f"imp:{_slug(code or title)}",
-        "origin": raw.get("origin") if raw.get("origin") in ("weekly", "template", "manual") else "imported",
+        "origin": raw.get("origin") if raw.get("origin") in ("weekly", "template", "manual", "auto") else "imported",
         "status": "ready", "batch": batch, "code": code, "channel": (raw.get("channel") or "").strip(),
         "product": (raw.get("product") or "").strip(), "title": full, "summary": summary or raw.get("summary", ""),
         "hook_type": raw.get("hook_type", ""), "why_it_works": raw.get("why_it_works", ""),
@@ -356,6 +393,50 @@ def import_document(doc, log=print):
         store.scripts.save(item)
         titles.append(item["title"])
     return {"added": added, "updated": updated, "titles": titles}
+
+
+# ---------- Tự viết kịch bản từ video đã quay ----------
+
+def suggest_from_sources(spec, log=print):
+    """Phân tích các phân đoạn trong video shop đã quay rồi viết vài kịch bản gắn sẵn với đúng các đoạn đó.
+
+    Mỗi cảnh của kịch bản mang shot_id và clip của một đoạn có thật, nên khi dựng thì lời đọc và hình luôn khớp.
+    """
+    if not ai.is_ready():
+        raise docs.DocError("Cần nhập Anthropic API key trong Cài đặt để AI xem video và viết kịch bản.")
+    source_ids = [s["id"] for s in store.sources.list() if s.get("status") == "ready"]
+    if not source_ids:
+        raise docs.DocError("Chưa có video nguồn nào xử lý xong. Thả video đã quay vào Bước 1 trước.")
+    ensure_shot_labels(source_ids, log=log)
+    shots, dropped = usable_shots(collect_shots(source_ids))
+    if len(shots) < 3:
+        raise docs.DocError("Video đã quay chưa đủ phân đoạn để viết kịch bản (cần ít nhất 3 đoạn khác nhau).")
+    count = max(1, min(5, int(spec.get("count") or 3)))
+    log(f"AI đang phân tích {len(shots)} phân đoạn và viết {count} kịch bản")
+    samples = [{"title": s.get("title", ""), "hook_type": s.get("hook_type", "")}
+               for s in store.scripts.list()[:8]]
+    result = ai.suggest_scripts(shots, count, spec.get("note", ""), spec.get("channel", ""), samples)
+    by_id = {s["id"]: s for s in shots}
+    batch_name = time.strftime("Từ video %d/%m %H:%M")
+    base, titles, ids = time.time(), [], []
+    for index, raw in enumerate(result.get("scripts") or []):
+        picked = [b for b in raw.get("beats") or [] if b.get("shot_id") in by_id]
+        if len(picked) < 3:
+            continue
+        item = finalize_script({**raw, "beats": picked, "origin": "auto",
+                                "channel": raw.get("channel") or spec.get("channel", ""),
+                                "key": f"auto:{int(base)}-{index}"}, batch_name)
+        for beat, src in zip(item["beats"], picked):
+            shot = by_id[src["shot_id"]]
+            beat["shot_id"] = shot["id"]
+            beat["clip"] = clip_from_shot(shot, "kịch bản này được viết từ chính đoạn quay đó")
+        item["created"] = base - index * 0.01
+        saved = store.scripts.save(item)
+        titles.append(saved["title"])
+        ids.append(saved["id"])
+    if not titles:
+        raise docs.DocError("AI chưa viết được kịch bản nào từ video này. Thêm ghi chú sản phẩm rồi thử lại.")
+    return {"added": len(titles), "titles": titles, "ids": ids, "shots": len(shots), "dropped": len(dropped)}
 
 
 def import_job(spec, log=print):

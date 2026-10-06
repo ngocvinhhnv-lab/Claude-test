@@ -248,11 +248,15 @@ def build_ass(opts, w, h, total, path, top_min=0):
         lines.append(f"Dialogue: 0,{ass_time(0)},{ass_time(total)},Title,,0,0,0,,"
                      f"{ass_escape(opts['text'])}")
     styles = {"bottom": "Caption", "top": "CapTop", "center": "CapCenter", "sub": "Sub"}
+    # Lề mặc định của từng style, để "lift" nâng chữ lên khỏi vùng đã có chữ cháy sẵn trong video nguồn
+    style_margin = {"Caption": bottom_v, "Sub": bottom_v, "CapTop": margin_v, "Title": margin_v}
     for cap in opts.get("captions") or []:
         start = parse_time(cap.get("start", 0))
         end = parse_time(cap.get("end", total))
         style_name = styles.get(cap.get("pos", "bottom"), "Caption")
-        lines.append(f"Dialogue: 0,{ass_time(start)},{ass_time(end)},{style_name},,0,0,0,,"
+        lift = float(cap.get("lift") or 0)
+        mv = round(style_margin[style_name] + h * lift) if lift and style_name in style_margin else 0
+        lines.append(f"Dialogue: 0,{ass_time(start)},{ass_time(end)},{style_name},,0,0,{mv},,"
                      f"{ass_escape(cap['text'])}")
     with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
