@@ -594,6 +594,47 @@ class CutQuality(unittest.TestCase):
         self.assertFalse(any("lời dài hơn" in w for w in plan["warnings"]))
 
 
+class ApiErrors(unittest.TestCase):
+    """Lỗi của Claude API phải thành một câu tiếng Việt nói rõ phải làm gì."""
+
+    def err(self, message, code=200):
+        return type("E", (Exception,), {"status_code": code, "body": {"type": "error", "error": {
+            "type": "invalid_request_error", "message": message}}, "message": "..."})()
+
+    def test_running_out_of_credit_says_where_to_top_up(self):
+        out = ai.friendly_error(self.err("Your credit balance is too low to access the Anthropic API. "
+                                         "Please go to Plans & Billing to upgrade or purchase credits."))
+        self.assertIn("hết tiền", out)
+        self.assertIn("Plans & Billing", out)
+        self.assertNotIn("200", out)      # mã 200 của luồng streaming chỉ làm rối
+
+    def test_other_known_failures_are_translated(self):
+        self.assertIn("giới hạn tần suất", ai.friendly_error(self.err("rate_limit_error", 429)))
+        self.assertIn("quá tải", ai.friendly_error(self.err("Overloaded", 529)))
+        self.assertIn("key", ai.friendly_error(self.err("invalid x-api-key", 401)))
+
+    def test_an_unknown_failure_keeps_the_original_wording_without_the_json(self):
+        out = ai.friendly_error(self.err("gateway blew up", 502))
+        self.assertIn("gateway blew up", out)
+        self.assertNotIn("{", out)
+
+    def test_the_batch_keeps_going_without_ai(self):
+        shots = [{"id": f"s_{i}", "source_id": "s", "start": i * 3.0, "end": i * 3.0 + 3, "length": 3.0,
+                  "desc": "", "note": "", "thumb": "", "scene_start": 0.0, "scene_end": 30.0, "sub": "",
+                  "sub_pos": "none", "marks": "", "sub_ok": True, "talking": False} for i in range(5)]
+        beats = [{"voice": f"Lời đọc số {i} đủ dài để đọc nha.", "text": "", "text_pos": "top", "duration": 3}
+                 for i in range(4)]
+        real = ai.match_clips
+        ai.match_clips = lambda *a, **k: (_ for _ in ()).throw(ai.AIError("Tài khoản Anthropic đã hết tiền."))
+        try:
+            plan = batch.plan_beats({"title": "T"}, beats, shots, {}, True, False, review=False)
+        finally:
+            ai.match_clips = real
+        self.assertEqual(plan["blocked"], "")
+        self.assertEqual(len(plan["picks"]), 4)   # vẫn ra video, chỉ là ghép đơn giản
+        self.assertTrue(any("hết tiền" in w for w in plan["warnings"]))
+
+
 class Salvage(unittest.TestCase):
     """Chỉ còn file đã dựng: cắt bỏ dải chữ cũ khỏi khung hình rồi xào lại thành video khác."""
 

@@ -72,6 +72,45 @@ class AIError(RuntimeError):
     pass
 
 
+# Claude API báo lỗi bằng tiếng Anh, có khi kèm cả khối JSON. Đổi sang một câu tiếng Việt nói rõ phải làm gì.
+FRIENDLY = (
+    (r"credit balance|insufficient.{0,20}(credit|fund)|purchase credits|billing",
+     "Tài khoản Anthropic đã hết tiền. Vào console.anthropic.com, mục Plans & Billing để nạp thêm rồi bấm Tiếp tục. "
+     "Trong lúc chờ, app vẫn tạo được video nhưng chỉ ghép cảnh đơn giản, không hiểu nội dung video."),
+    (r"rate.?limit|too many requests",
+     "Claude API đang giới hạn tần suất. Đợi vài phút rồi bấm Tiếp tục."),
+    (r"overloaded|try again later|temporarily unavailable",
+     "Máy chủ Claude đang quá tải. Đợi vài phút rồi bấm Tiếp tục."),
+    (r"authentication|invalid x-api-key|invalid api key|permission|unauthorized",
+     "Anthropic API key không dùng được (sai, hết hạn hoặc bị thu hồi). Nhập lại key trong mục Cài đặt."),
+    (r"max_tokens|too long|exceeds|too large",
+     "Nội dung gửi đi quá dài. Làm ít kịch bản một lần, hoặc dùng video nguồn ngắn hơn."),
+)
+
+
+def api_message(err):
+    """Lấy câu báo lỗi gọn trong phản hồi của Claude API (bỏ phần JSON bao quanh)."""
+    body = getattr(err, "body", None)
+    text = ""
+    if isinstance(body, dict) and isinstance(body.get("error"), dict):
+        text = str(body["error"].get("message") or "")
+    if not text:
+        text = str(getattr(err, "message", "") or err)
+    return " ".join(text.split())[:300]
+
+
+def friendly_error(err):
+    """Câu tiếng Việt nói rõ lỗi gì và phải làm gì."""
+    import re as _re
+    text = api_message(err)
+    for pattern, message in FRIENDLY:
+        if _re.search(pattern, text, _re.I):
+            return message
+    code = getattr(err, "status_code", None)
+    # khi streaming, lỗi nằm trong luồng nên mã HTTP vẫn là 200, hiện ra chỉ làm rối
+    return "Claude API báo lỗi" + (f" {code}" if code and code != 200 else "") + f": {text}"
+
+
 def is_ready():
     """Đã có Anthropic API key (trong Cài đặt hoặc biến môi trường) chưa."""
     return bool(get_settings().get("anthropic_api_key") or os.environ.get("ANTHROPIC_API_KEY"))
@@ -114,12 +153,8 @@ def _ask(content, schema, effort=None, long_output=False):
                 response = stream.get_final_message()
         else:
             response = client.beta.messages.create(**kwargs)
-    except anthropic.AuthenticationError as err:
-        raise AIError("Anthropic API key không hợp lệ. Kiểm tra lại trong Cài đặt.") from err
-    except anthropic.RateLimitError as err:
-        raise AIError("Claude API đang giới hạn tần suất, thử lại sau ít phút.") from err
     except anthropic.APIStatusError as err:
-        raise AIError(f"Claude API lỗi {err.status_code}: {err.message}") from err
+        raise AIError(friendly_error(err)) from err
     except anthropic.APIConnectionError as err:
         raise AIError("Không kết nối được Claude API, kiểm tra mạng.") from err
     if response.stop_reason == "refusal":
