@@ -3,12 +3,13 @@
 import json
 import os
 import re
+import shutil
 import tempfile
 import time
 
 from make_videos import probe
 
-from . import ai, media, store
+from . import ai, docs, media, store
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -252,3 +253,121 @@ def seed_weekly():
     if added:
         store.mark_imported(done)
     return added
+
+
+# ---------- Nhập kịch bản từ tài liệu ----------
+
+PLACEHOLDER = re.compile(r"\[[^\]]+\]")
+POSITIONS = ("top", "center", "bottom")
+
+
+def _slug(text):
+    import unicodedata
+    text = unicodedata.normalize("NFD", text or "").replace("đ", "d").replace("Đ", "D")
+    text = "".join(c for c in text if unicodedata.category(c) != "Mn")
+    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")[:40] or "kich-ban"
+
+
+def needs_from_beats(beats):
+    """Nhắc việc từ các ô [..] chưa điền: trong lời đọc (phải điền) và trong ghi chú cảnh quay (kiểm tra khi quay)."""
+    said = [m for b in beats for f in (b.get("voice"), b.get("text")) for m in PLACEHOLDER.findall(f or "")]
+    shot = [m for b in beats for m in PLACEHOLDER.findall(b.get("shot") or "")]
+    info = []
+    if said:
+        info.append("Điền vào lời đọc trước khi dựng (AI sẽ đọc to nếu để nguyên): " + " ".join(dict.fromkeys(said)))
+    if shot:
+        info.append("Kiểm tra khi quay: " + " ".join(dict.fromkeys(shot)))
+    info.append("Kiểm tra giá và số liệu trong lời đọc so với giỏ hàng ngày đăng")
+    return info
+
+
+def finalize_script(raw, batch=""):
+    """Chuẩn hoá một kịch bản (từ AI hoặc file JSON) về đúng dạng app lưu."""
+    raw_beats = raw.get("beats") or []
+    beats = []
+    for i, b in enumerate(raw_beats):
+        part, shot = (b.get("part") or "").strip(), (b.get("shot") or "").strip()
+        voice = (b.get("voice") or "").strip()
+        try:
+            duration = float(b.get("duration") or 0)
+        except (TypeError, ValueError):
+            duration = 0
+        pos = b.get("text_pos") if b.get("text_pos") in POSITIONS else (
+            "top" if i == 0 else "center" if i == len(raw_beats) - 1 else "bottom")
+        beats.append({"shot": shot if not part or shot.startswith(part) else f"{part} · {shot}",
+                      "voice": voice, "text": (b.get("text") or "").strip(), "text_pos": pos,
+                      "duration": round(max(1.0, duration or len(voice.split()) / 4 or 3.0), 1), "part": part})
+    if not beats:
+        raise docs.DocError(f"Kịch bản '{raw.get('title') or raw.get('code') or '?'}' không có cảnh nào")
+    code = (raw.get("code") or "").strip()
+    title = (raw.get("title") or code or "Kịch bản").strip()
+    full = title if (code and title.startswith(code)) else (f"{code} · {title}" if code else title)
+    summary = " · ".join(x for x in (raw.get("channel_name") or raw.get("channel"), raw.get("product"), raw.get("summary")) if x)
+    return {
+        "key": raw.get("key") or f"imp:{_slug(code or title)}",
+        "origin": raw.get("origin") if raw.get("origin") in ("weekly", "template", "manual") else "imported",
+        "status": "ready", "batch": batch, "code": code, "channel": (raw.get("channel") or "").strip(),
+        "product": (raw.get("product") or "").strip(), "title": full, "summary": summary or raw.get("summary", ""),
+        "hook_type": raw.get("hook_type", ""), "why_it_works": raw.get("why_it_works", ""),
+        "caption": raw.get("caption", ""), "hashtags": raw.get("hashtags") or [],
+        "beats": beats, "needs_info": needs_from_beats(beats),
+    }
+
+
+def _scripts_from_json(doc):
+    """File JSON đúng định dạng của app ({"scripts": [...]} hoặc danh sách kịch bản) thì nhập thẳng, không cần AI."""
+    text = doc.text.lstrip()
+    if not text.startswith(("{", "[")):
+        return None
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        return None
+    items = data.get("scripts") if isinstance(data, dict) else data
+    if isinstance(items, list) and items and all(isinstance(i, dict) and "beats" in i for i in items):
+        return items
+    return None
+
+
+def import_document(doc, log=print):
+    """Đọc tài liệu, tách kịch bản và nạp vào thư viện. Trùng mã thì cập nhật, không nhân đôi."""
+    docs.check_size(doc)
+    scripts = _scripts_from_json(doc) if doc.kind == "text" else None
+    if scripts is None:
+        if not ai.is_ready():
+            raise docs.DocError("Cần nhập Anthropic API key trong Cài đặt để AI đọc tài liệu. "
+                                "Hoặc dùng file JSON đúng định dạng của app.")
+        log("AI đang đọc tài liệu và tách kịch bản")
+        scripts = ai.extract_scripts(doc)
+    if not scripts:
+        raise docs.DocError("Không tìm thấy kịch bản video nào trong tài liệu")
+    batch_name = time.strftime("Nhập %d/%m/%Y")
+    existing = {s["key"]: s for s in store.scripts.list() if s.get("key")}
+    base, added, updated, titles = time.time(), 0, 0, []
+    for index, raw in enumerate(scripts):
+        item = finalize_script(raw, batch_name)
+        old = existing.get(item["key"])
+        if old:
+            item["id"], item["created"] = old["id"], old["created"]
+            updated += 1
+        else:
+            item["created"] = base - index * 0.01  # kịch bản đầu tài liệu hiện đầu thư viện
+            added += 1
+        store.scripts.save(item)
+        titles.append(item["title"])
+    return {"added": added, "updated": updated, "titles": titles}
+
+
+def import_job(spec, log=print):
+    """Chạy ở nền: spec là {"path"} (file đã upload), {"url"} hoặc {"text"}."""
+    if spec.get("path"):
+        try:
+            doc = docs.load_file(spec["path"])
+        finally:
+            shutil.rmtree(os.path.dirname(spec["path"]), ignore_errors=True)
+    elif spec.get("url"):
+        log("Đang tải tài liệu từ link")
+        doc = docs.fetch_url(spec["url"])
+    else:
+        doc = docs.Doc("text", spec.get("text", ""))
+    return import_document(doc, log)

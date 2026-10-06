@@ -28,7 +28,7 @@
     <div class="stack">
       <div class="card stack">
         <div><h3>Bước 1 · Thả video bạn đã quay</h3>
-          <p class="muted small">Thả tất cả video quay được vào đây, quay dọc càng tốt. Ghi chú sản phẩm cho từng video (không bắt buộc) giúp AI chọn cảnh đúng hơn.</p></div>
+          <p class="muted small">Thư viện kịch bản chỉ để tham khảo: app chọn kịch bản rồi tự viết lại cảnh nào chưa có video khớp. Thả tất cả video quay được vào đây, quay dọc càng tốt. Ghi chú sản phẩm cho từng video (không bắt buộc) giúp AI chọn cảnh đúng hơn.</p></div>
         <div class="drop" id="bt-drop">Kéo thả video vào đây hoặc bấm để chọn (chọn được nhiều file)
           <input type="file" id="bt-file" accept="video/*" multiple hidden></div>
         <div class="list" id="bt-sources"></div>
@@ -36,6 +36,7 @@
 
       <div class="card stack">
         <div class="row"><h3 class="grow">Bước 2 · Chọn kịch bản <span class="muted small" id="bt-selcount"></span></h3>
+          <button class="btn sm" id="bt-import">+ Nhập kịch bản mới</button>
           <button class="btn sm" id="bt-all">Chọn tất cả đang hiện</button>
           <button class="btn sm" id="bt-none">Bỏ chọn</button></div>
         <div class="row">
@@ -51,6 +52,9 @@
           <label class="f">Giọng đọc<select id="bt-voice">
             <option value="one">Một giọng chung (theo Cài đặt)</option>
             <option value="channel">Mỗi kênh một giọng và tốc độ khác nhau</option></select></label>
+          <label class="f">Khi thiếu cảnh quay phù hợp<select id="bt-adapt">
+            <option value="1">Tự viết lại cảnh đó cho khớp video đã quay (khuyên dùng)</option>
+            <option value="0">Giữ nguyên kịch bản, dùng tạm đoạn gần nhất và báo cần quay thêm</option></select></label>
           <label class="f">Tiếng gốc của video quay<select id="bt-audio">
             <option value="0.3">Giữ nhỏ (30%) làm nền</option>
             <option value="0">Tắt hẳn (nên chọn nếu video có tiếng người nói)</option></select></label>
@@ -80,6 +84,19 @@
           <label class="f">Ghi chú (tuỳ chọn)<input type="text" id="imp-notes" placeholder="VD: top 1 ngách tranh Nề Nếp, 1,4 tr view"></label>
           <button class="btn primary" id="imp-go">Phân tích kịch bản</button>
           <div class="err" id="imp-err"></div>
+        </div>
+        <div class="card stack" id="doc-card">
+          <div>
+            <h3>Nhập kịch bản từ file hoặc link</h3>
+            <p class="muted small">Tải kế hoạch kịch bản mới lên (Word, PDF, Excel, Google Docs, TXT...). AI tự tách từng kịch bản và thêm vào thư viện; kịch bản trùng mã sẽ được cập nhật.</p>
+          </div>
+          <label class="f">File<input type="file" id="doc-file" accept=".docx,.pdf,.xlsx,.csv,.txt,.md,.html,.htm,.json"></label>
+          <label class="f">hoặc link<input type="url" id="doc-url" placeholder="https://docs.google.com/document/d/…"></label>
+          <details><summary class="muted small" style="cursor:pointer">hoặc dán nội dung kịch bản</summary>
+            <textarea id="doc-text" rows="5" placeholder="Dán nguyên văn kịch bản vào đây" style="margin-top:6px"></textarea></details>
+          <button class="btn primary" id="doc-go">Nhập vào thư viện</button>
+          <div class="small muted">Link phải mở được mà không cần đăng nhập (Google Docs: chia sẻ “Bất kỳ ai có link”). Link cần đăng nhập như Claude hay Notion thì xuất ra file rồi upload.</div>
+          <div class="err" id="doc-err"></div>
         </div>
         <div class="card">
           <div class="row" style="margin-bottom:8px"><h3 class="grow">Thư viện kịch bản <span class="muted small" id="script-count"></span></h3>

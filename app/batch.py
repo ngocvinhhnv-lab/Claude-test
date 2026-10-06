@@ -172,6 +172,81 @@ def _run(batch_id):
         _cancel.discard(batch_id)
 
 
+def plan_beats(script, beats, shots, used, use_ai, adapt, note=lambda m: None):
+    """Chọn đoạn quay cho từng cảnh; cảnh nào chưa khớp thì (nếu bật adapt) nhờ AI viết lại cho khớp video đã quay.
+
+    Cảnh đã khớp tốt luôn được giữ nguyên lời gốc. Kịch bản chỉ là tham khảo: cảnh không có video quay phù hợp
+    được viết lại theo cảnh quay có sẵn, hoặc bỏ nếu không thể nói trung thực điều gì. Nếu phần lớn kịch bản không
+    có video quay cho sản phẩm thì trả về blocked để người dùng quay thêm.
+    """
+    warnings, changes, missing = [], [], []
+    try:
+        result = ai.match_clips(beats, shots, script, used) if use_ai else ai.simple_match(beats, shots, used)
+    except ai.AIError as err:
+        warnings.append(f"AI ghép cảnh lỗi ({err}), dùng ghép đơn giản")
+        result = ai.simple_match(beats, shots, used)
+    by_id = {s["id"]: s for s in shots}
+    by_beat = {m["beat"]: m for m in result["matches"] if m["shot_id"] in by_id}
+    local = Counter(used)
+
+    picks = []
+    for i, beat in enumerate(beats):
+        match = by_beat.get(i)
+        if not match or match["fit"] == "khong":
+            match = {**ai.simple_match([beat], shots, local)["matches"][0], "fit": "khong", "reason": ""}
+        shot = by_id[match["shot_id"]]
+        local[shot["id"]] += 1
+        picks.append({"shot": shot, "fit": match["fit"], "reason": match.get("reason", ""), "voice": beat.get("voice", ""),
+                      "text": beat.get("text", ""), "text_pos": beat.get("text_pos", "top"),
+                      "orig_voice": beat.get("voice", ""), "adapted": False, "drop": False})
+    missing = result.get("missing", [])
+
+    fix = {i: {"shot_id": p["shot"]["id"] if p["fit"] != "khong" else None, "fit": p["fit"]}
+           for i, p in enumerate(picks) if p["fit"] != "tot"}
+    unresolved = {i for i, p in enumerate(picks) if p["fit"] == "khong"}
+    if adapt and use_ai and fix:
+        note("Viết lại cảnh cho khớp video đã quay")
+        try:
+            plan = ai.adapt_beats(script, beats, shots, local, fix)
+        except ai.AIError as err:
+            warnings.append(f"AI viết lại cảnh lỗi ({err}), giữ kịch bản gốc")
+        else:
+            missing = plan.get("suggest_filming", [])
+            for item in plan["beats"]:
+                i = item["beat"]
+                if i not in fix:
+                    continue  # cảnh đã khớp tốt thì không được đụng vào
+                pick, voice = picks[i], (item.get("voice") or "").strip()
+                if item["usable"] and item["shot_id"] in by_id and voice:
+                    changes.append({"beat": i, "kind": "rewrite", "old": pick["voice"], "new": voice,
+                                    "reason": item.get("reason", "")})
+                    pick.update(shot=by_id[item["shot_id"]], voice=voice, text=(item.get("text") or "").strip(),
+                                text_pos=item.get("text_pos") or pick["text_pos"], fit="chinh", adapted=True)
+                    unresolved.discard(i)
+                elif 0 < i < len(beats) - 1:
+                    changes.append({"beat": i, "kind": "drop", "old": pick["voice"], "new": "",
+                                    "reason": item.get("reason") or "Không có cảnh quay phù hợp để nói trung thực"})
+                    pick["drop"] = True
+                    unresolved.discard(i)
+    for i in sorted(unresolved):
+        warnings.append(f"Cảnh {i + 1}: chưa có cảnh quay phù hợp, dùng tạm một đoạn có sẵn")
+
+    kept = [(p, b) for p, b in zip(picks, beats) if not p["drop"]]
+    if adapt and use_ai and (len(unresolved) + len(changes) - sum(c["kind"] == "rewrite" for c in changes)) * 2 >= len(beats):
+        return {"blocked": "Chưa có video quay cho sản phẩm này (hơn nửa số cảnh không có cảnh quay phù hợp). "
+                           "Quay thêm theo gợi ý rồi bấm Tiếp tục, hoặc bỏ qua kịch bản này.",
+                "warnings": warnings, "missing": missing, "changes": changes, "picks": [], "beats": []}
+    if len(kept) < 3:
+        return {"blocked": "Sau khi bỏ các cảnh không có video quay thì kịch bản còn quá ít cảnh. Quay thêm rồi bấm Tiếp tục.",
+                "warnings": warnings, "missing": missing, "changes": changes, "picks": [], "beats": []}
+    blanks = script_blanks({"beats": [{"voice": p["voice"], "text": p["text"]} for p, _ in kept]})
+    if blanks:
+        return {"blocked": "Còn ô chưa điền trong lời đọc: " + " ".join(blanks) + ". Sửa kịch bản rồi bấm Tiếp tục.",
+                "warnings": warnings, "missing": missing, "changes": changes, "picks": [], "beats": []}
+    return {"blocked": "", "warnings": warnings, "missing": missing, "changes": changes,
+            "picks": [p for p, _ in kept], "beats": [b for _, b in kept]}
+
+
 def _process(batch_id, index, shots, used, voice_for, use_ai):
     batch = store.batches.get(batch_id)
     item, options = batch["items"][index], batch["options"]
@@ -182,7 +257,7 @@ def _process(batch_id, index, shots, used, voice_for, use_ai):
         return
     blanks = script_blanks(script)
     if blanks:
-        _item(batch_id, index, status="blocked", blanks=blanks,
+        _item(batch_id, index, status="blocked", blanks=blanks, block_kind="blank",
               message="Còn ô chưa điền trong lời đọc: " + " ".join(blanks) + ". Sửa kịch bản rồi bấm Tiếp tục.")
         return
     beats = script.get("beats") or []
@@ -191,35 +266,30 @@ def _process(batch_id, index, shots, used, voice_for, use_ai):
         return
 
     _item(batch_id, index, status="matching", message="Ghép cảnh quay", blanks=[])
-    warnings = []
-    if use_ai:
-        try:
-            result = ai.match_clips(beats, shots, script, used)
-        except ai.AIError as err:
-            warnings.append(f"AI ghép cảnh lỗi ({err}), dùng ghép đơn giản")
-            result = ai.simple_match(beats, shots, used)
-    else:
-        result = ai.simple_match(beats, shots, used)
-    by_id = {s["id"]: s for s in shots}
-    by_beat = {m["beat"]: m for m in result["matches"] if m["shot_id"] in by_id}
+    adapt = bool(options.get("adapt", True))
+    plan = plan_beats(script, beats, shots, used, use_ai, adapt,
+                      note=lambda m: _item(batch_id, index, message=m))
+    if plan["blocked"]:
+        kind = "blank" if plan["blocked"].startswith("Còn ô") else "footage"
+        _item(batch_id, index, status="blocked", block_kind=kind, message=plan["blocked"],
+              warnings=plan["warnings"], missing=plan["missing"], changes=plan["changes"])
+        return
+    for pick in plan["picks"]:
+        used[pick["shot"]["id"]] += 1
 
-    new_beats, fits, picked = [], [], []
-    for i, beat in enumerate(beats):
-        match = by_beat.get(i)
-        if not match or match["fit"] == "khong":
-            match = {**ai.simple_match([beat], shots, used)["matches"][0], "fit": "khong"}
-            warnings.append(f"Cảnh {i + 1}: chưa có cảnh quay phù hợp, dùng tạm một đoạn có sẵn")
-        shot = by_id[match["shot_id"]]
-        used[shot["id"]] += 1
-        picked.append(shot["id"])
-        fits.append(match["fit"])
-        new_beats.append({**beat, "clip": library.clip_from_shot(shot, match.get("reason", ""))})
-    quality = "ok" if all(f == "tot" for f in fits) and use_ai else "tam"
+    new_beats = [{**beat_extra, "voice": p["voice"], "text": p["text"], "text_pos": p["text_pos"],
+                  "clip": library.clip_from_shot(p["shot"], p["reason"]), "adapted": p["adapted"],
+                  "orig_voice": p["orig_voice"] if p["adapted"] else None}
+                 for p, beat_extra in zip(plan["picks"], plan["beats"])]
+    fits = [p["fit"] for p in plan["picks"]]
+    quality = "ok" if use_ai and all(f in ("tot", "chinh") for f in fits) else "tam"
+    warnings, picked = plan["warnings"], [p["shot"]["id"] for p in plan["picks"]]
+    adapted = sum(1 for p in plan["picks"] if p["adapted"])
 
     provider, voice, rate = voice_for(item["channel"])
     project = {"name": item["title"], "script_id": script["id"], "caption": script.get("caption", ""),
                "hashtags": script.get("hashtags", []), "needs_info": script.get("needs_info", []),
-               "beats": new_beats, "renders": [], "missing": result.get("missing", []),
+               "beats": new_beats, "renders": [], "missing": plan["missing"],
                "settings": {"tts_provider": provider, "tts_voice": voice, "tts_rate": rate,
                             "music": options.get("music", "auto"), "music_bpm": 96 + (index * 7) % 25,
                             "source_volume": float(options.get("source_volume", 0.3))}}
@@ -228,7 +298,8 @@ def _process(batch_id, index, shots, used, voice_for, use_ai):
         project["renders"] = store.projects.get(item["project_id"]).get("renders", [])
     project = store.projects.save(project)
     _item(batch_id, index, status="rendering", message="Dựng video", project_id=project["id"],
-          warnings=warnings, quality=quality, used=picked, missing=result.get("missing", []),
+          warnings=warnings, quality=quality, used=picked, missing=plan["missing"], changes=plan["changes"],
+          adapted=adapted, dropped=sum(1 for c in plan["changes"] if c["kind"] == "drop"),
           matches=[{"beat": i, "fit": f} for i, f in enumerate(fits)])
 
     render = assemble.render_project(project, log=lambda m: _item(batch_id, index, message=m))

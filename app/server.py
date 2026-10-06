@@ -215,6 +215,22 @@ def import_competitor(file: Optional[UploadFile] = File(None), url: str = Form("
     return {"script": urlify(item), "job": job}
 
 
+@app.post("/api/scripts/import-doc")
+def import_doc(file: Optional[UploadFile] = File(None), url: str = Form(""), text: str = Form("")):
+    """Nhập kịch bản từ file (Word, PDF, Excel, HTML, CSV, TXT, MD, JSON), link hoặc chữ dán vào."""
+    if file and file.filename:
+        item_id = store.new_id()
+        path = _save_upload(file, media.upload_path("imports", item_id, file.filename))
+        spec = {"path": path}
+    elif url.strip():
+        spec = {"url": url.strip()}
+    elif text.strip():
+        spec = {"text": text}
+    else:
+        raise HTTPException(400, "Cần chọn file, dán link hoặc dán nội dung")
+    return jobs.submit("import", library.import_job, spec)
+
+
 @app.get("/api/scripts/{script_id}")
 def get_script(script_id: str):
     return urlify(_get(store.scripts, script_id))

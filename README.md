@@ -22,10 +22,20 @@ Tab **Tạo hàng loạt** (mở sẵn): thả video đã quay, chọn nhiều k
 
 1. AI mô tả từng đoạn video bạn quay (một lần, kết quả được lưu lại), nên ghép cảnh cho cả chục kịch bản chỉ cần gửi chữ.
 2. Mỗi kịch bản được ghép cảnh quay phù hợp (ưu tiên đoạn ít được dùng ở video khác), tạo giọng đọc, chữ, phụ đề, nhạc rồi dựng. Mỗi video là một dự án bình thường nên mở ra chỉnh tay được.
-3. Kịch bản còn ô `[kiểm tra]` trong lời đọc bị giữ lại để sửa rồi **Tiếp tục**; cảnh kho video chưa có sẽ được liệt kê ở **Cần quay thêm**.
+3. **Thư viện kịch bản chỉ để tham khảo.** Cảnh nào chưa có video quay khớp thì app (mặc định) nhờ AI **viết lại cảnh đó cho khớp video đã quay**: chọn đoạn quay có sẵn rồi chỉ nói và chỉ hiện những gì thấy được hoặc thông tin đã có trong kịch bản gốc và ghi chú video, không bịa giá hay thông số. Cảnh đã khớp tốt luôn giữ nguyên lời gốc. Cảnh không thể nói trung thực điều gì thì bị bỏ (trừ mở đầu và chốt). Nếu hơn nửa kịch bản không có video quay cho sản phẩm thì kịch bản được giữ lại với nhãn **Thiếu video quay**. Mọi thay đổi xem được bằng **Xem … cảnh đã viết lại** (lời gốc và lời mới). Có thể tắt ở ô "Khi thiếu cảnh quay phù hợp".
+   Kịch bản còn ô `[kiểm tra]` trong lời đọc bị giữ lại để sửa rồi **Tiếp tục**.
 4. **Tải tất cả (ZIP)** gồm các video, `noi_dung_dang.txt` (caption, hashtag, điều cần kiểm tra) và `can_quay_them.txt`.
 
 Tiến độ lưu trong `data/batches`, đóng trình duyệt hay tắt app đều tiếp tục được. Không có API key thì vẫn tạo được video nhưng chỉ ghép cảnh đơn giản.
+
+### Cập nhật thư viện kịch bản
+
+Ở tab **1. Kịch bản** (hoặc nút **+ Nhập kịch bản mới** ở tab Tạo hàng loạt), thẻ **Nhập kịch bản từ file hoặc link**: upload Word, PDF, Excel, HTML, CSV, TXT, MD, JSON, dán link, hoặc dán nội dung. AI tự tách từng kịch bản thành các cảnh. Kịch bản trùng mã được **cập nhật**, không nhân đôi. Lưu ý:
+
+- Cần Anthropic API key (trừ file JSON đúng định dạng của app, nhập thẳng không cần AI).
+- Link phải mở được mà không cần đăng nhập. Google Docs/Sheets: chia sẻ "Bất kỳ ai có link" (app tự đổi sang bản tải về). Link cần đăng nhập (Claude, Notion...) thì xuất ra file rồi upload. Chỉ nhận link trên internet, không nhận địa chỉ nội bộ.
+- Chữ trong `[...]` được giữ nguyên, AI không tự điền.
+- Tài liệu tối đa 200.000 ký tự (PDF 30 MB); dài hơn thì tách file.
 
 ### Quy trình từng video (thủ công)
 

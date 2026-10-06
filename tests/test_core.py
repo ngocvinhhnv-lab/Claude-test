@@ -18,7 +18,7 @@ os.environ["VIDEO_APP_CONFIG"] = os.path.join(_TMP, "config")
 sys.path.insert(0, ROOT)
 
 import make_videos  # noqa: E402
-from app import ai, assemble, batch, library, store  # noqa: E402
+from app import ai, assemble, batch, docs, library, store  # noqa: E402
 
 
 def load_tool(name):
@@ -182,6 +182,202 @@ class Environment(unittest.TestCase):
             self.assertEqual(evil.status_code, 403)
             ok = client.put("/api/settings", json={"shop_name": "x"}, headers={"origin": "http://testserver"})
             self.assertEqual(ok.status_code, 200)
+
+
+def make_docx(path):
+    import zipfile
+    w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+
+    def p(text, style=None):
+        ppr = f'<w:pPr><w:pStyle w:val="{style}"/></w:pPr>' if style else ""
+        return f'<w:p>{ppr}<w:r><w:t xml:space="preserve">{text}</w:t></w:r></w:p>'
+
+    rows = [["Mốc", "Phần", "Lời thoại", "Hình ảnh"], ["0–3s", "Mở đầu", "Chào anh chị", "Cầm lịch"]]
+    table = "<w:tbl>" + "".join("<w:tr>" + "".join(f"<w:tc>{p(c)}</w:tc>" for c in r) + "</w:tr>" for r in rows) + "</w:tbl>"
+    xml = f'<?xml version="1.0"?><w:document xmlns:w="{w}"><w:body>{p("M1 · Lịch", "Heading3")}{p("NS #1")}{table}</w:body></w:document>'
+    with zipfile.ZipFile(path, "w") as z:
+        z.writestr("word/document.xml", xml)
+
+
+class Documents(unittest.TestCase):
+    def test_docx_headings_and_tables_become_text(self):
+        path = os.path.join(_TMP, "t.docx")
+        make_docx(path)
+        doc = docs.load_file(path)
+        self.assertEqual(doc.kind, "text")
+        self.assertIn("### M1 · Lịch", doc.text)
+        self.assertIn("0–3s | Mở đầu | Chào anh chị | Cầm lịch", doc.text)
+
+    def test_html_tables_and_headings(self):
+        text = docs.html_text("<h3>L1 · A</h3><table><tr><td>0–3s</td><td>Mở đầu</td></tr></table><script>x()</script>")
+        self.assertIn("### L1 · A", text)
+        self.assertIn("0–3s", text)
+        self.assertNotIn("x()", text)
+
+    def test_format_is_detected_by_content_not_extension(self):
+        self.assertEqual(docs.from_bytes(b"%PDF-1.7 ...").kind, "pdf")
+        self.assertEqual(docs.from_bytes("<html><body><p>Xin chào</p></body></html>".encode()).text, "Xin chào")
+        with self.assertRaises(docs.DocError):
+            docs.from_bytes(b"")
+
+    def test_google_docs_links_become_text_exports(self):
+        self.assertEqual(docs.export_url("https://docs.google.com/document/d/AbC-123/edit?usp=sharing"),
+                         "https://docs.google.com/document/d/AbC-123/export?format=txt")
+        self.assertEqual(docs.export_url("https://example.com/a"), "https://example.com/a")
+
+    def test_internal_addresses_are_refused(self):
+        os.environ.pop("VIDEO_APP_ALLOW_LOCAL_URLS", None)
+        for url in ("http://127.0.0.1:8000/x", "http://localhost/x", "ftp://example.com/x", "file:///etc/passwd"):
+            with self.assertRaises(docs.DocError):
+                docs.fetch_url(url)
+
+
+class Import(unittest.TestCase):
+    def setUp(self):
+        shutil.rmtree(os.path.join(store.DATA_DIR, "scripts"), ignore_errors=True)
+        os.makedirs(os.path.join(store.DATA_DIR, "scripts"))
+        self.real = ai.extract_scripts
+        self.calls = 0
+
+        def fake(doc):
+            self.calls += 1
+            return [{"code": "M1", "title": "Lịch quăn mép", "channel": "NS", "product": "Lịch laminate", "summary": "", "hook_type": "",
+                     "caption": "", "hashtags": [], "beats": [
+                         {"part": "Mở đầu", "shot": "Cầm lịch", "voice": "Lịch quăn mép!", "text": "44K", "duration": 3},
+                         {"part": "Thông số", "shot": "Đo", "voice": "Cỡ [kiểm tra].", "text": "", "duration": 0},
+                         {"part": "Chốt", "shot": "Chỉ giỏ", "voice": "Bấm giỏ hàng nha!", "text": "", "duration": 4}]}]
+        ai.extract_scripts = fake
+        os.environ["ANTHROPIC_API_KEY"] = "x"
+
+    def tearDown(self):
+        ai.extract_scripts = self.real
+        os.environ.pop("ANTHROPIC_API_KEY", None)
+
+    def test_import_adds_then_updates_same_code(self):
+        first = library.import_document(docs.Doc("text", "bất kỳ"))
+        self.assertEqual((first["added"], first["updated"]), (1, 0))
+        second = library.import_document(docs.Doc("text", "bất kỳ"))
+        self.assertEqual((second["added"], second["updated"]), (0, 1))
+        (script,) = store.scripts.list()
+        self.assertEqual(script["title"], "M1 · Lịch quăn mép")
+        self.assertEqual([b["text_pos"] for b in script["beats"]], ["top", "bottom", "center"])
+        self.assertGreater(script["beats"][1]["duration"], 0)  # thiếu thời lượng thì ước lượng từ lời thoại
+        self.assertTrue(any("[kiểm tra]" in n for n in script["needs_info"]))
+
+    def test_app_json_imports_without_ai(self):
+        ai.extract_scripts = lambda doc: self.fail("không được gọi AI cho file JSON")
+        payload = '{"scripts": [{"title": "Thử", "beats": [{"voice": "Xin chào", "shot": "a"}]}]}'
+        self.assertEqual(library.import_document(docs.Doc("text", payload))["added"], 1)
+
+    def test_pdf_or_text_needs_an_api_key(self):
+        os.environ.pop("ANTHROPIC_API_KEY", None)
+        store.save_settings({"anthropic_api_key": ""})
+        with self.assertRaises(docs.DocError):
+            library.import_document(docs.Doc("text", "kịch bản thường"))
+        self.assertEqual(self.calls, 0)
+
+
+class Adaptation(unittest.TestCase):
+    """Kịch bản chỉ để tham khảo: cảnh chưa có video khớp được viết lại, cảnh đã khớp thì giữ nguyên."""
+
+    def setUp(self):
+        self.shots = [{"id": f"s_{i}", "source_id": "s", "start": i * 3.0, "end": i * 3.0 + 3, "length": 3.0, "desc": f"đoạn {i}",
+                       "note": "", "thumb": "", "scene_start": 0.0, "scene_end": 30.0} for i in range(6)]
+        self.beats = [{"shot": f"cảnh {i}", "voice": f"Lời gốc {i}.", "text": "", "text_pos": "top", "duration": 5, "part": ""}
+                      for i in range(5)]
+        self.script = {"title": "T", "product": "Lịch", "summary": ""}
+        self.real = (ai.match_clips, ai.adapt_beats)
+        self.adapt_calls = []
+
+    def tearDown(self):
+        ai.match_clips, ai.adapt_beats = self.real
+
+    def matches(self, fits):
+        ai.match_clips = lambda beats, shots, script, used: {
+            "matches": [{"beat": i, "shot_id": "none" if f == "khong" else f"s_{i}", "fit": f, "reason": ""} for i, f in enumerate(fits)],
+            "missing": ["cảnh gốc cần quay"]}
+
+    def adapt(self, items, suggest=("gợi ý",)):
+        def fake(script, beats, shots, used, fix):
+            self.adapt_calls.append(sorted(fix))
+            return {"beats": items, "suggest_filming": list(suggest)}
+        ai.adapt_beats = fake
+
+    def item(self, beat, usable=True, voice="Lời mới.", shot="s_5"):
+        return {"beat": beat, "usable": usable, "shot_id": shot if usable else "none", "voice": voice if usable else "",
+                "text": "", "text_pos": "bottom", "reason": "r"}
+
+    def run_plan(self, adapt=True):
+        return batch.plan_beats(self.script, self.beats, self.shots, {}, True, adapt)
+
+    def test_all_good_matches_are_untouched_and_ai_is_not_asked_to_rewrite(self):
+        self.matches(["tot"] * 5)
+        self.adapt([])
+        plan = self.run_plan()
+        self.assertEqual(self.adapt_calls, [])
+        self.assertEqual([p["voice"] for p in plan["picks"]], [f"Lời gốc {i}." for i in range(5)])
+
+    def test_only_unmatched_beats_are_rewritten_even_if_the_model_overreaches(self):
+        self.matches(["tot", "tot", "khong", "tot", "tot"])
+        self.adapt([self.item(2), self.item(0, voice="Model tự ý sửa cảnh tốt.")])
+        plan = self.run_plan()
+        voices = [p["voice"] for p in plan["picks"]]
+        self.assertEqual(self.adapt_calls, [[2]])
+        self.assertEqual(voices[2], "Lời mới.")
+        self.assertEqual(voices[0], "Lời gốc 0.")  # cảnh đã khớp tốt không bị đụng vào
+        self.assertEqual([c["beat"] for c in plan["changes"]], [2])
+        self.assertEqual(plan["missing"], ["gợi ý"])
+        self.assertEqual(plan["blocked"], "")
+
+    def test_unusable_middle_beat_is_dropped(self):
+        self.matches(["tot", "tot", "khong", "tot", "tot"])
+        self.adapt([self.item(2, usable=False)])
+        plan = self.run_plan()
+        self.assertEqual(len(plan["picks"]), 4)
+        self.assertEqual([c["kind"] for c in plan["changes"]], ["drop"])
+        self.assertEqual(plan["blocked"], "")
+
+    def test_unusable_first_or_last_beat_is_kept_with_a_warning(self):
+        self.matches(["khong", "tot", "tot", "tot", "tot"])
+        self.adapt([self.item(0, usable=False)])
+        plan = self.run_plan()
+        self.assertEqual(len(plan["picks"]), 5)  # mở đầu và chốt không bỏ được
+        self.assertEqual(plan["changes"], [])
+        self.assertTrue(any("Cảnh 1" in w for w in plan["warnings"]))
+
+    def test_script_is_blocked_when_half_the_beats_have_no_footage(self):
+        self.matches(["khong", "tot", "khong", "tot", "khong"])
+        self.adapt([self.item(0, usable=False), self.item(2, usable=False), self.item(4, usable=False)])
+        self.assertIn("Chưa có video quay", self.run_plan()["blocked"])
+
+    def test_script_is_blocked_when_footage_does_not_cover_the_product(self):
+        self.matches(["tot", "khong", "khong", "khong", "khong"])
+        self.adapt([self.item(i, usable=False) for i in range(1, 5)])
+        plan = self.run_plan()
+        self.assertIn("Chưa có video quay", plan["blocked"])
+
+    def test_without_adapt_original_script_is_kept_with_warnings(self):
+        self.matches(["tot", "khong", "tot", "tam", "tot"])
+        self.adapt([self.item(1)])
+        plan = self.run_plan(adapt=False)
+        self.assertEqual(self.adapt_calls, [])
+        self.assertEqual([p["voice"] for p in plan["picks"]], [f"Lời gốc {i}." for i in range(5)])
+        self.assertTrue(any("Cảnh 2" in w for w in plan["warnings"]))
+
+    def test_rewritten_line_with_an_unfilled_blank_is_blocked(self):
+        self.matches(["tot", "khong", "tot", "tot", "tot"])
+        self.adapt([self.item(1, voice="Cỡ [kiểm tra] nhé.")])
+        self.assertIn("Còn ô chưa điền", self.run_plan()["blocked"])
+
+    def test_ai_failure_while_rewriting_falls_back_to_the_original(self):
+        self.matches(["tot", "khong", "tot", "tot", "tot"])
+
+        def boom(*a, **k):
+            raise ai.AIError("hết hạn mức")
+        ai.adapt_beats = boom
+        plan = self.run_plan()
+        self.assertEqual(plan["blocked"], "")
+        self.assertTrue(any("viết lại cảnh lỗi" in w for w in plan["warnings"]))
 
 
 if __name__ == "__main__":

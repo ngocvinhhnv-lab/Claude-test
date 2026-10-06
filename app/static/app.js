@@ -9,7 +9,7 @@ const fmt = (t) => (t == null ? "–" : `${Math.floor(t / 60)}:${(t % 60).toFixe
 const S = { settings: {}, voices: {}, providers: {}, scripts: [], sources: [], projects: [],
   scriptId: null, script: null, project: null, jobs: new Map() };
 
-const ORIGIN = { competitor: "Đối thủ", template: "Mẫu", rewrite: "Đã viết lại", manual: "Tự viết", weekly: "Kế hoạch tuần" };
+const ORIGIN = { competitor: "Đối thủ", template: "Mẫu", rewrite: "Đã viết lại", manual: "Tự viết", weekly: "Kế hoạch tuần", imported: "Nhập tài liệu" };
 const PLACEHOLDER = /\[[^\]]+\]/g;
 const plain = (t) => String(t || "").normalize("NFD").replace(/\p{M}/gu, "").replace(/đ/g, "d").toLowerCase();
 const POS = { top: "Trên", center: "Giữa", bottom: "Dưới" };
@@ -37,11 +37,16 @@ function toast(msg) {
 
 // ---------- Tác vụ nền ----------
 function watchJob(job, label, onDone, onError) {
+  let fails = 0;
   S.jobs.set(job.id, { label, message: job.message });
   renderJobs();
   const tick = async () => {
     let j;
-    try { j = await api("GET", `/api/jobs/${job.id}`); } catch (e) { setTimeout(tick, 3000); return; }
+    try { j = await api("GET", `/api/jobs/${job.id}`); fails = 0; } catch (e) {
+      // mạng chập chờn thì thử lại; tác vụ không còn (app đã khởi động lại) thì thôi, không hỏi mãi
+      if (++fails >= 5) { S.jobs.delete(job.id); renderJobs(); return; }
+      setTimeout(tick, 3000); return;
+    }
     S.jobs.get(job.id).message = j.message;
     renderJobs();
     if (j.status === "running") { setTimeout(tick, 1500); return; }
@@ -77,6 +82,11 @@ async function loadScripts(selectId) {
   if (S.scripts.some((s) => s.status === "processing")) setTimeout(() => loadScripts(), 4000);
 }
 
+function batchLabel(b) {
+  const m = /^tuan-(\d{4})-(\d\d)-(\d\d)$/.exec(b || "");
+  return m ? `Tuần ${m[3]}/${m[2]}/${m[1]}` : b || "";
+}
+
 function scriptMatches(s, q) {
   if (!q) return true;
   const hay = plain([s.title, s.summary, s.product, s.code, s.channel, s.channel_name, s.group, s.hook_type].join(" "));
@@ -95,7 +105,7 @@ function renderScriptList() {
         <div class="row small" style="gap:6px"><span class="chip ${s.origin}">${s.channel ? esc(s.channel) + " · " : ""}${ORIGIN[s.origin] || s.origin}</span>
           ${s.status === "processing" ? `<span class="chip processing">Đang phân tích</span>` : ""}
           ${s.status === "error" ? `<span class="chip error">Lỗi</span>` : ""}
-          <span class="muted">${(s.beats || []).length} cảnh</span></div></div>
+          <span class="muted">${(s.beats || []).length} cảnh${s.batch ? ` · ${esc(batchLabel(s.batch))}` : ""}</span></div></div>
     </div>`).join("") : `<div class="empty small">${S.scripts.length ? "Không có kịch bản khớp" : "Chưa có kịch bản"}</div>`;
 }
 $("#script-search").addEventListener("input", renderScriptList);
@@ -232,6 +242,27 @@ $("#imp-go").addEventListener("click", async () => {
   } catch (err) { $("#imp-err").textContent = err.message; }
   $("#imp-go").disabled = false;
 });
+
+$("#doc-go").addEventListener("click", async () => {
+  const file = $("#doc-file").files[0], url = $("#doc-url").value.trim(), text = $("#doc-text").value.trim();
+  $("#doc-err").textContent = "";
+  if (!file && !url && !text) { $("#doc-err").textContent = "Chọn file, dán link hoặc dán nội dung."; return; }
+  const form = new FormData();
+  if (file) form.append("file", file);
+  form.append("url", url);
+  form.append("text", text);
+  $("#doc-go").disabled = true;
+  try {
+    const job = await api("POST", "/api/scripts/import-doc", undefined, form);
+    watchJob(job, "Nhập kịch bản", (res) => {
+      $("#doc-go").disabled = false;
+      $("#doc-file").value = ""; $("#doc-url").value = ""; $("#doc-text").value = "";
+      toast(`Đã nhập ${res.added} kịch bản mới${res.updated ? `, cập nhật ${res.updated} kịch bản trùng mã` : ""}`);
+      loadScripts();
+    }, (err) => { $("#doc-go").disabled = false; $("#doc-err").textContent = err; });
+  } catch (err) { $("#doc-go").disabled = false; $("#doc-err").textContent = err.message; }
+});
+$("#bt-import").addEventListener("click", () => { showPage("scripts"); $("#doc-card").scrollIntoView({ behavior: "smooth" }); });
 
 $("#script-new").addEventListener("click", async () => {
   const s = await api("POST", "/api/scripts", { title: "Kịch bản mới", beats: [{ shot: "", voice: "", text: "", text_pos: "top", duration: 3 }] });
@@ -442,6 +473,7 @@ function beatCard(b, i, cfg) {
       <div class="body">
         <label class="f full">Cảnh quay<input type="text" data-k="shot" value="${esc(b.shot)}"></label>
         <label class="f full">Lời đọc ${est ? `<span class="small">(~${est}s)</span>` : ""}<textarea data-k="voice" rows="2">${esc(b.voice)}</textarea></label>
+        ${b.adapted && b.orig_voice ? `<div class="full small muted">Đã viết lại cho khớp video quay. Lời gốc: ${esc(b.orig_voice)}</div>` : ""}
         ${blanks.length ? `<div class="full err blank-note">${blankWarning(blanks)}</div>` : ""}
         <label class="f">Chữ trên màn hình<textarea data-k="text" rows="2">${esc(b.text)}</textarea></label>
         <div class="stack" style="gap:8px">
@@ -696,7 +728,7 @@ function renderBatchScripts() {
     const blanks = blanksOfScript(s);
     return `<label class="item" data-id="${s.id}"><input type="checkbox" ${S.btSel.has(s.id) ? "checked" : ""}>
       <div class="grow"><div class="t">${esc(s.title)}</div>
-        <div class="small muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.product || s.summary || "")}</div></div>
+        <div class="small muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.product || s.summary || "")}${s.batch ? ` · ${esc(batchLabel(s.batch))}` : ""}</div></div>
       ${blanks.length ? `<span class="chip warn" title="${esc(blanks.join(" "))}">Còn ${blanks.length} ô trống</span>` : ""}
       <span class="chip ${s.origin}">${s.channel ? esc(s.channel) + " · " : ""}${ORIGIN[s.origin] || ""}</span></label>`;
   }).join("") : `<div class="empty small">Không có kịch bản khớp</div>`;
@@ -734,7 +766,7 @@ $("#bt-start").addEventListener("click", async () => {
   $("#bt-err").textContent = "";
   const order = S.scripts.filter((s) => S.btSel.has(s.id)).map((s) => s.id);
   try {
-    const b = await api("POST", "/api/batches", { script_ids: order, options: { voice_mode: $("#bt-voice").value, music: $("#bt-music").value, source_volume: parseFloat($("#bt-audio").value) } });
+    const b = await api("POST", "/api/batches", { script_ids: order, options: { voice_mode: $("#bt-voice").value, music: $("#bt-music").value, source_volume: parseFloat($("#bt-audio").value), adapt: $("#bt-adapt").value === "1" } });
     S.btSel.clear(); renderBatchScripts();
     await loadBatches(b.id);
     $("#bt-run").scrollIntoView({ behavior: "smooth" });
@@ -768,19 +800,25 @@ async function pollBatch() {
 }
 
 function itemHtml(it, i, b) {
-  const [label, cls] = BT_STATUS[it.status] || [it.status, ""];
+  const [label0, cls] = BT_STATUS[it.status] || [it.status, ""];
+  const label = it.status === "blocked" && it.block_kind === "footage" ? "Thiếu video quay" : label0;
+  const rewritten = (it.changes || []).filter((c) => c.kind === "rewrite").length, dropped = (it.changes || []).filter((c) => c.kind === "drop").length;
+  const adaptChip = rewritten || dropped ? `<span class="chip running" title="Kịch bản gốc chỉ để tham khảo: các cảnh chưa có video khớp đã được viết lại theo video bạn quay">Đã chỉnh kịch bản</span>` : "";
   const q = it.status === "done" ? (it.quality === "ok" ? `<span class="chip ok">Ghép cảnh tốt</span>` : `<span class="chip warn" title="Có cảnh chưa thật khớp hoặc dùng tạm, nên xem video và đổi cảnh nếu cần">Nên xem lại</span>`) : "";
   const open = S.openVideos && S.openVideos.has(`${b.id}:${i}`);
   return `<div class="run-item" data-i="${i}">
     <div class="row" style="gap:8px">
-      <span class="chip ${cls}">${label}</span>${q}
+      <span class="chip ${cls}">${label}</span>${q}${adaptChip}
       <div class="grow"><b>${esc(it.title)}</b>
         <div class="small ${it.status === "error" || it.status === "blocked" ? "err" : "muted"}">${esc(it.status === "done" ? "" : it.message)}</div></div>
       ${it.status === "done" ? `<button class="btn sm" data-act="view">${open ? "Ẩn video" : "Xem"}</button>
         <a class="btn sm" href="${esc(it.render.path)}" download>Tải về</a>` : ""}
       ${it.project_id ? `<button class="btn sm" data-act="project">Mở để chỉnh</button>` : ""}
-      ${it.status === "blocked" ? `<button class="btn sm" data-act="script">Sửa kịch bản</button>` : ""}
+      ${it.status === "blocked" && it.block_kind !== "footage" ? `<button class="btn sm" data-act="script">Sửa kịch bản</button>` : ""}
     </div>
+    ${(it.changes || []).length ? `<details class="small" style="margin-top:4px"><summary style="cursor:pointer">Xem ${rewritten ? `${rewritten} cảnh đã viết lại` : ""}${rewritten && dropped ? ", " : ""}${dropped ? `${dropped} cảnh đã bỏ` : ""}</summary>
+      ${it.changes.map((c) => `<div style="margin:6px 0;padding-left:8px;border-left:3px solid var(--bd)"><b>Cảnh ${c.beat + 1}${c.kind === "drop" ? " (bỏ)" : ""}</b>
+        <div class="muted">Gốc: ${esc(c.old)}</div>${c.kind === "rewrite" ? `<div>Mới: ${esc(c.new)}</div>` : ""}<div class="muted">${esc(c.reason)}</div></div>`).join("")}</details>` : ""}
     ${(it.warnings || []).length ? `<div class="small" style="color:var(--wn);margin-top:4px">${it.warnings.map(esc).join("<br>")}</div>` : ""}
     ${open ? `<video src="${esc(it.render.path)}" controls playsinline preload="metadata"></video>` : ""}</div>`;
 }
@@ -804,7 +842,7 @@ function renderBatchRun() {
     <div class="bar"><i style="width:${total ? (finished / total) * 100 : 0}%"></i></div>
     <div class="small muted">${finished}/${total} · ${done} video xong${stuck ? ` · ${stuck} cần xử lý` : ""} · ${esc(b.message || "")}</div>
     ${(b.notes || []).map((n) => `<div class="warn">${esc(n)}</div>`).join("")}
-    ${(b.missing || []).length ? `<div class="warn"><b>Cần quay thêm để video đẹp hơn:</b><ul style="margin:6px 0 0">${b.missing.map((m) => `<li>${esc(m.text)} <span class="muted">(cho ${m.codes.map(esc).join(", ")})</span></li>`).join("")}</ul></div>` : ""}`;
+    ${(b.missing || []).length ? `<div class="warn"><b>Gợi ý quay thêm để video lần sau tốt hơn:</b><ul style="margin:6px 0 0">${b.missing.map((m) => `<li>${esc(m.text)} <span class="muted">(cho ${m.codes.map(esc).join(", ")})</span></li>`).join("")}</ul></div>` : ""}`;
   let host = $("#bt-run-card");
   if (!host || host.dataset.id !== b.id) {
     box.innerHTML = `<div class="card stack" id="bt-run-card" data-id="${b.id}"><div id="bt-run-head" class="stack"></div><div class="stack" id="bt-items"></div></div>`;

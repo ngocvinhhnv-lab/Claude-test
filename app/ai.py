@@ -2,6 +2,7 @@
 
 import base64
 import json
+import os
 
 import anthropic
 
@@ -71,6 +72,11 @@ class AIError(RuntimeError):
     pass
 
 
+def is_ready():
+    """Đã có Anthropic API key (trong Cài đặt hoặc biến môi trường) chưa."""
+    return bool(get_settings().get("anthropic_api_key") or os.environ.get("ANTHROPIC_API_KEY"))
+
+
 def _client():
     key = get_settings().get("anthropic_api_key") or None
     try:
@@ -85,21 +91,29 @@ def _image(path):
     return {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": data}}
 
 
-def _ask(content, schema, effort=None):
-    """Gọi Claude với đầu ra JSON theo schema, trả về dict. effort: low|medium|high (mặc định high)."""
+def _ask(content, schema, effort=None, long_output=False):
+    """Gọi Claude với đầu ra JSON theo schema, trả về dict. effort: low|medium|high (mặc định high).
+
+    long_output: kết quả có thể rất dài (nhiều kịch bản), dùng streaming và giới hạn đầu ra lớn.
+    """
     client = _client()
+    kwargs = dict(
+        model=MODEL,
+        max_tokens=64000 if long_output else 16000,
+        betas=["server-side-fallback-2026-07-01"],
+        fallbacks="default",
+        thinking={"type": "adaptive"},
+        system=SYSTEM,
+        output_config={"format": {"type": "json_schema", "schema": schema},
+                       **({"effort": effort} if effort else {})},
+        messages=[{"role": "user", "content": content}],
+    )
     try:
-        response = client.beta.messages.create(
-            model=MODEL,
-            max_tokens=16000,
-            betas=["server-side-fallback-2026-07-01"],
-            fallbacks="default",
-            thinking={"type": "adaptive"},
-            system=SYSTEM,
-            output_config={"format": {"type": "json_schema", "schema": schema},
-                           **({"effort": effort} if effort else {})},
-            messages=[{"role": "user", "content": content}],
-        )
+        if long_output:
+            with client.beta.messages.stream(**kwargs) as stream:
+                response = stream.get_final_message()
+        else:
+            response = client.beta.messages.create(**kwargs)
     except anthropic.AuthenticationError as err:
         raise AIError("Anthropic API key không hợp lệ. Kiểm tra lại trong Cài đặt.") from err
     except anthropic.RateLimitError as err:
@@ -111,7 +125,7 @@ def _ask(content, schema, effort=None):
     if response.stop_reason == "refusal":
         raise AIError("Claude từ chối xử lý yêu cầu này.")
     if response.stop_reason == "max_tokens":
-        raise AIError("Kết quả quá dài, bị cắt giữa chừng. Thử lại với video ngắn hơn.")
+        raise AIError("Kết quả quá dài, bị cắt giữa chừng. Thử lại với tài liệu hoặc video ngắn hơn.")
     text = next((b.text for b in response.content if b.type == "text"), "")
     try:
         return json.loads(text)
@@ -266,3 +280,133 @@ def simple_match(beats, shots, used=None):
         prev = pick
         matches.append({"beat": i, "shot_id": pick["id"], "fit": "tam", "reason": "ghép tự động đơn giản"})
     return {"matches": matches, "missing": []}
+
+
+# ---------- Nhập kịch bản từ tài liệu ----------
+
+EXTRACT_SCHEMA = {
+    "type": "object",
+    "properties": {"scripts": {"type": "array", "items": {
+        "type": "object",
+        "properties": {
+            "code": {"type": "string", "description": "Mã kịch bản nếu tài liệu có (VD L1, K5), không thì rỗng"},
+            "title": {"type": "string"},
+            "channel": {"type": "string", "description": "Kênh đăng nếu có (VD NS, TV), không thì rỗng"},
+            "product": {"type": "string"},
+            "summary": {"type": "string", "description": "Bối cảnh quay hoặc ghi chú ngắn"},
+            "hook_type": {"type": "string"},
+            "caption": {"type": "string"},
+            "hashtags": {"type": "array", "items": {"type": "string"}},
+            "beats": {"type": "array", "items": {
+                "type": "object",
+                "properties": {
+                    "part": {"type": "string", "description": "Phần của kịch bản (Mở đầu, Công dụng, Thông số, Chốt...), rỗng nếu không có"},
+                    "shot": {"type": "string", "description": "Cảnh quay: hình ảnh, biểu cảm, hành động"},
+                    "voice": {"type": "string", "description": "Lời thoại nguyên văn"},
+                    "text": {"type": "string", "description": "Chữ hiện trên màn hình nếu tài liệu nêu rõ, không thì rỗng"},
+                    "duration": {"type": "number", "description": "Độ dài cảnh (giây)"},
+                },
+                "required": ["part", "shot", "voice", "text", "duration"],
+                "additionalProperties": False}},
+        },
+        "required": ["code", "title", "channel", "product", "summary", "hook_type", "caption", "hashtags", "beats"],
+        "additionalProperties": False}}},
+    "required": ["scripts"],
+    "additionalProperties": False,
+}
+
+
+def extract_scripts(doc):
+    """Tách các kịch bản video trong một tài liệu (chữ hoặc PDF) thành danh sách kịch bản có cảnh."""
+    content = []
+    if doc.kind == "pdf":
+        content.append({"type": "document", "source": {"type": "base64", "media_type": "application/pdf",
+                                                       "data": base64.standard_b64encode(doc.data).decode("utf-8")}})
+        body = ""
+    else:
+        body = "Nội dung tài liệu (bảng được thể hiện thành các dòng, cột ngăn cách bằng ' | '):\n\n" + doc.text + "\n\n"
+    content.append({"type": "text", "text": body + (
+        "Tài liệu này chứa các kịch bản video bán hàng của shop (có thể kèm các phần khác như bảng phân bổ, quy tắc chung, "
+        "checklist). Hãy trích ra TẤT CẢ kịch bản video, mỗi kịch bản thành các cảnh theo đúng thứ tự.\n"
+        "Quy tắc:\n"
+        "- Giữ nguyên lời thoại và mô tả cảnh quay trong tài liệu, không tự sáng tác, không rút gọn, không sửa số liệu.\n"
+        "- Chữ trong ngoặc vuông như [kiểm tra] là chỗ còn trống: giữ nguyên, tuyệt đối không tự điền.\n"
+        "- duration: lấy từ mốc thời gian của cảnh nếu có (VD 3–10s là 7 giây); nếu không có thì ước lượng theo lời thoại, "
+        "khoảng 4 từ mỗi giây.\n"
+        "- text: chỉ điền chữ hiện trên màn hình khi tài liệu nêu rõ (VD Chữ to \"44K\"), nếu không thì để rỗng.\n"
+        "- Không đưa vào kịch bản các phần không phải kịch bản (quy tắc chung, bảng phân bổ, checklist).\n"
+        "- Nếu tài liệu không có kịch bản video nào, trả về danh sách rỗng.")})
+    return _ask(content, EXTRACT_SCHEMA, effort="medium", long_output=True)["scripts"]
+
+
+# ---------- Viết lại cảnh cho khớp video đã quay ----------
+
+ADAPT_RULES = (
+    "Quy tắc nội dung của shop: xưng 'em', gọi 'anh chị', câu ngắn, văn nói, không đọc như quảng cáo. "
+    "Giá, cỡ, số tờ, chất liệu, khuyến mãi chỉ được nói khi đã có trong kịch bản gốc hoặc ghi chú video, "
+    "tuyệt đối không bịa thông số, đánh giá, bình luận của khách. Tranh tâm linh hoặc phong thủy: nói 'theo quan niệm', "
+    "không hứa tài lộc. Trà: không nói công dụng sức khỏe."
+)
+
+
+def adapt_beats(script, beats, shots, used, fix):
+    """Viết lại các cảnh chưa có cảnh quay phù hợp để khớp với video shop đã quay.
+
+    beats: toàn bộ cảnh của kịch bản gốc (để hiểu mạch). fix: {số cảnh: {"shot_id": đoạn tạm hoặc None, "fit": ...}}
+    cần chỉnh. shots: kho đoạn quay (đã có mô tả chữ). Trả về {"beats": [...], "suggest_filming": [...]}.
+    """
+    content = [{"type": "text", "text": "Kho đoạn video shop đã quay:"}]
+    by_id = {}
+    for shot in shots:
+        by_id[shot["id"]] = shot
+        line = f"{shot['id']}: {shot['desc'] or '(chưa có mô tả)'} · dài {shot['length']:.0f}s"
+        if shot.get("note"):
+            line += f" · ghi chú video: {shot['note']}"
+        if used.get(shot["id"]):
+            line += f" · đã dùng {used[shot['id']]} lần ở video khác"
+        content.append({"type": "text", "text": line})
+    lines = []
+    for i, beat in enumerate(beats):
+        head = f"Cảnh {i} ({beat.get('part') or '-'}, ~{beat.get('duration') or 3:.0f}s)"
+        if i in fix:
+            cur = by_id.get(fix[i].get("shot_id"))
+            lines.append(f"Cảnh {i} CẦN CHỈNH ({beat.get('part') or '-'}, ~{beat.get('duration') or 3:.0f}s). "
+                         f"Gốc quay: {beat.get('shot') or '-'} | Lời gốc: {beat.get('voice') or '-'} | "
+                         f"Đoạn tạm: {cur['desc'] if cur else 'chưa có đoạn nào hợp'}")
+        else:
+            lines.append(f"{head} GIỮ NGUYÊN: {beat.get('voice') or '-'}")
+    content.append({"type": "text", "text": (
+        f"Kịch bản gốc (chỉ để tham khảo ý và mạch): {script.get('title', '')}. Sản phẩm: {script.get('product') or '(không rõ)'}. "
+        f"Bối cảnh gốc: {script.get('summary', '')}\n" + "\n".join(lines) + "\n\n"
+        "Các cảnh GIỮ NGUYÊN đã có cảnh quay phù hợp, đừng đụng vào. Với mỗi cảnh CẦN CHỈNH, hãy viết lại cảnh đó "
+        "dựa trên đoạn quay có sẵn trong kho: chọn đoạn quay phù hợp nhất (shot_id), rồi viết lời thoại và chữ trên màn hình "
+        "chỉ nói và chỉ hiện những gì thấy được trong đoạn đó, hoặc thông tin đã có sẵn trong kịch bản gốc và ghi chú video. "
+        "Giữ vai trò của cảnh trong mạch (mở đầu, công dụng, thông số, chốt), giữ giọng văn, độ dài lời gần bằng lời gốc "
+        "(khoảng 4 từ mỗi giây). Cảnh mở đầu và cảnh chốt kêu gọi bấm giỏ hàng có thể dùng đoạn quay sản phẩm bất kỳ. "
+        "Nếu câu gốc có ô [..] chưa điền mà vẫn dùng ý đó, giữ nguyên ô [..], không tự điền. "
+        "Nếu kho không có đoạn nào liên quan đến sản phẩm này và không thể nói trung thực điều gì cho cảnh đó thì đặt usable=false. "
+        "Ưu tiên đoạn ít được dùng ở video khác. " + ADAPT_RULES + "\n"
+        "suggest_filming: tối đa 3 gợi ý cảnh nên quay thêm để video lần sau tốt hơn (không bắt buộc), ngắn gọn.")})
+    ids = list(by_id) + ["none"]
+    schema = {
+        "type": "object",
+        "properties": {
+            "beats": {"type": "array", "items": {
+                "type": "object",
+                "properties": {
+                    "beat": {"type": "integer"},
+                    "usable": {"type": "boolean"},
+                    "shot_id": {"type": "string", "enum": ids},
+                    "voice": {"type": "string"},
+                    "text": {"type": "string"},
+                    "text_pos": {"type": "string", "enum": ["top", "center", "bottom"]},
+                    "reason": {"type": "string", "description": "Đã đổi gì và vì sao, một câu"},
+                },
+                "required": ["beat", "usable", "shot_id", "voice", "text", "text_pos", "reason"],
+                "additionalProperties": False}},
+            "suggest_filming": {"type": "array", "items": {"type": "string"}},
+        },
+        "required": ["beats", "suggest_filming"],
+        "additionalProperties": False,
+    }
+    return _ask(content, schema, effort="medium")
