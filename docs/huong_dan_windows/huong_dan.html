@@ -73,7 +73,7 @@
   <li>Phần A · Cài đặt (làm 1 lần)
     <ol><li>Cài Python</li><li>Cài ffmpeg</li><li>Giải nén app</li><li>Chạy app lần đầu</li><li>Cài đặt trong app</li></ol></li>
   <li>Phần B · Làm video hằng ngày
-    <ol><li>Mở app</li><li>Tạo video hàng loạt (cách nhanh)</li><li>Để AI tự viết kịch bản từ video của bạn</li><li>Video quay có sẵn chữ hoặc phụ đề</li><li>Cập nhật thư viện kịch bản</li><li>Cách thủ công: lấy kịch bản</li><li>Quay và upload video nguồn</li><li>Dựng và xuất video</li><li>Tắt app, sao lưu</li></ol></li>
+    <ol><li>Mở app</li><li>Tạo video hàng loạt (cách nhanh)</li><li>Để AI tự viết kịch bản từ video của bạn</li><li>AI soát lại trước khi dựng</li><li>Video quay còn chữ hoặc sticker cũ</li><li>Phông chữ, màu chữ, nhạc riêng</li><li>Cập nhật thư viện kịch bản</li><li>Cách thủ công: lấy kịch bản</li><li>Quay và upload video nguồn</li><li>Dựng và xuất video</li><li>Tắt app, sao lưu</li></ol></li>
   <li>Phần C · Xử lý lỗi thường gặp</li>
   <li>Phần D · Dùng chung 1 máy cho cả nhóm (tuỳ chọn)</li>
 </ol>
@@ -176,7 +176,7 @@
   <ol>
     <li><b>Bước 1 · Thả video đã quay.</b> Kéo thả tất cả video quay được vào khung (nhiều file một lúc, quay dọc). Đợi mỗi video hiện ảnh và số đoạn, khoảng vài chục giây. Nên ghi chú sản phẩm vào ô bên phải mỗi video (ví dụ <i>“lịch bloc 14,5×20,5”</i>): không bắt buộc nhưng giúp chọn đúng cảnh hơn.</li>
     <li><b>Bước 2 · Chọn kịch bản.</b> Gõ vào ô tìm hoặc bấm nút kênh <b>NS, SH, TV, TL</b> để lọc, rồi tick từng kịch bản hoặc bấm <span class="btn">Chọn tất cả đang hiện</span>. Kịch bản có nhãn vàng <b>Còn n ô trống</b> sẽ bị giữ lại, vì còn chỗ <code>[kiểm tra]</code> chưa điền.</li>
-    <li><b>Bước 3 · Tạo video.</b> Chọn giọng đọc (một giọng chung, hoặc mỗi kênh một giọng và tốc độ khác nhau cho đỡ giống nhau) và nhạc nền. Ô <b>Khi thiếu cảnh quay phù hợp</b> nên để <b>Tự viết lại cảnh đó cho khớp video đã quay</b>. Nếu video quay có tiếng người nói hoặc ồn thì ở ô <b>Tiếng gốc của video quay</b> chọn <b>Tắt hẳn</b>, tránh chồng lên giọng đọc. Rồi bấm <span class="btn red">Bắt đầu tạo N video</span>.</li>
+    <li><b>Bước 3 · Tạo video.</b> Chọn giọng đọc (một giọng chung, hoặc mỗi kênh một giọng và tốc độ khác nhau cho đỡ giống nhau) và nhạc nền (nhạc Tết tự tạo, hoặc bấm <b>Upload nhạc riêng</b> để dùng nhạc của shop). Ba ô sau nên để nguyên như mặc định: <b>Khi thiếu cảnh quay phù hợp</b> = tự viết lại, <b>Soát lại trước khi dựng</b> = AI đối chiếu từng cảnh, <b>Đoạn quay còn chữ hoặc sticker cũ</b> = bỏ hẳn. Nếu video quay có tiếng người nói hoặc ồn thì ở ô <b>Tiếng gốc của video quay</b> chọn <b>Tắt hẳn</b>, tránh chồng lên giọng đọc. Rồi bấm <span class="btn red">Bắt đầu tạo N video</span>.</li>
   </ol>
   <p><b>Phần mềm tự làm:</b> mô tả video bạn quay (lần đầu), ghép cảnh quay vào từng kịch bản, tạo giọng đọc, chữ, phụ đề, nhạc, rồi dựng lần lượt từng video. Mỗi video khoảng 1–2 phút tuỳ máy, bạn có thể để máy chạy và làm việc khác. <b>Đừng đóng cửa sổ đen.</b> Đóng trình duyệt thì app vẫn chạy; nếu lỡ tắt app, mở lại và bấm <span class="btn">Tiếp tục</span>.</p>
 <figure><img src="s_batch_setup.png" alt=""><figcaption>Hình 2. Tab Tạo hàng loạt: thả video (Bước 1), chọn kịch bản (Bước 2), chọn giọng và nhạc rồi bấm tạo (Bước 3).</figcaption></figure>
@@ -187,16 +187,28 @@
 <ol>
   <li>AI xem từng phân đoạn trong video bạn vừa thả, rồi viết các kịch bản <b>khác hướng nhau</b> (hậu trường, cận cảnh chất liệu, cách dùng, so sánh, lời khuyên) để bạn chọn.</li>
   <li>Mỗi cảnh của kịch bản <b>đã gắn sẵn một đoạn quay thật</b> của bạn, nên lời đọc và hình luôn khớp nhau; lúc dựng app dùng đúng đoạn đó chứ không ghép lại.</li>
-  <li>Kịch bản mới hiện ở đầu danh sách, nhãn <b>Từ video của bạn</b>, được tô sáng. <b>Tick chọn cái bạn thích</b> rồi làm tiếp Bước 3 như bình thường. Muốn sửa lời thì vào tab <b>1. Kịch bản</b>.</li>
+  <li>Viết xong, AI <b>soát lại</b> từng cảnh một lần nữa (lời có đúng hình không, mạch có thuận không, đủ <b>30–40 giây</b> chưa) rồi mới đưa vào thư viện.</li>
+  <li>Kịch bản mới hiện ở đầu danh sách, nhãn <b>Từ video của bạn</b>, được tô sáng. Bấm <span class="btn">Xem kịch bản</span> để đọc trọn kịch bản ngay tại chỗ: ảnh từng đoạn quay, lời đọc, chữ trên màn hình và tổng số giây. <b>Tick chọn cái bạn thích</b> rồi làm tiếp Bước 3. Muốn sửa lời thì vào tab <b>1. Kịch bản</b>.</li>
 </ol>
 <div class="box warn"><b>AI chỉ nói những gì nhìn thấy</b> trong đoạn quay, cộng với thông tin bạn gõ ở ô trên. Không bịa giá, thông số, đánh giá của khách. Dù vậy <b>vẫn phải đọc lại lời</b> trước khi đăng, nhất là giá và số liệu.</div>
 <figure><img src="s_batch_gen.png" alt=""><figcaption>Hình 4. AI tự viết kịch bản từ chính video bạn quay; các kịch bản mới được tô sáng, chọn cái bạn thích.</figcaption></figure>
 
-<h3>Video quay có sẵn chữ hoặc phụ đề cháy trong hình</h3>
-<p>Nhiều đoạn quay lại từ video cũ đã có chữ cháy sẵn trong hình (phụ đề lời nói, chữ chạy, giá, tên kênh). App tự xử lý, bạn không phải làm gì:</p>
+<h3>AI soát lại kịch bản trước khi dựng</h3>
+<p>Mặc định, trước khi máy dựng video, AI đọc lại cả kịch bản cùng với đoạn quay đã chọn cho từng cảnh rồi sửa cho khớp. Nó soát:</p>
 <ul>
-  <li>Đoạn có chữ <b>không phù hợp</b> (một câu lời thoại, nhiều dòng, nói giá hay khuyến mãi, kêu gọi bấm giỏ, có tên shop khác) <b>bị bỏ hẳn</b>, không dùng cho video nào. Ở Bước 1 mỗi video hiện nhãn vàng <i>“Bỏ n đoạn có phụ đề cháy sẵn”</i>.</li>
-  <li>Đoạn chữ ngắn và trung tính (tên sản phẩm, năm) <b>vẫn dùng</b>, nhưng chữ và phụ đề mới được <b>đặt tránh chỗ chữ cũ</b> để không chồng lên nhau.</li>
+  <li><b>Lời có đúng hình không:</b> đang nói về cái gì thì phải đang thấy cái đó. Sai thì viết lại lời theo cảnh, hoặc đổi sang đoạn quay khác hợp hơn.</li>
+  <li><b>Mạch có thuận không:</b> mở đầu bắt mắt → chi tiết, cách dùng → chốt kêu gọi bấm giỏ hàng; sắp xếp lại thứ tự nếu lộn xộn.</li>
+  <li><b>Không lặp:</b> không dùng một đoạn quay hai lần, không nói lại cùng một ý.</li>
+  <li><b>Đủ dài:</b> tổng phải ra <b>30–40 giây</b>. Thiếu thì thêm cảnh từ các đoạn quay chưa dùng, dư thì cắt bớt cảnh yếu nhất. Nhãn số giây hiện ngay cạnh tên video (xanh là đạt).</li>
+</ul>
+<p>Những chỗ đã sửa xem được bằng <b>Xem … cảnh đã soát lại</b>. Muốn dựng nhanh và đỡ tốn AI thì đổi ô <b>Soát lại trước khi dựng</b> sang <i>Dựng ngay</i>.</p>
+
+<h3>Video quay còn chữ, sticker hoặc nét vẽ của lần dựng trước</h3>
+<p>Quay lại màn hình video cũ, hoặc dùng lại file đã dựng, thì trong hình còn chữ chèn, sticker, watermark, mũi tên hay vòng tròn khoanh sản phẩm. App tự xử lý, bạn không phải làm gì:</p>
+<ul>
+  <li>AI xem <b>3 khung hình</b> (đầu, giữa, cuối) của từng đoạn, nên chữ chỉ hiện thoáng qua cũng bắt được.</li>
+  <li>Đoạn còn <b>bất cứ chữ chèn hay nét vẽ nào</b> (dù chỉ một hai chữ nhỏ) <b>bị bỏ hẳn</b>, không dùng cho video nào. Ở Bước 1 mỗi video hiện nhãn vàng <i>“Bỏ n đoạn còn chữ hoặc nét chèn sẵn”</i>.</li>
+  <li>Muốn tiếc đoạn quay thì đổi ô <b>Đoạn quay còn chữ hoặc sticker cũ</b> sang <i>Vẫn dùng nếu chữ ngắn</i>: khi đó chữ và phụ đề mới được <b>đặt tránh chỗ chữ cũ</b> để không chồng lên nhau.</li>
   <li>Chữ <b>in trên chính sản phẩm</b> (số ngày trên tờ lịch, chữ trên tranh, trên thời khóa biểu) không bị tính là phụ đề, nên không ảnh hưởng gì.</li>
   <li>Khi chọn đoạn bằng tay (tab Dựng video, nút <b>Chọn đoạn</b>), đoạn có chữ được đánh dấu <b>⚠ phụ đề sẵn</b> hoặc <b>có chữ sẵn</b> ở góc trên ảnh.</li>
 </ul>
@@ -231,6 +243,20 @@
 </div></div>
 
 <div class="step"><div class="num">3</div><div>
+  <h3>Phông chữ, màu chữ và nhạc riêng của shop</h3>
+  <p>Vào tab <b>Cài đặt</b>, thẻ <b>Chữ trên video</b>:</p>
+  <ol>
+    <li><b>Phông chữ:</b> danh sách phông đang có trên máy. Phông có dấu <b>★</b> là phông gợi ý (đậm, dễ đọc trên điện thoại, đủ dấu tiếng Việt). Muốn dùng phông khác thì cài phông đó vào Windows (bấm phải file .ttf rồi chọn <b>Install</b>) và mở lại app.</li>
+    <li><b>Kiểu chữ:</b> <i>nền hộp mờ</i> (rõ trên mọi nền, an toàn nhất) hoặc <i>chữ viền</i> (nhìn thoáng hơn).</li>
+    <li><b>Màu chữ</b> và <b>màu phụ đề:</b> bấm vào ô màu; khung xem trước bên dưới cho thấy chữ sẽ ra sao. Vàng nhũ hoặc đỏ Tết hợp video Tết, trắng hợp mọi video.</li>
+    <li>Bấm <span class="btn red">Lưu cài đặt</span>. Cài đặt này dùng cho mọi video; muốn riêng một video thì đổi ở tab <b>3. Dựng video</b>.</li>
+  </ol>
+  <p>Thẻ <b>Nhạc nền của shop</b>: bấm <span class="btn">Upload nhạc</span> để thêm file mp3 hoặc m4a. Nhạc đã tải lên dùng lại được cho mọi video, chọn ở ô <b>Nhạc nền</b> (Bước 3 hoặc tab Dựng video).</p>
+  <div class="box warn"><b>Nhạc:</b> chỉ dùng nhạc bạn có quyền sử dụng; nhạc có bản quyền có thể bị TikTok tắt tiếng cả video. Không chắc thì để <i>Tự tạo nhạc Tết</i> — nhạc này app tự sinh ra, không dính bản quyền.</div>
+  <figure><img src="s_text.png" alt=""><figcaption>Hình 7. Chọn phông chữ, kiểu chữ và màu chữ trong tab Cài đặt, có khung xem trước.</figcaption></figure>
+</div></div>
+
+<div class="step"><div class="num">4</div><div>
   <h3>Cập nhật thư viện kịch bản (khi có kế hoạch kịch bản mới)</h3>
   <p>Thư viện không cố định. Khi có tài liệu kịch bản mới (ví dụ kế hoạch tuần sau), bấm <span class="btn">+ Nhập kịch bản mới</span> ở Bước 2 của tab Tạo hàng loạt, hoặc vào tab <b>1. Kịch bản</b>, thẻ <b>Nhập kịch bản từ file hoặc link</b>:</p>
   <ol>
@@ -247,7 +273,7 @@
     </ul></div>
 </div></div>
 
-<div class="step"><div class="num">4</div><div>
+<div class="step"><div class="num">5</div><div>
   <h3>Cách thủ công: lấy kịch bản (tab “1. Kịch bản”)</h3>
   <p><b>Cách 1: Dùng kịch bản có sẵn.</b> Thư viện có sẵn kịch bản mẫu KB1–KB3 và <b>40 kịch bản của kế hoạch tuần</b> (nhãn <b>Kế hoạch tuần</b>, có mã như L1, K3, T2, S4 và chữ cái đầu là kênh NS, SH, TV, TL). Gõ vào ô <b>Tìm</b> để lọc, ví dụ <code>K5</code>, <code>lich bloc</code>, <code>TV</code>. Bấm vào một kịch bản để xem từng cảnh: quay gì, lời đọc, chữ trên màn hình, số giây.</p>
   <div class="box warn"><b>Ô <code>[kiểm tra]</code> trong lời đọc</b>Một số kịch bản có chỗ để trống như <code>[kiểm tra]</code> hoặc <code>[giá giỏ]</code>. Xem hàng thật hoặc trang sản phẩm rồi <b>sửa câu đó bằng thông tin thật</b> ở tab Dựng video. Nếu để nguyên, app báo đỏ và <b>không cho xuất video</b>, vì giọng AI sẽ đọc luôn chữ “kiểm tra”. Giá trong kịch bản lấy theo giỏ hàng ngày 05/10, cần so lại với giá lúc đăng.</div>
@@ -261,8 +287,8 @@
   <p><b>Viết lại cho sản phẩm nhà:</b> mở kịch bản, kéo xuống phần <b>Viết lại cho sản phẩm của tôi</b>, điền tên sản phẩm, giá, quy cách, điểm nổi bật, rồi bấm <span class="btn red">Viết lại bằng AI</span>. Bản mới có nhãn <b>Đã viết lại</b>. Nếu AI báo <b>Cần bổ sung</b> (ví dụ thiếu giá), hãy điền thêm thông tin.</p>
   <p>Có thể sửa tay mọi ô trong bảng các cảnh rồi bấm <span class="btn">Lưu thay đổi</span>.</p>
 </div></div>
-<figure><img src="s_scripts.png" alt=""><figcaption>Hình 7. Tab Kịch bản: bóc kịch bản đối thủ (trái trên), thư viện kịch bản (trái dưới), chi tiết từng cảnh (phải).</figcaption></figure>
-<figure><img src="s_rewrite.png" alt=""><figcaption>Hình 8. Viết lại kịch bản cho sản phẩm nhà. Chỉ điền thông tin đúng sự thật; ô nào để trống thì AI sẽ không bịa ra.</figcaption></figure>
+<figure><img src="s_scripts.png" alt=""><figcaption>Hình 8. Tab Kịch bản: bóc kịch bản đối thủ (trái trên), thư viện kịch bản (trái dưới), chi tiết từng cảnh (phải).</figcaption></figure>
+<figure><img src="s_rewrite.png" alt=""><figcaption>Hình 9. Viết lại kịch bản cho sản phẩm nhà. Chỉ điền thông tin đúng sự thật; ô nào để trống thì AI sẽ không bịa ra.</figcaption></figure>
 <div class="box warn"><b>Quy tắc nội dung</b>
   <ul>
     <li>Không chép nguyên văn lời đối thủ; luôn bấm “Viết lại”.</li>
@@ -271,7 +297,7 @@
     <li>Với tranh tôn giáo, phong thuỷ: không hứa tài lộc hay công dụng.</li>
   </ul></div>
 
-<div class="step"><div class="num">5</div><div>
+<div class="step"><div class="num">6</div><div>
   <h3>Quay và upload video nguồn (tab “2. Video nguồn”)</h3>
   <p><b>Quay theo cột “Cảnh quay” của kịch bản:</b></p>
   <ul>
@@ -282,9 +308,9 @@
   <p><b>Chuyển video từ điện thoại sang máy tính</b> bằng cáp, Google Drive, hoặc Zalo PC. Nếu dùng Zalo, phải gửi <b>dạng file</b>: gửi dạng video thì Zalo nén làm mờ.</p>
   <p><b>Upload:</b> ở tab <b>2. Video nguồn</b>, kéo thả các video vào khung (chọn được nhiều file cùng lúc). Mỗi video hiện nhãn <b>Đang xử lý</b>; khoảng vài chục giây sau sẽ hiện ảnh và số đoạn. App tự chia video thành các đoạn ngắn để chọn cảnh. Video quay bằng iPhone (HDR) được chỉnh màu tự động.</p>
 </div></div>
-<figure><img src="s_sources.png" alt=""><figcaption>Hình 9. Tab Video nguồn sau khi upload: mỗi video hiện ảnh, độ dài và số đoạn đã chia.</figcaption></figure>
+<figure><img src="s_sources.png" alt=""><figcaption>Hình 10. Tab Video nguồn sau khi upload: mỗi video hiện ảnh, độ dài và số đoạn đã chia.</figcaption></figure>
 
-<div class="step"><div class="num">6</div><div>
+<div class="step"><div class="num">7</div><div>
   <h3>Dựng và xuất video (tab “3. Dựng video”)</h3>
   <ol>
     <li>Ở tab <b>1. Kịch bản</b>, mở kịch bản muốn dùng và bấm <span class="btn red">Dựng video từ kịch bản này →</span>. App chuyển sang tab Dựng video với đủ các cảnh.</li>
@@ -308,15 +334,15 @@
       <li>Nhạc tự nhỏ lại khi có giọng đọc.</li>
     </ul></div>
 </div></div>
-<figure><img src="s_studio.png" alt=""><figcaption>Hình 10. Tab Dựng video. Thanh trên cùng là nút AI ghép cảnh, Xuất video và các lựa chọn giọng đọc, nhạc, khung hình; bên dưới là từng cảnh.</figcaption></figure>
-<figure><img src="s_picker.png" alt=""><figcaption>Hình 11. Hộp chọn đoạn video: bấm một ảnh đoạn (viền đỏ) rồi bấm “Dùng đoạn này”.</figcaption></figure>
+<figure><img src="s_studio.png" alt=""><figcaption>Hình 11. Tab Dựng video. Thanh trên cùng là nút AI ghép cảnh, Xuất video và các lựa chọn giọng đọc, nhạc, khung hình; bên dưới là từng cảnh.</figcaption></figure>
+<figure><img src="s_picker.png" alt=""><figcaption>Hình 12. Hộp chọn đoạn video: bấm một ảnh đoạn (viền đỏ) rồi bấm “Dùng đoạn này”.</figcaption></figure>
 <div class="box"><b>Làm nhiều video từ 1 kịch bản</b>
   <ul>
     <li>Ở tab Dựng video có dòng <b>Hook khác cho cảnh 1</b>: bấm một hook để thay, rồi xuất thêm bản mới.</li>
     <li>Có thể đổi đoạn video hoặc giọng đọc (nam/nữ) để các video không trùng nhau.</li>
   </ul></div>
 
-<div class="step"><div class="num">7</div><div>
+<div class="step"><div class="num">8</div><div>
   <h3>Tắt app và sao lưu</h3>
   <ul>
     <li><b>Tắt app:</b> đóng cửa sổ đen.</li>

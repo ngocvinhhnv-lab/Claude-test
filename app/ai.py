@@ -186,12 +186,14 @@ def rewrite_script(script, product):
 def label_shots(items, note=""):
     """Mô tả từng đoạn quay bằng chữ để ghép cảnh về sau không cần gửi lại ảnh.
 
-    items: [(số thứ tự, đường dẫn ảnh giữa đoạn)]. Trả về {số thứ tự: {"desc", "product"}}.
+    items: [(số thứ tự, đường dẫn ảnh dải 3 khung hình đầu–giữa–cuối đoạn)].
+    Trả về {số thứ tự: {"desc", "product", "sub", "sub_pos", "sub_ok", "marks"}}.
     """
     content = [{"type": "text", "text": (
         "Đây là các đoạn video shop tự quay để bán hàng (tranh, liễn, lịch, thời khóa biểu, trà...). "
         f"Ghi chú của người quay: {note or '(không có)'}.\n"
-        "Mỗi đoạn có một ảnh giữa đoạn:")}]
+        "Mỗi đoạn có một ảnh gồm 3 khung hình ghép ngang: đầu đoạn, giữa đoạn, cuối đoạn. "
+        "Xem cả 3 khung hình, vì chữ hay sticker nhiều khi chỉ hiện thoáng qua một lúc:")}]
     for index, path in items:
         content.append({"type": "text", "text": f"Đoạn {index}:"})
         content.append(_image(path))
@@ -200,24 +202,26 @@ def label_shots(items, note=""):
         "góc máy (toàn cảnh, cận, từ trên xuống), hành động (tay cầm, lật, treo, bóc hộp, máy đang chạy...), "
         "bối cảnh. Chỉ tả điều nhìn thấy, không đoán. Trường product là tên sản phẩm chính nhìn thấy, "
         "để trống nếu không có.\n\n"
-        "Ngoài ra cho biết đoạn này có CHỮ CHÁY SẴN hay không, tức chữ do người dựng chèn thêm vào hình: phụ đề lời nói, "
-        "chữ chạy, chữ quảng cáo, giá, tên kênh, watermark, sticker chữ. "
-        "KHÔNG tính chữ in trên chính sản phẩm (số ngày trên tờ lịch, chữ trên tranh, trên bao bì, trên thời khóa biểu) "
-        "và không tính chữ của máy quay (giờ, ngày).\n"
-        "- sub: chép lại chữ chèn đó, rỗng nếu không có.\n"
+        "Ngoài ra, việc QUAN TRỌNG NHẤT: cho biết đoạn này có dấu vết ĐÃ DỰNG hay chưa, tức mọi thứ do người dựng "
+        "chèn thêm lên hình ở bất kỳ khung hình nào trong 3 khung: phụ đề lời nói, chữ chạy, chữ quảng cáo, giá, "
+        "tên kênh, watermark, sticker chữ dù chỉ một hai chữ, hộp chữ nền đen, emoji, mũi tên, vòng tròn hay nét vẽ "
+        "khoanh vào sản phẩm, khung viền trang trí, ảnh chèn góc.\n"
+        "KHÔNG tính chữ in trên chính sản phẩm (số ngày trên tờ lịch, chữ trên tranh, trên bao bì, trên thời khóa biểu, "
+        "nhãn hộp trà) và không tính chữ do máy quay in (giờ, ngày).\n"
+        "- sub: chép lại chữ chèn thấy được, kể cả chữ rất ngắn; rỗng nếu không có chữ chèn nào.\n"
         "- sub_pos: chữ chèn nằm ở phần nào của khung hình (top, center, bottom); 'none' nếu không có.\n"
-        "- sub_ok: true nếu đoạn vẫn dùng lại được khi app lồng phụ đề mới (không có chữ chèn, hoặc chữ chèn rất ngắn "
-        "và trung tính như tên sản phẩm). false nếu chữ chèn là một câu lời thoại, nhiều dòng, choán phần lớn khung hình, "
-        "nói giá hay khuyến mãi, kêu gọi bấm giỏ hàng, hoặc có tên shop/kênh khác — vì phụ đề mới sẽ chồng lên "
-        "hoặc nói khác với chữ đang hiện.")})
+        "- marks: nét vẽ, mũi tên, vòng tròn, emoji, sticker không phải chữ; rỗng nếu không có.\n"
+        "- sub_ok: CHỈ true khi đoạn hoàn toàn sạch, không có bất cứ chữ chèn hay nét vẽ nào trong cả 3 khung hình "
+        "(chữ in trên sản phẩm không tính). Thấy dù chỉ một chữ nhỏ, một sticker hay một nét khoanh thì để false. "
+        "Thà báo false nhầm còn hơn để sót, vì đoạn lọt lưới sẽ làm bẩn video mới.")})
     schema = {
         "type": "object",
         "properties": {"shots": {"type": "array", "items": {
             "type": "object",
             "properties": {"index": {"type": "integer"}, "desc": {"type": "string"}, "product": {"type": "string"},
                            "sub": {"type": "string"}, "sub_pos": {"type": "string", "enum": ["top", "center", "bottom", "none"]},
-                           "sub_ok": {"type": "boolean"}},
-            "required": ["index", "desc", "product", "sub", "sub_pos", "sub_ok"], "additionalProperties": False}}},
+                           "marks": {"type": "string"}, "sub_ok": {"type": "boolean"}},
+            "required": ["index", "desc", "product", "sub", "sub_pos", "marks", "sub_ok"], "additionalProperties": False}}},
         "required": ["shots"], "additionalProperties": False,
     }
     result = _ask(content, schema, effort="low")
@@ -231,6 +235,8 @@ def _shot_line(shot, used=None):
         line += f" · ghi chú video: {shot['note']}"
     if shot.get("sub"):
         line += f" · trên hình đã có chữ cháy sẵn \"{shot['sub']}\" ở {shot.get('sub_pos') or 'không rõ'}"
+    if shot.get("marks"):
+        line += f" · có nét chèn sẵn: {shot['marks']}"
     if (used or {}).get(shot["id"]):
         line += f" · đã dùng {used[shot['id']]} lần ở video khác"
     return line
@@ -390,8 +396,10 @@ def suggest_scripts(shots, count=3, note="", channel="", samples=None):
         + (f"Kịch bản shop đang dùng, để bắt đúng giọng (đừng chép lại):\n{style}\n" if style else "")
         + f"\nHãy phân tích các phân đoạn trên rồi viết {count} kịch bản KHÁC NHAU chỉ dùng chính các đoạn này, "
         "để người bán chọn một cái. Yêu cầu:\n"
-        "- Mỗi kịch bản 5–7 cảnh, tổng 20–35 giây. Mỗi cảnh gắn shot_id của một đoạn có thật trong danh sách, "
-        "không dùng lại một đoạn hai lần trong cùng kịch bản.\n"
+        "- Mỗi kịch bản 7–9 cảnh, TỔNG ĐỘ DÀI 30–40 GIÂY. Lời đọc cả kịch bản khoảng 120–160 từ "
+        "(người đọc khoảng 4 từ mỗi giây), chia đều cho các cảnh; kịch bản ngắn hơn 30 giây là không đạt.\n"
+        "- Mỗi cảnh gắn shot_id của một đoạn có thật trong danh sách, không dùng lại một đoạn hai lần "
+        "trong cùng kịch bản.\n"
         "- LỜI VÀ HÌNH PHẢI KHỚP: lời của cảnh chỉ được nói về đúng thứ đang thấy trong đoạn đã chọn, hoặc "
         "thông tin shop cho phép nói ở trên. Không nói về cảnh không có trong video.\n"
         "- Mạch phải logic: cảnh đầu là hook từ đoạn bắt mắt nhất, giữa là chi tiết hoặc cách dùng, cảnh cuối chốt "
@@ -399,7 +407,7 @@ def suggest_scripts(shots, count=3, note="", channel="", samples=None):
         "trong cùng video khi chúng kể cùng một việc.\n"
         "- Mỗi kịch bản phải khác nhau thật sự: khác hook, khác góc tiếp cận (hậu trường, cận cảnh chất liệu, "
         "cách dùng, so sánh, lời khuyên), khác thứ tự đoạn.\n"
-        "- duration: khoảng số từ của lời chia 4, từ 2 đến 6 giây, không dài hơn đoạn quay quá nhiều.\n"
+        "- duration: bằng số từ của lời chia 4, từ 3 đến 6 giây mỗi cảnh.\n"
         "- text: chữ trên màn hình ngắn (tối đa 8 từ) hoặc để rỗng. Đoạn nào đã có chữ cháy sẵn thì để text rỗng, "
         "hoặc đặt text_pos ở vị trí khác chỗ chữ cũ để không chồng chữ.\n"
         "- TUYỆT ĐỐI không dùng ô trống kiểu [kiểm tra]: chỉ viết điều đã biết chắc.\n"
@@ -493,3 +501,78 @@ def adapt_beats(script, beats, shots, used, fix):
         "additionalProperties": False,
     }
     return _ask(content, schema, effort="medium")
+
+
+# ---- Kiểm tra lại kịch bản và cảnh quay trước khi dựng ----
+
+REVIEW_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "verdict": {"type": "string", "enum": ["ok", "sua", "khong_dung_duoc"]},
+        "note": {"type": "string", "description": "Một câu: đã sửa gì, hoặc vì sao không dùng được"},
+        "beats": {"type": "array", "description": "Toàn bộ kịch bản sau khi kiểm tra, theo đúng thứ tự sẽ dựng",
+                  "items": {
+                      "type": "object",
+                      "properties": {
+                          "from": {"type": "integer", "description": "Cảnh gốc tương ứng, -1 nếu là cảnh thêm mới"},
+                          "shot_id": {"type": "string"},
+                          "part": {"type": "string"},
+                          "voice": {"type": "string"},
+                          "text": {"type": "string"},
+                          "text_pos": {"type": "string", "enum": ["top", "center", "bottom"]},
+                          "duration": {"type": "number"},
+                          "changed": {"type": "string", "description": "Đã đổi gì so với cảnh gốc, rỗng nếu giữ nguyên"},
+                      },
+                      "required": ["from", "shot_id", "part", "voice", "text", "text_pos", "duration", "changed"],
+                      "additionalProperties": False}},
+    },
+    "required": ["verdict", "note", "beats"],
+    "additionalProperties": False,
+}
+
+
+def review_plan(script, items, shots, seconds, target=(30, 40)):
+    """Đối chiếu từng cảnh với đoạn quay đã chọn rồi sửa lại cho khớp và đủ dài trước khi dựng.
+
+    items: [{"shot_id", "part", "voice", "text", "text_pos", "duration"}] theo thứ tự hiện tại.
+    shots: toàn bộ kho đoạn quay dùng được (có thể đổi hoặc thêm cảnh). seconds: độ dài đang ước tính.
+    """
+    content = [{"type": "text", "text": "Kho đoạn quay dùng được (chỉ được dùng các đoạn này):"}]
+    for shot in shots:
+        content.append({"type": "text", "text": _shot_line(shot)})
+    lines = []
+    by_id = {s["id"]: s for s in shots}
+    for i, item in enumerate(items):
+        shot = by_id.get(item.get("shot_id"))
+        lines.append(f"Cảnh {i} [{item.get('part') or '-'}] đoạn {item.get('shot_id')} "
+                     f"({shot['desc'] if shot else 'KHÔNG CÒN TRONG KHO'}) — lời: {item.get('voice') or '-'} "
+                     f"| chữ: {item.get('text') or '-'} | {float(item.get('duration') or 0):.0f}s")
+    low, high = target
+    content.append({"type": "text", "text": (
+        f"Kịch bản sắp dựng: {script.get('title', '')}. Sản phẩm: {script.get('product') or '(không rõ)'}.\n"
+        + "\n".join(lines) + "\n\n"
+        f"Độ dài lời đọc đang khoảng {seconds:.0f} giây, cần {low}–{high} giây.\n\n"
+        "Hãy đóng vai người dựng khó tính, soát lại TỪNG CẢNH trước khi máy dựng video, rồi trả về TOÀN BỘ "
+        "kịch bản sau khi sửa (kể cả các cảnh giữ nguyên), theo đúng thứ tự sẽ dựng. Soát các điểm sau:\n"
+        "1. Lời có đúng thứ đang thấy trong đoạn quay không. Đang nói về cái gì thì phải đang thấy cái đó; "
+        "nói sai cảnh thì viết lại lời theo cảnh, hoặc đổi sang đoạn khác hợp hơn (shot_id), hoặc bỏ cảnh đó.\n"
+        "2. Mạch có hợp lý không: mở đầu bắt mắt, giữa là chi tiết hoặc cách dùng, cuối chốt kêu gọi bấm giỏ hàng. "
+        "Sắp xếp lại thứ tự nếu thấy lộn xộn, nối các đoạn cùng một việc đứng gần nhau.\n"
+        "3. Không lặp: không dùng một đoạn quay hai lần, không nói lại cùng một ý hai lần.\n"
+        f"4. Đủ dài: tổng lời đọc phải ra {low}–{high} giây (khoảng {low * 4}–{high * 4} từ). Thiếu thì thêm cảnh "
+        "từ các đoạn chưa dùng trong kho và viết lời cho nó, hoặc nói kỹ hơn ở cảnh đang quá ngắn. "
+        "Dư thì cắt bớt cảnh yếu nhất. duration mỗi cảnh bằng số từ chia 4, từ 3 đến 6 giây.\n"
+        "5. Chữ trên màn hình ngắn gọn (tối đa 8 từ), không trùng lời đọc từng chữ, đoạn đã có chữ cháy sẵn thì "
+        "để text rỗng.\n"
+        "6. Không bịa giá, thông số, đánh giá; không để ô trống kiểu [kiểm tra].\n"
+        "Trường changed: ghi ngắn gọn đã đổi gì (viết lại lời, đổi đoạn, đổi chỗ, thêm cảnh), để trống nếu giữ nguyên. "
+        "verdict: 'ok' nếu gần như không phải sửa, 'sua' nếu có sửa, 'khong_dung_duoc' nếu kho quay không đủ để "
+        "làm một video mạch lạc. " + ADAPT_RULES)})
+    schema = {**REVIEW_SCHEMA}
+    schema["properties"] = {**REVIEW_SCHEMA["properties"]}
+    schema["properties"]["beats"] = {**REVIEW_SCHEMA["properties"]["beats"]}
+    items_schema = {**REVIEW_SCHEMA["properties"]["beats"]["items"]}
+    items_schema["properties"] = {**items_schema["properties"],
+                                  "shot_id": {"type": "string", "enum": [s["id"] for s in shots]}}
+    schema["properties"]["beats"]["items"] = items_schema
+    return _ask(content, schema, effort="high")

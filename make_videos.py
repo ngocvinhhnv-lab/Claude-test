@@ -52,6 +52,10 @@ DEFAULTS = {
     "safe_zone": False,    # tránh vùng TikTok che (thanh tab, cột nút, caption)
     # Phông đi kèm app (thư mục fonts/) nên chữ giống nhau trên mọi hệ điều hành và đủ dấu tiếng Việt
     "font": "DejaVu Sans",
+    "fontsdir": None,       # thư mục chứa phông (mặc định dùng phông đi kèm app)
+    "text_color": "#FFFFFF",   # màu chữ trên màn hình
+    "sub_color": "#FFFFFF",    # màu phụ đề chạy theo lời đọc
+    "text_style": "box",       # box = nền hộp mờ sau chữ, outline = chữ viền
     "crf": 20,
 }
 
@@ -190,6 +194,26 @@ def frame_filter(ratio, fit, src_w, src_h, tag=""):
     return f, w, h
 
 
+def ass_color(value, default="#FFFFFF"):
+    """#RRGGBB (hoặc RRGGBB) -> màu ASS dạng BBGGRR."""
+    text = str(value or default).strip().lstrip("#")
+    if len(text) != 6 or any(c not in "0123456789abcdefABCDEF" for c in text):
+        text = default.lstrip("#")
+    return f"{text[4:6]}{text[2:4]}{text[0:2]}".upper()
+
+
+def is_dark(value, default="#FFFFFF"):
+    """Màu chữ tối thì viền và nền phải sáng mới đọc được."""
+    text = str(value or default).strip().lstrip("#")
+    if len(text) != 6:
+        return False
+    try:
+        r, g, b = (int(text[i:i + 2], 16) for i in (0, 2, 4))
+    except ValueError:
+        return False
+    return (0.299 * r + 0.587 * g + 0.114 * b) < 110
+
+
 def ass_escape(text):
     return str(text).replace("\\", "\\\\").replace("{", "(").replace("}", ")").replace("\n", "\\N")
 
@@ -219,10 +243,22 @@ def build_ass(opts, w, h, total, path, top_min=0):
         bottom_v = round(h * 0.22)
     if opts["text_pos"] == "top":
         margin_v = max(margin_v, top_min)
-    # BorderStyle=3: nền hộp mờ sau chữ; BorderStyle=1: chữ trắng viền đen kiểu phụ đề TikTok
-    style = ("Style: {name},{font},{size},{color},&H00FFFFFF,&H{outline},&H80000000,"
+    # BorderStyle=3: nền hộp mờ sau chữ; BorderStyle=1: chữ viền kiểu phụ đề TikTok
+    style = ("Style: {name},{font},{size},&H00{color},&H00FFFFFF,&H{outline},&H{back},"
              "-1,0,0,0,100,100,0,0,{border},{pad},0,{align},{ml},{mr},{mv},1")
-    common = dict(font=opts["font"], ml=ml, mr=mr, color="&H00FFFFFF")
+    text_color = ass_color(opts.get("text_color"))
+    sub_color = ass_color(opts.get("sub_color") or opts.get("text_color"))
+    boxed = (opts.get("text_style") or "box") != "outline"
+    # chữ màu tối thì viền và nền hộp phải sáng, chữ sáng thì viền và nền tối
+    edge = "00FFFFFF" if is_dark(opts.get("text_color")) else "00000000"
+    back = "80FFFFFF" if is_dark(opts.get("text_color")) else "80000000"
+    sub_edge = "00FFFFFF" if is_dark(opts.get("sub_color") or opts.get("text_color")) else "00000000"
+    common = dict(font=opts["font"], ml=ml, mr=mr, color=text_color,
+                  outline=back if boxed else edge, back=back,
+                  border=3 if boxed else 1)
+    def pad(size):
+        return round(size * 0.25) if boxed else max(3, round(size * 0.09))
+
     lines = [
         "[Script Info]", "ScriptType: v4.00+", f"PlayResX: {w}", f"PlayResY: {h}",
         "WrapStyle: 0", "",
@@ -230,16 +266,16 @@ def build_ass(opts, w, h, total, path, top_min=0):
         "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, "
         "BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, "
         "BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding",
-        style.format(name="Title", size=size, pad=round(size * 0.25), border=3, outline="80000000",
+        style.format(name="Title", size=size, pad=pad(size),
                      align=align.get(opts["text_pos"], 8), mv=margin_v, **common),
-        style.format(name="Caption", size=round(size * 0.9), pad=round(size * 0.2), border=3,
-                     outline="80000000", align=2, mv=bottom_v, **common),
-        style.format(name="CapTop", size=size, pad=round(size * 0.25), border=3,
-                     outline="80000000", align=8, mv=margin_v, **common),
-        style.format(name="CapCenter", size=round(size * 1.1), pad=round(size * 0.25), border=3,
-                     outline="80000000", align=5, mv=0, **common),
+        style.format(name="Caption", size=round(size * 0.9), pad=pad(round(size * 0.9)),
+                     align=2, mv=bottom_v, **common),
+        style.format(name="CapTop", size=size, pad=pad(size), align=8, mv=margin_v, **common),
+        style.format(name="CapCenter", size=round(size * 1.1), pad=pad(round(size * 1.1)),
+                     align=5, mv=0, **common),
         style.format(name="Sub", size=round(size * 0.95), pad=max(3, round(size * 0.09)),
-                     border=1, outline="00000000", align=2, mv=bottom_v, **common),
+                     align=2, mv=bottom_v, **{**common, "color": sub_color, "border": 1,
+                                              "outline": sub_edge}),
         "",
         "[Events]",
         "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text",
@@ -371,7 +407,8 @@ def render(source, info, opts, ratio, out_path, tmpdir):
     if opts.get("text") or opts.get("captions"):
         ass = os.path.join(tmpdir, os.path.basename(out_path) + ".ass")
         build_ass(opts, w, h, total, ass, top_min)
-        graph.append(f"{v}ass='{filter_path(ass)}':fontsdir='{filter_path(FONTS_DIR)}'[vt]")
+        fontsdir = opts.get("fontsdir") or FONTS_DIR
+        graph.append(f"{v}ass='{filter_path(ass)}':fontsdir='{filter_path(fontsdir)}'[vt]")
         v = "[vt]"
 
     if fade > 0:

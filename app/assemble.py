@@ -2,6 +2,7 @@
 
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 import time
@@ -12,12 +13,14 @@ import numpy as np
 import make_videos
 import tao_nhac
 
-from . import store, tts
+from . import fonts, store, tts
 
 LEAD = 0.15        # giọng bắt đầu sau khi vào cảnh một chút
 TAIL = 0.35        # nghỉ sau câu nói trước khi sang cảnh
 MIN_BEAT = 1.0
 MIN_SPEED = 0.5    # quay chậm tối đa 2 lần; thiếu nữa thì giữ khung cuối
+
+TEXT_KEYS = ("text_font", "text_color", "sub_color", "text_style")
 
 DEFAULT_PROJECT_SETTINGS = {
     "ratio": "9:16",
@@ -68,6 +71,22 @@ def split_subtitle(text, max_words=6):
             chunks.append(" ".join(words[:n]))
             words = words[n:]
     return [c for c in chunks if c]
+
+
+WORDS_PER_SECOND = 4.0
+
+
+def beat_seconds(beat):
+    """Độ dài ước tính của một cảnh khi dựng: theo lời đọc nếu có, nếu không thì theo số giây ghi trong kịch bản."""
+    words = len(speakable(beat.get("voice")).split())
+    if words:
+        return LEAD + words / WORDS_PER_SECOND + TAIL
+    return max(MIN_BEAT, float(beat.get("duration") or 0) or 3.0)
+
+
+def plan_seconds(beats):
+    """Độ dài ước tính của cả video (giây)."""
+    return round(sum(beat_seconds(b) for b in beats), 1)
 
 
 def caption_plan(text_pos, avoid, has_sub):
@@ -153,9 +172,32 @@ def fit_clip(clip, source, target):
             "pad": round(pad, 3)}
 
 
+def fonts_dir(family, tmp):
+    """Thư mục phông cho ffmpeg: phông đi kèm app cộng thêm phông người dùng chọn trên máy.
+
+    Chép file phông vào một thư mục riêng để libass tìm được trên mọi hệ điều hành,
+    kể cả bản ffmpeg không có fontconfig.
+    """
+    files = fonts.files_for(family) if family else []
+    if not files:
+        return make_videos.FONTS_DIR, make_videos.DEFAULTS["font"]
+    folder = os.path.join(tmp, "fonts")
+    os.makedirs(folder, exist_ok=True)
+    for name in os.listdir(make_videos.FONTS_DIR):
+        if name.lower().endswith((".ttf", ".otf")):
+            shutil.copyfile(os.path.join(make_videos.FONTS_DIR, name), os.path.join(folder, name))
+    for path in files[:8]:
+        try:
+            shutil.copyfile(path, os.path.join(folder, os.path.basename(path)))
+        except OSError:
+            continue
+    return folder, family
+
+
 def render_project(project, log=print):
     settings = store.get_settings()
-    ps = {**DEFAULT_PROJECT_SETTINGS, **project.get("settings", {})}
+    text = {k: settings[k] for k in TEXT_KEYS if settings.get(k)}
+    ps = {**DEFAULT_PROJECT_SETTINGS, **text, **project.get("settings", {})}
     provider = ps.get("tts_provider") or settings["tts_provider"]
     voice = ps.get("tts_voice") or settings["tts_voice"]
     rate = ps.get("tts_rate", settings["tts_rate"])
@@ -215,10 +257,13 @@ def render_project(project, log=print):
             music = ps["music"]
         logo = settings.get("logo") if ps["logo_on"] and settings.get("logo") else None
 
+        folder, family = fonts_dir(ps.get("text_font"), tmp)
         opts = {**make_videos.DEFAULTS, "clips": clips, "captions": captions, "fit": ps["fit"],
                 "voice": voice_track, "voice_volume": 1.0, "music": music,
                 "music_volume": ps["music_volume"], "audio_volume": ps["source_volume"],
-                "keep_audio": True, "logo": logo, "safe_zone": True, "fade": ps["fade"]}
+                "keep_audio": True, "logo": logo, "safe_zone": True, "fade": ps["fade"],
+                "font": family, "fontsdir": folder, "text_color": ps.get("text_color"),
+                "sub_color": ps.get("sub_color"), "text_style": ps.get("text_style")}
         name = re.sub(r"[^\w-]+", "_", project.get("name") or "video").strip("_")[:40] or "video"
         out = os.path.join(out_dir, f"{name}_{time.strftime('%Y%m%d_%H%M%S')}.mp4")
         log("Dựng video")

@@ -45,7 +45,7 @@ def active():
 
 
 def create(script_ids, options=None):
-    options = {"voice_mode": "one", "music": "auto", **(options or {})}
+    options = {"voice_mode": "one", "music": "auto", "review": True, "strict": True, **(options or {})}
     if active():
         raise ValueError("Đang có một đợt tạo video chạy. Đợi xong hoặc bấm Dừng trước.")
     items = []
@@ -192,7 +192,41 @@ def _finish(picks, beats, warnings, changes, missing):
             "picks": [p for p, _ in kept], "beats": [b for _, b in kept]}
 
 
-def plan_beats(script, beats, shots, used, use_ai, adapt, note=lambda m: None):
+def _review(script, picks, beats, shots, warnings, changes, missing, note):
+    """Soát lại cả kịch bản với cảnh quay đã chọn rồi dựng lại danh sách cảnh theo kết quả soát."""
+    items = [{"part": b.get("part", ""), "shot_id": p["shot"]["id"], "voice": p["voice"], "text": p["text"],
+              "text_pos": p["text_pos"], "duration": b.get("duration") or 3}
+             for p, b in zip(picks, beats) if not p["drop"]]
+    result = library.review_beats(script, items, shots, rounds=2)
+    if result["note"] and result["note"] not in warnings:
+        warnings.append("Soát lại: " + result["note"])
+    if result["blocked"]:
+        return {"blocked": result["blocked"], "warnings": warnings, "missing": missing,
+                "changes": changes, "picks": [], "beats": []}
+    by_id = {s["id"]: s for s in shots}
+    changed_at = {c["beat"]: c for c in result["changes"]}
+    new_picks, new_beats = [], []
+    for i, item in enumerate(result["beats"]):
+        shot = by_id.get(item["shot_id"])
+        if not shot:
+            continue
+        change = changed_at.get(i)
+        new_picks.append({"shot": shot, "fit": "chinh" if change else "tot",
+                          "reason": change["reason"] if change else "đã soát cho khớp cảnh quay",
+                          "voice": item["voice"], "text": item["text"], "text_pos": item["text_pos"],
+                          "orig_voice": change["old"] if change else item["voice"],
+                          "adapted": bool(change), "drop": False})
+        new_beats.append({"part": item.get("part", ""), "shot": item.get("shot", ""),
+                          "duration": item["duration"], "voice": item["voice"],
+                          "text": item["text"], "text_pos": item["text_pos"]})
+    changes += [c for c in result["changes"] if c["old"] != c["new"]]
+    if len(new_picks) < 3:
+        return {"blocked": "Sau khi soát lại, kịch bản còn quá ít cảnh dùng được. Quay thêm rồi bấm Tiếp tục.",
+                "warnings": warnings, "missing": missing, "changes": changes, "picks": [], "beats": []}
+    return _finish(new_picks, new_beats, warnings, changes, missing)
+
+
+def plan_beats(script, beats, shots, used, use_ai, adapt, note=lambda m: None, review=True, strict=True):
     """Chọn đoạn quay cho từng cảnh; cảnh nào chưa khớp thì (nếu bật adapt) nhờ AI viết lại cho khớp video đã quay.
 
     Cảnh đã khớp tốt luôn được giữ nguyên lời gốc. Kịch bản chỉ là tham khảo: cảnh không có video quay phù hợp
@@ -203,13 +237,17 @@ def plan_beats(script, beats, shots, used, use_ai, adapt, note=lambda m: None):
     kho video này (mỗi cảnh đã có shot_id) thì dùng luôn đoạn đã gắn, không ghép lại nữa.
     """
     warnings, changes, missing = [], [], []
-    shots, dropped = library.usable_shots(shots)
+    shots, dropped = library.usable_shots(shots, strict)
     if dropped:
-        warnings.append(f"Đã bỏ {len(dropped)} đoạn quay có phụ đề cháy sẵn không phù hợp với lời mới")
+        warnings.append(f"Đã bỏ {len(dropped)} đoạn quay còn chữ hoặc nét chèn sẵn của video cũ")
     bound = [next((s for s in shots if s["id"] == (b.get("shot_id") or "")), None) for b in beats]
     if beats and all(bound):
-        return _finish([_pick(shot, beat, "tot", "kịch bản viết từ chính đoạn quay này")
-                        for shot, beat in zip(bound, beats)], beats, warnings, changes, missing)
+        picks = [_pick(shot, beat, "tot", "kịch bản viết từ chính đoạn quay này")
+                 for shot, beat in zip(bound, beats)]
+        if review and use_ai:
+            note("Soát lại kịch bản cho khớp cảnh quay")
+            return _review(script, picks, beats, shots, warnings, changes, missing, note)
+        return _finish(picks, beats, warnings, changes, missing)
     try:
         result = ai.match_clips(beats, shots, script, used) if use_ai else ai.simple_match(beats, shots, used)
     except ai.AIError as err:
@@ -263,6 +301,9 @@ def plan_beats(script, beats, shots, used, use_ai, adapt, note=lambda m: None):
         return {"blocked": "Chưa có video quay cho sản phẩm này (hơn nửa số cảnh không có cảnh quay phù hợp). "
                            "Quay thêm theo gợi ý rồi bấm Tiếp tục, hoặc bỏ qua kịch bản này.",
                 "warnings": warnings, "missing": missing, "changes": changes, "picks": [], "beats": []}
+    if review and use_ai and any(not p["drop"] for p in picks):
+        note("Soát lại kịch bản cho khớp cảnh quay")
+        return _review(script, picks, beats, shots, warnings, changes, missing, note)
     return _finish(picks, beats, warnings, changes, missing)
 
 
@@ -287,7 +328,8 @@ def _process(batch_id, index, shots, used, voice_for, use_ai):
     _item(batch_id, index, status="matching", message="Ghép cảnh quay", blanks=[])
     adapt = bool(options.get("adapt", True))
     plan = plan_beats(script, beats, shots, used, use_ai, adapt,
-                      note=lambda m: _item(batch_id, index, message=m))
+                      note=lambda m: _item(batch_id, index, message=m),
+                      review=bool(options.get("review", True)), strict=bool(options.get("strict", True)))
     if plan["blocked"]:
         kind = "blank" if plan["blocked"].startswith("Còn ô") else "footage"
         _item(batch_id, index, status="blocked", block_kind=kind, message=plan["blocked"],
@@ -302,15 +344,19 @@ def _process(batch_id, index, shots, used, voice_for, use_ai):
                  for p, beat_extra in zip(plan["picks"], plan["beats"])]
     fits = [p["fit"] for p in plan["picks"]]
     quality = "ok" if use_ai and all(f in ("tot", "chinh") for f in fits) else "tam"
+    seconds = assemble.plan_seconds(new_beats)
     warnings, picked = plan["warnings"], [p["shot"]["id"] for p in plan["picks"]]
     adapted = sum(1 for p in plan["picks"] if p["adapted"])
 
     provider, voice, rate = voice_for(item["channel"])
+    music = options.get("music", "auto")
+    if music not in ("auto", "none"):
+        music = library.music_path(music) or "auto"   # nhạc đã upload, bị xoá thì quay về nhạc tự tạo
     project = {"name": item["title"], "script_id": script["id"], "caption": script.get("caption", ""),
                "hashtags": script.get("hashtags", []), "needs_info": script.get("needs_info", []),
                "beats": new_beats, "renders": [], "missing": plan["missing"],
                "settings": {"tts_provider": provider, "tts_voice": voice, "tts_rate": rate,
-                            "music": options.get("music", "auto"), "music_bpm": 96 + (index * 7) % 25,
+                            "music": music, "music_bpm": 96 + (index * 7) % 25,
                             "source_volume": float(options.get("source_volume", 0.3))}}
     if item.get("project_id"):
         project["id"] = item["project_id"]
@@ -318,6 +364,7 @@ def _process(batch_id, index, shots, used, voice_for, use_ai):
     project = store.projects.save(project)
     _item(batch_id, index, status="rendering", message="Dựng video", project_id=project["id"],
           warnings=warnings, quality=quality, used=picked, missing=plan["missing"], changes=plan["changes"],
+          seconds=seconds,
           adapted=adapted, dropped=sum(1 for c in plan["changes"] if c["kind"] == "drop"),
           matches=[{"beat": i, "fit": f} for i, f in enumerate(fits)])
 

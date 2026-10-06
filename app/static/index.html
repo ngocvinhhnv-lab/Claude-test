@@ -73,12 +73,20 @@
           <label class="f">Khi thiếu cảnh quay phù hợp<select id="bt-adapt">
             <option value="1">Tự viết lại cảnh đó cho khớp video đã quay (khuyên dùng)</option>
             <option value="0">Giữ nguyên kịch bản, dùng tạm đoạn gần nhất và báo cần quay thêm</option></select></label>
+          <label class="f">Soát lại trước khi dựng<select id="bt-review">
+            <option value="1">AI đối chiếu từng cảnh với lời, sửa cho khớp và đủ 30–40 giây (khuyên dùng)</option>
+            <option value="0">Dựng ngay, không soát lại (nhanh hơn, ít tốn AI hơn)</option></select></label>
+          <label class="f">Đoạn quay còn chữ hoặc sticker cũ<select id="bt-strict">
+            <option value="1">Bỏ hẳn, không dùng (khuyên dùng)</option>
+            <option value="0">Vẫn dùng nếu chữ ngắn, đặt chữ mới tránh chỗ đó</option></select></label>
           <label class="f">Tiếng gốc của video quay<select id="bt-audio">
             <option value="0.3">Giữ nhỏ (30%) làm nền</option>
             <option value="0">Tắt hẳn (nên chọn nếu video có tiếng người nói)</option></select></label>
           <label class="f">Nhạc nền<select id="bt-music">
             <option value="auto">Tự tạo nhạc Tết, mỗi video một nhịp khác</option>
-            <option value="none">Không nhạc</option></select></label>
+            <option value="none">Không nhạc</option></select>
+            <span class="row small" style="margin-top:4px"><label class="btn sm">Upload nhạc riêng<input type="file" id="bt-music-file" accept="audio/*" hidden></label>
+              <button class="btn ghost sm" id="bt-music-del" hidden>Xoá nhạc này</button></span></label>
         </div>
         <div class="hint" id="bt-estimate"></div>
         <div class="row"><button class="btn primary" id="bt-start">Bắt đầu tạo video</button><span class="err" id="bt-err"></span></div>
@@ -175,6 +183,25 @@
         <div class="row"><input type="text" id="set-test-text" class="grow" value="Xin chào, đây là giọng đọc thử của shop mình nha."><button class="btn" id="set-test">Nghe thử</button></div>
         <audio id="set-audio" controls hidden></audio>
         <div class="err" id="set-tts-err"></div>
+      </div>
+      <div class="card stack">
+        <h3>Chữ trên video</h3>
+        <p class="muted small">Dùng cho mọi video. Phông lấy từ máy bạn; phông có dấu ★ là phông đẹp, dễ đọc trên điện thoại.</p>
+        <div class="fields">
+          <label class="f">Phông chữ<select id="set-font"></select></label>
+          <label class="f">Kiểu chữ<select id="set-text-style">
+            <option value="box">Chữ trên nền hộp mờ (rõ trên mọi nền)</option>
+            <option value="outline">Chữ viền, không nền</option></select></label>
+        </div>
+        <div><div class="muted small">Màu chữ trên màn hình</div><div class="swatches" id="set-color"></div></div>
+        <div><div class="muted small">Màu phụ đề chạy theo lời đọc</div><div class="swatches" id="set-subcolor"></div></div>
+        <div class="preview-text" id="set-preview"><span>Lịch bloc đại 14,5×20,5</span></div>
+      </div>
+      <div class="card stack">
+        <h3>Nhạc nền của shop</h3>
+        <p class="muted small">Nhạc tải lên dùng lại được cho mọi video. Chỉ dùng nhạc bạn có quyền sử dụng để tránh bị TikTok tắt tiếng.</p>
+        <div class="list" id="set-music"></div>
+        <label class="btn">Upload nhạc<input type="file" id="set-music-file" accept="audio/*" hidden></label>
       </div>
       <div class="card stack">
         <h3>Thương hiệu</h3>

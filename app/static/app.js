@@ -7,7 +7,7 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const fmt = (t) => (t == null ? "–" : `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, "0")}`);
 
 const S = { settings: {}, voices: {}, providers: {}, scripts: [], sources: [], projects: [],
-  scriptId: null, script: null, project: null, jobs: new Map() };
+  fonts: [], colors: [], music: [], scriptId: null, script: null, project: null, jobs: new Map() };
 
 const ORIGIN = { competitor: "Đối thủ", template: "Mẫu", rewrite: "Đã viết lại", manual: "Tự viết", weekly: "Kế hoạch tuần", imported: "Nhập tài liệu", auto: "Từ video của bạn" };
 const PLACEHOLDER = /\[[^\]]+\]/g;
@@ -364,7 +364,8 @@ async function saveProject() {
 }
 
 function ps() { return { ...PROJECT_DEFAULTS, tts_provider: S.settings.tts_provider, tts_voice: S.settings.tts_voice,
-  tts_rate: S.settings.tts_rate, ...(S.project.settings || {}) }; }
+  tts_rate: S.settings.tts_rate, text_font: S.settings.text_font, text_color: S.settings.text_color,
+  sub_color: S.settings.sub_color, text_style: S.settings.text_style, ...(S.project.settings || {}) }; }
 
 function clipThumb(clip) {
   if (!clip) return null;
@@ -402,7 +403,14 @@ function renderStudio() {
         <label class="f">Nhạc nền<select data-set="music">
           <option value="auto" ${cfg.music === "auto" ? "selected" : ""}>Tự tạo nhạc Tết (không bản quyền)</option>
           <option value="none" ${cfg.music === "none" ? "selected" : ""}>Không nhạc</option>
-          ${musicUploaded ? `<option value="${esc(cfg.music)}" selected>File đã upload</option>` : ""}</select></label>
+          ${S.music.map((m) => `<option value="${esc(m.path)}" ${m.path === cfg.music ? "selected" : ""}>${esc(m.name)}</option>`).join("")}
+          ${musicUploaded && !S.music.some((m) => m.path === cfg.music) ? `<option value="${esc(cfg.music)}" selected>File đã upload</option>` : ""}</select></label>
+        <label class="f">Phông chữ<select data-set="text_font">${S.fonts.map((f) => `<option value="${esc(f.family)}" ${f.family === cfg.text_font ? "selected" : ""}>${f.recommended ? "★ " : ""}${esc(f.family)}</option>`).join("")}</select></label>
+        <label class="f">Màu chữ<select data-set="text_color">${S.colors.map((c) => `<option value="${c.hex}" ${c.hex === cfg.text_color ? "selected" : ""}>${esc(c.name)}</option>`).join("")}</select></label>
+        <label class="f">Màu phụ đề<select data-set="sub_color">${S.colors.map((c) => `<option value="${c.hex}" ${c.hex === cfg.sub_color ? "selected" : ""}>${esc(c.name)}</option>`).join("")}</select></label>
+        <label class="f">Kiểu chữ<select data-set="text_style">
+          <option value="box" ${cfg.text_style === "box" ? "selected" : ""}>Nền hộp mờ</option>
+          <option value="outline" ${cfg.text_style === "outline" ? "selected" : ""}>Chữ viền</option></select></label>
         <label class="f">Âm lượng nhạc<input type="range" data-set="music_volume" min="0" max="1" step="0.05" value="${cfg.music_volume}"></label>
         <label class="f">Âm lượng tiếng gốc<input type="range" data-set="source_volume" min="0" max="1" step="0.05" value="${cfg.source_volume}"></label>
         <label class="f">Khung hình<select data-set="ratio">${["9:16", "1:1", "4:5", "16:9"].map((r) => `<option ${r === cfg.ratio ? "selected" : ""}>${r}</option>`).join("")}</select></label>
@@ -598,7 +606,7 @@ function renderShots() {
   const st = parseFloat($("#pk-start").value);
   $("#pk-shots").innerHTML = (src.shots || []).map((sh, k) => `<button data-k="${k}" class="${Math.abs(sh.start - st) < 0.05 ? "on" : ""}">
     <img src="${esc(sh.thumb)}" alt=""><span>${sh.start.toFixed(1)}–${sh.end.toFixed(1)}s</span>
-    ${sh.sub ? `<span class="sub-badge ${sh.sub_ok === false ? "bad" : ""}" title="${esc(sh.sub)}">${sh.sub_ok === false ? "⚠ phụ đề sẵn" : "có chữ sẵn"}</span>` : ""}</button>`).join("");
+    ${sh.sub || sh.marks ? `<span class="sub-badge bad" title="${esc(sh.sub || sh.marks)}">⚠ ${sh.sub ? "chữ sẵn" : "nét vẽ sẵn"}</span>` : ""}</button>`).join("");
 }
 
 $("#pk-source").addEventListener("change", (e) => { pk.sourceId = e.target.value; loadPickerSource(null); });
@@ -624,7 +632,83 @@ $("#pk-ok").addEventListener("click", () => {
   renderStudio(); queueSave();
 });
 
+// ---------- Nhạc nền dùng chung ----------
+function renderMusic() {
+  const sel = $("#bt-music");
+  if (sel) {
+    const keep = sel.value;
+    sel.innerHTML = `<option value="auto">Tự tạo nhạc Tết, mỗi video một nhịp khác</option>
+      <option value="none">Không nhạc</option>` +
+      S.music.map((m) => `<option value="${esc(m.id)}">${esc(m.name)}</option>`).join("");
+    sel.value = S.music.some((m) => m.id === keep) || ["auto", "none"].includes(keep) ? keep : "auto";
+    $("#bt-music-del").hidden = ["auto", "none"].includes(sel.value);
+  }
+  const box = $("#set-music");
+  if (box) box.innerHTML = S.music.length ? S.music.map((m) => `<div class="row small" data-m="${esc(m.id)}">
+      <span class="grow">${esc(m.name)}</span><audio src="${esc(m.path)}" controls preload="none" style="height:30px"></audio>
+      <button class="btn ghost sm" data-del-music="${esc(m.id)}">✕</button></div>`).join("")
+    : `<div class="muted small">Chưa có nhạc nào. Upload file mp3 hoặc m4a để dùng cho video.</div>`;
+}
+
+async function uploadMusic(file, after) {
+  if (!file) return;
+  const form = new FormData();
+  form.append("file", file);
+  try {
+    S.music = await api("POST", "/api/music", undefined, form);
+    renderMusic();
+    if (after) after();
+    toast("Đã thêm nhạc nền");
+  } catch (err) { toast(err.message); }
+}
+$("#set-music-file").addEventListener("change", (e) => { uploadMusic(e.target.files[0]); e.target.value = ""; });
+$("#bt-music-file").addEventListener("change", (e) => {
+  uploadMusic(e.target.files[0], () => { $("#bt-music").value = S.music[S.music.length - 1].id; renderMusic(); });
+  e.target.value = "";
+});
+$("#bt-music").addEventListener("change", renderMusic);
+$("#bt-music-del").addEventListener("click", async () => {
+  const id = $("#bt-music").value;
+  if (["auto", "none"].includes(id) || !confirm("Xoá file nhạc này?")) return;
+  S.music = await api("DELETE", `/api/music/${encodeURIComponent(id)}`);
+  $("#bt-music").value = "auto"; renderMusic();
+});
+$("#set-music").addEventListener("click", async (e) => {
+  const id = e.target.dataset.delMusic;
+  if (!id || !confirm("Xoá file nhạc này?")) return;
+  S.music = await api("DELETE", `/api/music/${encodeURIComponent(id)}`);
+  renderMusic();
+});
+
 // ================= CÀI ĐẶT =================
+function swatches(box, value, onPick) {
+  box.innerHTML = S.colors.map((c) => `<button class="sw ${c.hex === value ? "on" : ""}" data-hex="${c.hex}"
+    title="${esc(c.name)}" style="background:${c.hex}"></button>`).join("");
+  box.onclick = (e) => {
+    const hex = e.target.dataset.hex;
+    if (!hex) return;
+    onPick(hex);
+    swatches(box, hex, onPick);
+  };
+}
+
+function renderTextPreview() {
+  const box = $("#set-preview");
+  if (!box) return;
+  const s = S.settings;
+  const span = $("span", box);
+  span.style.fontFamily = `"${s.text_font || "DejaVu Sans"}", sans-serif`;
+  span.style.color = s.text_color || "#FFFFFF";
+  if ((s.text_style || "box") === "box") {
+    span.style.background = "rgba(0,0,0,.55)";
+    span.style.textShadow = "none";
+  } else {
+    span.style.background = "transparent";
+    const dark = parseInt((s.text_color || "#fff").slice(1, 3), 16) < 90;
+    span.style.textShadow = `0 0 6px ${dark ? "#fff" : "#000"}, 0 2px 4px ${dark ? "#fff" : "#000"}`;
+  }
+}
+
 function renderSettings() {
   const s = S.settings;
   $("#set-provider").innerHTML = Object.entries(S.providers).map(([k, v]) => `<option value="${k}" ${k === s.tts_provider ? "selected" : ""}>${esc(v)}</option>`).join("");
@@ -637,7 +721,16 @@ function renderSettings() {
   }
   $("#set-logo-img").hidden = !s.logo; if (s.logo) $("#set-logo-img").src = s.logo + "?t=" + Date.now();
   $("#set-logo-del").hidden = !s.logo;
+  $("#set-font").innerHTML = S.fonts.map((f) => `<option value="${esc(f.family)}" ${f.family === s.text_font ? "selected" : ""}>${f.recommended ? "★ " : ""}${esc(f.family)}</option>`).join("")
+    || `<option value="DejaVu Sans">DejaVu Sans</option>`;
+  $("#set-text-style").value = s.text_style || "box";
+  swatches($("#set-color"), s.text_color || "#FFFFFF", (hex) => { S.settings.text_color = hex; renderTextPreview(); });
+  swatches($("#set-subcolor"), s.sub_color || "#FFFFFF", (hex) => { S.settings.sub_color = hex; renderTextPreview(); });
+  renderTextPreview();
+  renderMusic();
 }
+$("#set-font").addEventListener("change", (e) => { S.settings.text_font = e.target.value; renderTextPreview(); });
+$("#set-text-style").addEventListener("change", (e) => { S.settings.text_style = e.target.value; renderTextPreview(); });
 $("#set-provider").addEventListener("change", (e) => { $("#set-voice").innerHTML = voiceOptions(e.target.value); });
 $("#set-save").addEventListener("click", async () => {
   try {
@@ -645,7 +738,9 @@ $("#set-save").addEventListener("click", async () => {
       anthropic_api_key: $("#set-anthropic").value.trim(), tts_provider: $("#set-provider").value,
       tts_voice: $("#set-voice").value, tts_rate: parseInt($("#set-rate").value) || 0,
       azure_key: $("#set-azure").value.trim(), azure_region: $("#set-azure-region").value.trim(),
-      fpt_key: $("#set-fpt").value.trim(), shop_name: $("#set-shop").value.trim() });
+      fpt_key: $("#set-fpt").value.trim(), shop_name: $("#set-shop").value.trim(),
+      text_font: $("#set-font").value, text_style: $("#set-text-style").value,
+      text_color: S.settings.text_color, sub_color: S.settings.sub_color });
     renderSettings(); $("#set-msg").textContent = "Đã lưu"; setTimeout(() => ($("#set-msg").textContent = ""), 2500);
     if (S.script) renderScriptDetail();
     if (S.project) renderStudio();
@@ -687,7 +782,7 @@ function renderBatchSources() {
   if (!box) return;
   box.innerHTML = S.sources.length ? S.sources.map((s) => {
     const shots = s.shots || [], labelled = shots.filter((x) => x.desc).length;
-    const burned = shots.filter((x) => x.sub && x.sub_ok === false);
+    const burned = shots.filter((x) => x.sub || x.marks);
     return `<div class="src-row" data-id="${s.id}">
       ${s.poster ? `<img src="${esc(s.poster)}" alt="">` : `<div class="thumb-ph" style="width:36px;height:62px"></div>`}
       <div class="grow"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.name)}</div>
@@ -695,7 +790,7 @@ function renderBatchSources() {
           ${s.status === "processing" ? `<span class="chip processing">Đang xử lý</span>` : ""}
           ${s.status === "error" ? `<span class="chip error" title="${esc(s.error)}">Lỗi</span>` : ""}
           ${s.info ? `<span>${fmt(s.info.duration)} · ${shots.length} đoạn${labelled ? ` · AI đã mô tả ${labelled}` : ""}</span>` : ""}
-          ${burned.length ? `<span class="chip warn" title="${esc(burned.map((x) => x.sub).join(" · "))}">Bỏ ${burned.length} đoạn có phụ đề cháy sẵn</span>` : ""}</div></div>
+          ${burned.length ? `<span class="chip warn" title="${esc(burned.map((x) => x.sub || x.marks).join(" · "))}">Bỏ ${burned.length} đoạn còn chữ hoặc nét chèn sẵn</span>` : ""}</div></div>
       <input type="text" data-note="${s.id}" value="${esc(s.note || "")}" placeholder="Ghi chú sản phẩm: VD lịch bloc 14,5×20,5">
       <button class="btn ghost sm" data-del="${s.id}" title="Xoá">✕</button></div>`;
   }).join("") : `<div class="empty small">Chưa có video nguồn. Thả video vào khung trên.</div>`;
@@ -736,15 +831,48 @@ function renderBatchScripts() {
   $("#bt-scripts").innerHTML = list.length ? list.map((s) => {
     const blanks = blanksOfScript(s);
     const fresh = S.btFresh && S.btFresh.has(s.id);
-    return `<label class="item ${fresh ? "fresh" : ""}" data-id="${s.id}"><input type="checkbox" ${S.btSel.has(s.id) ? "checked" : ""}>
+    const open = S.btOpen && S.btOpen.has(s.id);
+    return `<label class="item ${fresh ? "fresh" : ""} ${open ? "open" : ""}" data-id="${s.id}"><input type="checkbox" ${S.btSel.has(s.id) ? "checked" : ""}>
       <div class="grow"><div class="t">${esc(s.title)}</div>
         <div class="small muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.product || s.summary || "")}${s.batch ? ` · ${esc(batchLabel(s.batch))}` : ""}</div>
-        ${s.origin === "auto" ? `<div class="small muted">${(s.beats || []).length} cảnh đã gắn sẵn đoạn quay${s.why_it_works ? ` · ${esc(s.why_it_works)}` : ""}</div>` : ""}</div>
+        <div class="small muted">${(s.beats || []).length} cảnh · khoảng ${scriptSeconds(s)} giây${s.origin === "auto" ? " · đã gắn sẵn đoạn quay" : ""}${s.why_it_works ? ` · ${esc(s.why_it_works)}` : ""}</div>
+        ${open ? scriptPreview(s) : ""}</div>
       ${blanks.length ? `<span class="chip warn" title="${esc(blanks.join(" "))}">Còn ${blanks.length} ô trống</span>` : ""}
+      <button class="btn sm" data-peek="${s.id}">${open ? "Ẩn kịch bản" : "Xem kịch bản"}</button>
       <span class="chip ${s.origin}">${s.channel ? esc(s.channel) + " · " : ""}${ORIGIN[s.origin] || ""}</span></label>`;
   }).join("") : `<div class="empty small">Không có kịch bản khớp</div>`;
   renderBatchEstimate();
 }
+
+// Độ dài ước tính: lời đọc khoảng 4 từ mỗi giây, cộng khoảng nghỉ đầu và cuối mỗi cảnh
+function scriptSeconds(s) {
+  const total = (s.beats || []).reduce((sum, b) => {
+    const words = String(b.voice || "").trim().split(/\s+/).filter(Boolean).length;
+    return sum + (words ? 0.5 + words / 4 : Math.max(1, parseFloat(b.duration) || 3));
+  }, 0);
+  return Math.round(total);
+}
+
+function scriptPreview(s) {
+  const rows = (s.beats || []).map((b, i) => {
+    const thumb = clipThumb(b.clip);
+    return `<tr><td class="muted">${i + 1}</td>
+      <td>${thumb ? `<img src="${esc(thumb)}" alt="" class="peek-thumb">` : `<span class="muted small">${esc((b.shot || "").slice(0, 40)) || "–"}</span>`}</td>
+      <td>${esc(b.voice) || `<span class="muted">(không có lời)</span>`}</td>
+      <td class="small">${b.text ? esc(b.text) : `<span class="muted">–</span>`}</td></tr>`;
+  }).join("");
+  return `<div class="peek"><table class="peek-table"><tbody>${rows}</tbody></table>
+    <div class="small muted">Tổng khoảng ${scriptSeconds(s)} giây. Lúc tạo, AI còn soát lại từng cảnh cho khớp video của bạn.</div></div>`;
+}
+
+$("#bt-scripts").addEventListener("click", (e) => {
+  const id = e.target.dataset.peek;
+  if (!id) return;
+  e.preventDefault();   // bấm nút trong label thì không tick chọn kịch bản
+  S.btOpen = S.btOpen || new Set();
+  S.btOpen.has(id) ? S.btOpen.delete(id) : S.btOpen.add(id);
+  renderBatchScripts();
+});
 
 // ---------- AI tự viết kịch bản từ video đã quay ----------
 $("#gen-go").addEventListener("click", async () => {
@@ -764,7 +892,7 @@ $("#gen-go").addEventListener("click", async () => {
       await Promise.all([loadScripts(), loadSources()]);  // tải lại nguồn để hiện đoạn AI vừa xem và vừa bỏ
       $("#bt-scripts").scrollIntoView({ behavior: "smooth", block: "center" });
       toast(`Đã viết ${res.added} kịch bản từ ${res.shots} đoạn quay của bạn` +
-        (res.dropped ? ` (bỏ ${res.dropped} đoạn có phụ đề cháy sẵn)` : "") + " — chọn kịch bản bạn thích.");
+        (res.dropped ? ` (bỏ ${res.dropped} đoạn còn chữ hoặc nét chèn sẵn)` : "") + " — chọn kịch bản bạn thích.");
     }, (err) => { btn.disabled = false; $("#gen-hint").textContent = ""; $("#gen-err").textContent = err; });
   } catch (err) { btn.disabled = false; $("#gen-hint").textContent = ""; $("#gen-err").textContent = err.message; }
 });
@@ -800,7 +928,10 @@ $("#bt-start").addEventListener("click", async () => {
   $("#bt-err").textContent = "";
   const order = S.scripts.filter((s) => S.btSel.has(s.id)).map((s) => s.id);
   try {
-    const b = await api("POST", "/api/batches", { script_ids: order, options: { voice_mode: $("#bt-voice").value, music: $("#bt-music").value, source_volume: parseFloat($("#bt-audio").value), adapt: $("#bt-adapt").value === "1" } });
+    const b = await api("POST", "/api/batches", { script_ids: order, options: {
+      voice_mode: $("#bt-voice").value, music: $("#bt-music").value,
+      source_volume: parseFloat($("#bt-audio").value), adapt: $("#bt-adapt").value === "1",
+      review: $("#bt-review").value === "1", strict: $("#bt-strict").value === "1" } });
     S.btSel.clear(); renderBatchScripts();
     await loadBatches(b.id);
     $("#bt-run").scrollIntoView({ behavior: "smooth" });
@@ -837,12 +968,14 @@ function itemHtml(it, i, b) {
   const [label0, cls] = BT_STATUS[it.status] || [it.status, ""];
   const label = it.status === "blocked" && it.block_kind === "footage" ? "Thiếu video quay" : label0;
   const rewritten = (it.changes || []).filter((c) => c.kind === "rewrite").length, dropped = (it.changes || []).filter((c) => c.kind === "drop").length;
-  const adaptChip = rewritten || dropped ? `<span class="chip running" title="Kịch bản gốc chỉ để tham khảo: các cảnh chưa có video khớp đã được viết lại theo video bạn quay">Đã chỉnh kịch bản</span>` : "";
+  const reviewed = (it.changes || []).filter((c) => c.kind === "review").length;
+  const adaptChip = rewritten || dropped || reviewed ? `<span class="chip running" title="Kịch bản gốc chỉ để tham khảo: các cảnh chưa khớp đã được viết lại theo video bạn quay và soát lại trước khi dựng">Đã chỉnh kịch bản</span>` : "";
+  const lenChip = it.seconds ? `<span class="chip ${it.seconds >= 28 && it.seconds <= 45 ? "ok" : "warn"}" title="Độ dài ước tính của video">${Math.round(it.seconds)}s</span>` : "";
   const q = it.status === "done" ? (it.quality === "ok" ? `<span class="chip ok">Ghép cảnh tốt</span>` : `<span class="chip warn" title="Có cảnh chưa thật khớp hoặc dùng tạm, nên xem video và đổi cảnh nếu cần">Nên xem lại</span>`) : "";
   const open = S.openVideos && S.openVideos.has(`${b.id}:${i}`);
   return `<div class="run-item" data-i="${i}">
     <div class="row" style="gap:8px">
-      <span class="chip ${cls}">${label}</span>${q}${adaptChip}
+      <span class="chip ${cls}">${label}</span>${q}${adaptChip}${lenChip}
       <div class="grow"><b>${esc(it.title)}</b>
         <div class="small ${it.status === "error" || it.status === "blocked" ? "err" : "muted"}">${esc(it.status === "done" ? "" : it.message)}</div></div>
       ${it.status === "done" ? `<button class="btn sm" data-act="view">${open ? "Ẩn video" : "Xem"}</button>
@@ -850,9 +983,9 @@ function itemHtml(it, i, b) {
       ${it.project_id ? `<button class="btn sm" data-act="project">Mở để chỉnh</button>` : ""}
       ${it.status === "blocked" && it.block_kind !== "footage" ? `<button class="btn sm" data-act="script">Sửa kịch bản</button>` : ""}
     </div>
-    ${(it.changes || []).length ? `<details class="small" style="margin-top:4px"><summary style="cursor:pointer">Xem ${rewritten ? `${rewritten} cảnh đã viết lại` : ""}${rewritten && dropped ? ", " : ""}${dropped ? `${dropped} cảnh đã bỏ` : ""}</summary>
-      ${it.changes.map((c) => `<div style="margin:6px 0;padding-left:8px;border-left:3px solid var(--bd)"><b>Cảnh ${c.beat + 1}${c.kind === "drop" ? " (bỏ)" : ""}</b>
-        <div class="muted">Gốc: ${esc(c.old)}</div>${c.kind === "rewrite" ? `<div>Mới: ${esc(c.new)}</div>` : ""}<div class="muted">${esc(c.reason)}</div></div>`).join("")}</details>` : ""}
+    ${(it.changes || []).length ? `<details class="small" style="margin-top:4px"><summary style="cursor:pointer">Xem ${[rewritten ? `${rewritten} cảnh đã viết lại` : "", dropped ? `${dropped} cảnh đã bỏ` : "", reviewed ? `${reviewed} cảnh đã soát lại` : ""].filter(Boolean).join(", ")}</summary>
+      ${it.changes.map((c) => `<div style="margin:6px 0;padding-left:8px;border-left:3px solid var(--bd)"><b>Cảnh ${c.beat + 1}${c.kind === "drop" ? " (bỏ)" : c.kind === "review" ? " (soát lại)" : ""}</b>
+        <div class="muted">Gốc: ${esc(c.old)}</div>${c.kind === "drop" ? "" : `<div>Mới: ${esc(c.new)}</div>`}<div class="muted">${esc(c.reason)}</div></div>`).join("")}</details>` : ""}
     ${(it.warnings || []).length ? `<div class="small" style="color:var(--wn);margin-top:4px">${it.warnings.map(esc).join("<br>")}</div>` : ""}
     ${open ? `<video src="${esc(it.render.path)}" controls playsinline preload="metadata"></video>` : ""}</div>`;
 }
@@ -915,7 +1048,8 @@ $("#bt-run").addEventListener("click", async (e) => {
 // ================= KHỞI ĐỘNG =================
 (async function init() {
   const st = await api("GET", "/api/state");
-  Object.assign(S, { settings: st.settings, voices: st.voices, providers: st.providers });
+  Object.assign(S, { settings: st.settings, voices: st.voices, providers: st.providers,
+    fonts: st.fonts || [], colors: st.colors || [], music: st.music || [] });
   $("#ver").textContent = st.version ? `v${st.version}` : "";
   if (st.ffmpeg && st.ffmpeg.problems.length) {
     const box = $("#env-warn");

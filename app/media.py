@@ -28,6 +28,22 @@ def grab_frame(path, info, t, out, width=320):
     return out
 
 
+def shot_strip(path, info, start, end, out, width=210):
+    """Ghép 3 khoảnh khắc (đầu, giữa, cuối) của một đoạn vào một ảnh.
+
+    Chữ hay sticker cháy sẵn nhiều khi chỉ hiện thoáng qua, xem một khung hình giữa đoạn là bỏ sót.
+    """
+    span = max(0.0, end - start)
+    times = [start + span * f for f in (0.12, 0.5, 0.88)]
+    cmd = [FFMPEG, "-hide_banner", "-loglevel", "error", "-y"]
+    for t in times:
+        cmd += ["-ss", f"{max(0.0, min(t, max(0.0, info['duration'] - 0.05))):.3f}", "-i", path]
+    chain = ";".join(f"[{i}:v]{_vf(info, f'scale={width}:-2')},setsar=1[s{i}]" for i in range(len(times)))
+    graph = f"{chain};{''.join(f'[s{i}]' for i in range(len(times)))}hstack=inputs={len(times)}[out]"
+    _run(cmd + ["-filter_complex", graph, "-map", "[out]", "-frames:v", "1", "-q:v", "4", out])
+    return out
+
+
 def make_proxy(path, info, out):
     """Bản H.264 nhẹ để xem trên trình duyệt (video iPhone HEVC không phát được trên Chrome)."""
     _run([FFMPEG, "-hide_banner", "-loglevel", "error", "-y", "-i", path,

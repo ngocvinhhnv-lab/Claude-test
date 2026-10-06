@@ -20,7 +20,7 @@ from starlette.background import BackgroundTask  # noqa: E402
 
 import make_videos  # noqa: E402
 
-from . import __version__, assemble, batch, jobs, library, media, store, tts  # noqa: E402
+from . import __version__, assemble, batch, fonts, jobs, library, media, store, tts  # noqa: E402
 
 app = FastAPI(title="TikTok Video Studio")
 STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
@@ -28,7 +28,7 @@ os.makedirs(store.DATA_DIR, exist_ok=True)
 class MediaFiles(StaticFiles):
     """Chỉ phát file ảnh, video, âm thanh trong thư mục data. Các file dữ liệu khác (.json...) trả về 404."""
 
-    ALLOWED = {".mp4", ".mov", ".webm", ".jpg", ".jpeg", ".png", ".mp3", ".m4a", ".wav", ".zip"}
+    ALLOWED = {".mp4", ".mov", ".webm", ".jpg", ".jpeg", ".png", ".mp3", ".m4a", ".wav", ".aac", ".zip"}
 
     async def get_response(self, path, scope):
         if os.path.splitext(path)[1].lower() not in self.ALLOWED:
@@ -116,11 +116,47 @@ def public_settings():
     return urlify(out)
 
 
+COLORS = [
+    {"name": "Trắng", "hex": "#FFFFFF"}, {"name": "Vàng nhũ", "hex": "#FFD24A"},
+    {"name": "Vàng chanh", "hex": "#F7F34A"}, {"name": "Đỏ Tết", "hex": "#E5364F"},
+    {"name": "Cam", "hex": "#FF8A3D"}, {"name": "Hồng", "hex": "#FF6FA5"},
+    {"name": "Xanh ngọc", "hex": "#35D0C0"}, {"name": "Xanh lá", "hex": "#5BD66A"},
+    {"name": "Đen", "hex": "#111111"},
+]
+
+
 @app.get("/api/state")
 def state():
     return {"settings": public_settings(), "voices": tts.VOICES, "providers": tts.PROVIDER_NAMES,
-            "jobs": jobs.active(), "version": __version__,
+            "jobs": jobs.active(), "version": __version__, "colors": COLORS,
+            "fonts": [{"family": f["family"], "recommended": f["recommended"]} for f in fonts.system_fonts()],
+            "music": urlify(library.music_list()),
             "ffmpeg": {"path": make_videos.FFMPEG, "problems": make_videos.ffmpeg_problems()}}
+
+
+@app.get("/api/music")
+def list_music():
+    return urlify(library.music_list())
+
+
+@app.post("/api/music")
+def upload_music(file: UploadFile = File(...)):
+    """Nhạc nền riêng, dùng lại được cho mọi video (tab Tạo hàng loạt và Dựng video)."""
+    name = os.path.basename(file.filename or "nhac.mp3")
+    if not name.lower().endswith(library.MUSIC_EXT):
+        raise HTTPException(400, "Chỉ nhận file nhạc mp3, m4a, wav hoặc aac")
+    safe = "".join(c for c in name if c.isalnum() or c in "._- ").strip() or "nhac.mp3"
+    _save_upload(file, store.data_path("music", f"{store.new_id()}_{safe}"))
+    return urlify(library.music_list())
+
+
+@app.delete("/api/music/{name}")
+def delete_music(name: str):
+    path = library.music_path(name)
+    if not path:
+        raise HTTPException(404, "Không tìm thấy file nhạc")
+    os.remove(path)
+    return urlify(library.music_list())
 
 
 @app.put("/api/settings")

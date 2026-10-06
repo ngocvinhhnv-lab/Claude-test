@@ -106,6 +106,12 @@ DEFAULT_SETTINGS = {
     "fpt_key": "",
     "shop_name": "",
     "logo": "",
+    # Chữ trên video: phông lấy từ máy, màu có sẵn vài màu đẹp
+    "text_font": "DejaVu Sans",
+    "text_color": "#FFFFFF",
+    "sub_color": "#FFFFFF",
+    "text_style": "box",
+    "music": "auto",
 }
 
 

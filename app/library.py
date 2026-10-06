@@ -9,7 +9,7 @@ import time
 
 from make_videos import probe
 
-from . import ai, docs, media, store
+from . import ai, assemble, docs, media, store
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -142,26 +142,35 @@ def collect_shots(source_ids):
                           "thumb": shot["thumb"], "desc": shot.get("desc", ""), "note": src.get("note", ""),
                           "product": shot.get("product", ""), "length": shot["end"] - shot["start"],
                           "sub": shot.get("sub", ""), "sub_pos": shot.get("sub_pos", "none"),
-                          "sub_ok": shot.get("sub_ok", True), "scene": shot.get("scene"),
+                          "marks": shot.get("marks", ""), "sub_ok": shot.get("sub_ok", True),
+                          "checked": bool(shot.get("sub_checked")), "scene": shot.get("scene"),
                           "scene_start": shot.get("scene_start", 0.0),
                           "scene_end": shot.get("scene_end", src["info"]["duration"]),
                           "label": f"{src.get('name', sid)} · {shot['start']:.1f}–{shot['end']:.1f}s"})
     return shots
 
 
-def sub_blocks(shot):
-    """Đoạn quay có phụ đề cháy sẵn không dùng lại được (phụ đề mới sẽ chồng lên hoặc nói khác chữ đang hiện)."""
-    return bool(shot.get("sub")) and shot.get("sub_ok") is False
+def sub_blocks(shot, strict=True):
+    """Đoạn quay còn dấu vết đã dựng (chữ chèn, sticker, nét vẽ) nên không dùng lại được.
 
-
-def usable_shots(shots):
-    """Bỏ các đoạn có phụ đề cháy sẵn không phù hợp. Trả về (đoạn dùng được, đoạn đã bỏ).
-
-    Nếu bỏ hết thì giữ nguyên cả kho (thà có video để xem lại còn hơn không tạo được gì).
+    strict (mặc định): hễ thấy bất cứ chữ chèn hay nét vẽ nào là bỏ — chữ nhỏ như "nụ" hay vòng tròn đỏ
+    của video cũ lọt vào video mới trông rất lộ. Không strict: chỉ bỏ khi AI nói chữ đó không phù hợp.
     """
-    keep = [s for s in shots if not sub_blocks(s)]
-    dropped = [s for s in shots if sub_blocks(s)]
-    return (keep, dropped) if keep else (shots, [])
+    dirty = bool(shot.get("sub")) or bool(shot.get("marks"))
+    return dirty if strict else (dirty and shot.get("sub_ok") is False)
+
+
+def usable_shots(shots, strict=True):
+    """Bỏ các đoạn còn chữ hay nét chèn sẵn. Trả về (đoạn dùng được, đoạn đã bỏ).
+
+    Nếu bỏ hết thì nới lỏng rồi mới giữ nguyên cả kho, để vẫn làm được video thay vì không ra gì.
+    """
+    keep = [s for s in shots if not sub_blocks(s, strict)]
+    if keep:
+        return keep, [s for s in shots if sub_blocks(s, strict)]
+    if strict:
+        return usable_shots(shots, strict=False)
+    return shots, []
 
 
 def clip_from_shot(shot, reason=""):
@@ -173,7 +182,19 @@ def clip_from_shot(shot, reason=""):
     return clip
 
 
-LABEL_FIELDS = ("desc", "product", "sub", "sub_pos", "sub_ok")
+LABEL_FIELDS = ("desc", "product", "sub", "sub_pos", "marks")
+
+
+def _strip(src, k):
+    """Ảnh 3 khung hình của một đoạn để AI thấy cả chữ chỉ hiện thoáng qua (tạo một lần, dùng lại)."""
+    shot = src["shots"][k]
+    path = os.path.join(os.path.dirname(src["path"]), f"strip_{k:03d}.jpg")
+    if not os.path.exists(path):
+        try:
+            media.shot_strip(src["path"], src["info"], shot["start"], shot["end"], path)
+        except Exception:
+            return shot["thumb"]  # máy yếu hoặc file lỗi: quay về ảnh một khung như trước
+    return path
 
 
 def ensure_shot_labels(source_ids, log=print, chunk=20):
@@ -192,7 +213,7 @@ def ensure_shot_labels(source_ids, log=print, chunk=20):
             by_source.setdefault(sid, []).append(k)
         for sid, ks in by_source.items():
             src = store.sources.get(sid)
-            result = ai.label_shots([(k, src["shots"][k]["thumb"]) for k in ks], src.get("note", ""))
+            result = ai.label_shots([(k, _strip(src, k)) for k in ks], src.get("note", ""))
             for k in ks:
                 label = result.get(k)
                 if label:
@@ -395,7 +416,81 @@ def import_document(doc, log=print):
     return {"added": added, "updated": updated, "titles": titles}
 
 
+# ---------- Nhạc nền người dùng tự tải lên ----------
+
+MUSIC_EXT = (".mp3", ".m4a", ".wav", ".aac")
+
+
+def music_list():
+    """Các file nhạc đã upload, dùng chung cho mọi video."""
+    folder = os.path.join(store.DATA_DIR, "music")
+    if not os.path.isdir(folder):
+        return []
+    items = []
+    for name in sorted(os.listdir(folder)):
+        path = os.path.join(folder, name)
+        if name.lower().endswith(MUSIC_EXT) and os.path.isfile(path):
+            items.append({"id": name, "name": name.split("_", 1)[-1], "path": path,
+                          "size": os.path.getsize(path)})
+    return items
+
+
+def music_path(name):
+    """Đường dẫn file nhạc theo tên file, chặn đường dẫn lạ."""
+    safe = os.path.basename(name or "")
+    for item in music_list():
+        if item["id"] == safe:
+            return item["path"]
+    return None
+
+
 # ---------- Tự viết kịch bản từ video đã quay ----------
+
+TARGET_SECONDS = (30, 40)
+
+
+def review_beats(script, beats, shots, log=print, rounds=2):
+    """Soát lại từng cảnh với đoạn quay đã chọn: lời có đúng hình không, mạch có hợp lý không, đủ 30–40 giây chưa.
+
+    Trả về {"beats", "changes", "note", "blocked"}. Mỗi vòng là một lượt hỏi AI; dừng sớm khi đã đạt.
+    """
+    changes, note, blocked = [], "", ""
+    for attempt in range(max(1, rounds)):
+        seconds = assemble.plan_seconds(beats)
+        low, high = TARGET_SECONDS
+        if attempt and low <= seconds <= high:
+            break
+        try:
+            result = ai.review_plan(script, beats, shots, seconds, TARGET_SECONDS)
+        except ai.AIError as err:
+            note = f"Không soát lại được bằng AI ({err}), giữ nguyên kịch bản"
+            break
+        by_id = {s["id"]: s for s in shots}
+        new_beats = []
+        for item in result.get("beats") or []:
+            if item.get("shot_id") not in by_id or not (item.get("voice") or "").strip():
+                continue
+            old = beats[item["from"]] if 0 <= item.get("from", -1) < len(beats) else {}
+            new_beats.append({"part": item.get("part") or old.get("part", ""),
+                              "shot": old.get("shot", ""), "shot_id": item["shot_id"],
+                              "voice": item["voice"].strip(), "text": (item.get("text") or "").strip(),
+                              "text_pos": item.get("text_pos") or old.get("text_pos") or "top",
+                              "duration": float(item.get("duration") or 0) or 3.0})
+            if item.get("changed"):
+                changes.append({"beat": len(new_beats) - 1, "kind": "review",
+                                "old": old.get("voice", ""), "new": item["voice"].strip(),
+                                "reason": item["changed"]})
+        note = result.get("note", "")
+        if result.get("verdict") == "khong_dung_duoc":
+            blocked = note or "Kho video quay chưa đủ để làm một video mạch lạc cho kịch bản này."
+            break
+        if len(new_beats) >= 3:
+            beats = new_beats
+        if result.get("verdict") == "ok":
+            break
+    return {"beats": beats, "changes": changes, "note": note, "blocked": blocked,
+            "seconds": assemble.plan_seconds(beats)}
+
 
 def suggest_from_sources(spec, log=print):
     """Phân tích các phân đoạn trong video shop đã quay rồi viết vài kịch bản gắn sẵn với đúng các đoạn đó.
@@ -419,10 +514,13 @@ def suggest_from_sources(spec, log=print):
     by_id = {s["id"]: s for s in shots}
     batch_name = time.strftime("Từ video %d/%m %H:%M")
     base, titles, ids = time.time(), [], []
-    for index, raw in enumerate(result.get("scripts") or []):
+    scripts = result.get("scripts") or []
+    for index, raw in enumerate(scripts):
         picked = [b for b in raw.get("beats") or [] if b.get("shot_id") in by_id]
         if len(picked) < 3:
             continue
+        log(f"AI đang soát lại kịch bản {index + 1}/{len(scripts)} cho khớp cảnh quay")
+        picked = review_beats(raw, picked, shots, log=log)["beats"]
         item = finalize_script({**raw, "beats": picked, "origin": "auto",
                                 "channel": raw.get("channel") or spec.get("channel", ""),
                                 "key": f"auto:{int(base)}-{index}"}, batch_name)

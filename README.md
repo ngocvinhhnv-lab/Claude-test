@@ -24,8 +24,9 @@ Tab **Tạo hàng loạt** (mở sẵn): thả video đã quay, chọn nhiều k
 2. Mỗi kịch bản được ghép cảnh quay phù hợp (ưu tiên đoạn ít được dùng ở video khác), tạo giọng đọc, chữ, phụ đề, nhạc rồi dựng. Mỗi video là một dự án bình thường nên mở ra chỉnh tay được.
 3. **Thư viện kịch bản chỉ để tham khảo.** Cảnh nào chưa có video quay khớp thì app (mặc định) nhờ AI **viết lại cảnh đó cho khớp video đã quay**: chọn đoạn quay có sẵn rồi chỉ nói và chỉ hiện những gì thấy được hoặc thông tin đã có trong kịch bản gốc và ghi chú video, không bịa giá hay thông số. Cảnh đã khớp tốt luôn giữ nguyên lời gốc. Cảnh không thể nói trung thực điều gì thì bị bỏ (trừ mở đầu và chốt). Nếu hơn nửa kịch bản không có video quay cho sản phẩm thì kịch bản được giữ lại với nhãn **Thiếu video quay**. Mọi thay đổi xem được bằng **Xem … cảnh đã viết lại** (lời gốc và lời mới). Có thể tắt ở ô "Khi thiếu cảnh quay phù hợp".
    Kịch bản còn ô `[kiểm tra]` trong lời đọc bị giữ lại để sửa rồi **Tiếp tục**.
-4. **Video nguồn có phụ đề cháy sẵn:** đoạn nào có chữ chèn không phù hợp (một câu lời thoại, nhiều dòng, nói giá hay khuyến mãi, kêu gọi bấm giỏ, có tên shop khác) **bị bỏ hẳn** khỏi kho ghép cảnh — app ghi rõ bỏ bao nhiêu đoạn. Đoạn chữ ngắn và trung tính (tên sản phẩm) vẫn dùng, nhưng chữ và phụ đề mới được **đặt tránh chỗ chữ cũ** để không chồng lên nhau.
-5. **Tải tất cả (ZIP)** gồm các video, `noi_dung_dang.txt` (caption, hashtag, điều cần kiểm tra) và `can_quay_them.txt`.
+4. **Soát lại trước khi dựng** (mặc định bật): AI đọc lại cả kịch bản cùng đoạn quay đã chọn cho từng cảnh và sửa trước khi máy dựng — lời phải đúng thứ đang thấy trong cảnh, mạch phải thuận (mở đầu → chi tiết → chốt), không dùng lại một đoạn hai lần, không nói lặp ý, và **tổng phải ra 30–40 giây** (thiếu thì thêm cảnh từ các đoạn chưa dùng, dư thì cắt). Mọi chỗ sửa hiện trong **Xem … cảnh đã soát lại**. Tắt được ở ô "Soát lại trước khi dựng".
+5. **Video nguồn còn chữ hoặc sticker cũ:** đoạn nào còn **bất cứ** chữ chèn, sticker, watermark, emoji hay nét khoanh của lần dựng trước **bị bỏ hẳn** khỏi kho ghép cảnh (AI xem 3 khung hình đầu–giữa–cuối mỗi đoạn nên chữ chỉ hiện thoáng qua cũng bắt được). App ghi rõ bỏ bao nhiêu đoạn. Chữ **in trên chính sản phẩm** (ngày trên tờ lịch, chữ trên tranh) không tính. Chuyển sang "Vẫn dùng nếu chữ ngắn" thì đoạn chữ ngắn được giữ lại và chữ mới được **đặt tránh chỗ chữ cũ**.
+6. **Tải tất cả (ZIP)** gồm các video, `noi_dung_dang.txt` (caption, hashtag, điều cần kiểm tra) và `can_quay_them.txt`.
 
 Tiến độ lưu trong `data/batches`, đóng trình duyệt hay tắt app đều tiếp tục được. Không có API key thì vẫn tạo được video nhưng chỉ ghép cảnh đơn giản.
 
@@ -34,6 +35,8 @@ Tiến độ lưu trong `data/batches`, đóng trình duyệt hay tắt app đ�
 Ở **Bước 2 · Chọn kịch bản**, mở **✨ Để AI xem video bạn vừa thả rồi tự viết kịch bản cho đúng video đó**: chọn số kịch bản (2–5), kênh sẽ đăng và những thông tin được phép nói (giá, khổ, số tờ). AI phân tích từng phân đoạn trong video của bạn rồi viết nhiều kịch bản **khác hướng nhau** (hậu trường, cận cảnh chất liệu, cách dùng, so sánh, lời khuyên) để bạn chọn một cái.
 
 - Mỗi cảnh của kịch bản **gắn sẵn một đoạn quay thật**, nên lời đọc và hình luôn khớp nhau sau khi dựng; đến lượt dựng app dùng đúng đoạn đó, không ghép lại nữa.
+- Viết xong, AI **soát lại** từng cảnh một lần nữa (đúng hình chưa, mạch có thuận không, đủ **30–40 giây** chưa) rồi mới đưa vào thư viện.
+- Bấm **Xem kịch bản** ngay trong danh sách để đọc trọn kịch bản: ảnh từng đoạn quay, lời đọc, chữ trên màn hình và tổng số giây.
 - Lời chỉ nói những gì thấy trong đoạn đã chọn hoặc thông tin bạn ghi ở ô trên — không bịa giá, thông số, đánh giá; không có ô `[kiểm tra]` nào.
 - Các đoạn có phụ đề cháy sẵn không phù hợp được loại trước khi viết.
 - Kịch bản mới nằm trong thư viện với nhãn **Từ video của bạn**, mở ở tab **1. Kịch bản** để sửa lời, hoặc bấm **Dựng video từ kịch bản này** (các cảnh đã có đoạn, chỉ cần xuất).
@@ -59,7 +62,9 @@ Tiến độ lưu trong `data/batches`, đóng trình duyệt hay tắt app đ�
 ### Video xuất ra
 
 - **Giọng đọc quyết định nhịp dựng.** Mỗi cảnh dài đúng bằng lời đọc. Nếu đoạn quay ngắn hơn lời, app tự lấy dài thêm trong video nguồn, quay chậm, hoặc giữ khung cuối.
-- **Chữ đầy đủ:** chữ trên màn hình theo từng cảnh, phụ đề chạy theo lời đọc (chữ trắng viền đen). Tất cả nằm trong vùng an toàn, không bị thanh tab, cột nút và caption của TikTok che.
+- **Chữ đầy đủ:** chữ trên màn hình theo từng cảnh, phụ đề chạy theo lời đọc. Tất cả nằm trong vùng an toàn, không bị thanh tab, cột nút và caption của TikTok che.
+- **Phông và màu chữ:** tab Cài đặt cho chọn phông có sẵn trên máy (phông gợi ý có dấu ★), màu chữ và màu phụ đề từ bảng màu đẹp sẵn, kiểu chữ nền hộp mờ hoặc chữ viền, có ô xem trước. Mỗi dự án đổi riêng được ở tab Dựng video. Phông đã chọn được chép kèm khi dựng nên chữ ra đúng trên mọi máy.
+- **Nhạc riêng:** upload file nhạc của shop ở tab Cài đặt (hoặc ngay ở Bước 3), dùng lại cho mọi video; vẫn giữ lựa chọn nhạc Tết tự tạo không bản quyền.
 - **Âm thanh:** nhạc nền tự nhỏ lại khi có giọng đọc. Có thể giảm tiếng gốc của video.
 - **Đăng bài:** caption và hashtag sẵn để sao chép.
 

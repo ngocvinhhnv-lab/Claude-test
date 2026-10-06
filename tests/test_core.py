@@ -18,7 +18,7 @@ os.environ["VIDEO_APP_CONFIG"] = os.path.join(_TMP, "config")
 sys.path.insert(0, ROOT)
 
 import make_videos  # noqa: E402
-from app import ai, assemble, batch, docs, library, store  # noqa: E402
+from app import ai, assemble, batch, docs, fonts, library, store  # noqa: E402
 
 
 def load_tool(name):
@@ -308,7 +308,7 @@ class Adaptation(unittest.TestCase):
                 "text": "", "text_pos": "bottom", "reason": "r"}
 
     def run_plan(self, adapt=True):
-        return batch.plan_beats(self.script, self.beats, self.shots, {}, True, adapt)
+        return batch.plan_beats(self.script, self.beats, self.shots, {}, True, adapt, review=False)
 
     def test_all_good_matches_are_untouched_and_ai_is_not_asked_to_rewrite(self):
         self.matches(["tot"] * 5)
@@ -388,11 +388,16 @@ class BurnedSubtitles(unittest.TestCase):
                 "desc": f"đoạn {i}", "note": "", "thumb": "", "scene_start": 0.0, "scene_end": 30.0,
                 "sub": sub, "sub_pos": pos if sub else "none", "sub_ok": ok}
 
-    def test_unsuitable_burned_subtitles_are_dropped_suitable_ones_kept(self):
-        shots = [self.shot(0), self.shot(1, "Giá chỉ 39k hôm nay thôi nha", ok=False), self.shot(2, "Lịch bloc 2026")]
+    def test_any_leftover_sticker_or_drawing_is_dropped(self):
+        # mặc định khắt khe: chữ nhỏ như "nụ" hay vòng tròn đỏ của video cũ cũng phải bỏ
+        shots = [self.shot(0), self.shot(1, "Giá chỉ 39k hôm nay thôi nha", ok=False), self.shot(2, "nụ"),
+                 {**self.shot(3), "marks": "vòng tròn đỏ khoanh sản phẩm"}]
         keep, dropped = library.usable_shots(shots)
-        self.assertEqual([s["id"] for s in keep], ["s_0", "s_2"])
-        self.assertEqual([s["id"] for s in dropped], ["s_1"])
+        self.assertEqual([s["id"] for s in keep], ["s_0"])
+        self.assertEqual([s["id"] for s in dropped], ["s_1", "s_2", "s_3"])
+        # chế độ nới lỏng: chỉ bỏ đoạn AI nói là không phù hợp
+        keep, dropped = library.usable_shots(shots, strict=False)
+        self.assertEqual([s["id"] for s in keep], ["s_0", "s_2", "s_3"])
 
     def test_everything_subtitled_is_kept_rather_than_producing_nothing(self):
         shots = [self.shot(0, "một câu lời thoại dài", ok=False)]
@@ -416,7 +421,7 @@ class BurnedSubtitles(unittest.TestCase):
         finally:
             ai.simple_match = real
         self.assertNotIn("s_9", seen)
-        self.assertTrue(any("phụ đề cháy sẵn" in w for w in plan["warnings"]))
+        self.assertTrue(any("chữ hoặc nét chèn sẵn" in w for w in plan["warnings"]))
 
     def test_new_text_moves_away_from_the_burned_in_text(self):
         # chữ cháy sẵn ở đáy: chữ trên màn hình giữ chỗ cũ, phụ đề lời đọc được nâng lên
@@ -456,7 +461,7 @@ class Suggested(unittest.TestCase):
         real = ai.match_clips
         ai.match_clips = lambda *a, **k: self.fail("kịch bản đã gắn đoạn thì không được ghép lại")
         try:
-            plan = batch.plan_beats({"title": "T"}, beats, self.shots, {}, True, True)
+            plan = batch.plan_beats({"title": "T"}, beats, self.shots, {}, True, True, review=False)
         finally:
             ai.match_clips = real
         self.assertEqual([p["shot"]["id"] for p in plan["picks"]], ["s_0", "s_1", "s_2", "s_3"])
@@ -471,7 +476,10 @@ class Suggested(unittest.TestCase):
         self.assertTrue(all(p["shot"]["id"] in {s["id"] for s in self.shots} for p in plan["picks"]))
 
     def test_written_scripts_are_stored_with_their_clips(self):
-        real = (ai.is_ready, ai.suggest_scripts, library.ensure_shot_labels, library.collect_shots)
+        real = (ai.is_ready, ai.suggest_scripts, library.ensure_shot_labels, library.collect_shots,
+                library.review_beats)
+        library.review_beats = lambda script, beats, shots, log=print, rounds=2: {
+            "beats": beats, "changes": [], "note": "", "blocked": "", "seconds": 30.0}
         source = store.sources.save({"name": "quay.mov", "status": "ready", "path": "x.mov",
                                      "info": {"duration": 20.0}, "shots": []})
         ai.is_ready = lambda: True
@@ -486,7 +494,8 @@ class Suggested(unittest.TestCase):
         try:
             result = library.suggest_from_sources({"count": 1, "note": "Liễn 39k"})
         finally:
-            ai.is_ready, ai.suggest_scripts, library.ensure_shot_labels, library.collect_shots = real
+            (ai.is_ready, ai.suggest_scripts, library.ensure_shot_labels, library.collect_shots,
+             library.review_beats) = real
             store.sources.delete(source["id"])
         self.assertEqual(result["added"], 1)
         (script,) = store.scripts.list()
@@ -494,6 +503,122 @@ class Suggested(unittest.TestCase):
         self.assertEqual(len(script["beats"]), 4)  # cảnh gắn đoạn không tồn tại bị bỏ
         self.assertEqual([b["shot_id"] for b in script["beats"]], ["s_0", "s_1", "s_2", "s_3"])
         self.assertTrue(all(b["clip"]["source_id"] == "s" for b in script["beats"]))
+
+
+class Review(unittest.TestCase):
+    """Trước khi dựng, AI soát lại từng cảnh cho khớp đoạn quay và đủ 30–40 giây."""
+
+    def setUp(self):
+        self.shots = [{"id": f"s_{i}", "source_id": "s", "start": i * 4.0, "end": i * 4.0 + 4, "length": 4.0,
+                       "desc": f"đoạn {i}", "note": "", "thumb": "", "scene_start": 0.0, "scene_end": 40.0,
+                       "sub": "", "sub_pos": "none", "marks": "", "sub_ok": True} for i in range(8)]
+        self.beats = [{"part": "", "voice": "Lời gốc rất ngắn.", "text": "", "text_pos": "top",
+                       "duration": 3, "shot_id": f"s_{i}"} for i in range(4)]
+        self.calls = []
+        self.real = ai.review_plan
+
+    def tearDown(self):
+        ai.review_plan = self.real
+
+    def reviewer(self, beats_out, verdict="sua", note="đã sửa"):
+        def fake(script, items, shots, seconds, target=(30, 40)):
+            self.calls.append(round(seconds))
+            return {"verdict": verdict, "note": note, "beats": beats_out}
+        ai.review_plan = fake
+
+    def out(self, n, voice="Câu đã viết lại cho khớp cảnh quay, dài vừa đủ nha anh chị.", start=0):
+        return [{"from": i, "shot_id": f"s_{i}", "part": "Mở đầu", "voice": voice, "text": "", "text_pos": "top",
+                 "duration": 4, "changed": "viết lại cho khớp cảnh" if i == start else ""} for i in range(n)]
+
+    def test_review_rewrites_beats_and_records_what_changed(self):
+        self.reviewer(self.out(8))
+        plan = batch.plan_beats({"title": "T"}, self.beats, self.shots, {}, True, True)
+        self.assertEqual(len(plan["picks"]), 8)
+        self.assertEqual([c["kind"] for c in plan["changes"]], ["review"])
+        self.assertTrue(plan["picks"][0]["adapted"])
+        self.assertEqual(plan["picks"][0]["orig_voice"], "Lời gốc rất ngắn.")
+        self.assertEqual(plan["blocked"], "")
+
+    def test_short_script_is_sent_back_until_it_reaches_thirty_seconds(self):
+        short = self.out(4, "Ngắn quá.")
+        self.reviewer(short)
+        library.review_beats({"title": "T"}, self.beats, self.shots)
+        self.assertEqual(len(self.calls), 2)  # lần đầu chưa đủ dài nên soát lại lần nữa
+
+    def test_long_enough_script_is_not_sent_back(self):
+        self.reviewer(self.out(8))
+        result = library.review_beats({"title": "T"}, self.beats, self.shots)
+        self.assertEqual(len(self.calls), 1)
+        self.assertGreaterEqual(result["seconds"], 30)
+
+    def test_model_saying_the_footage_does_not_work_blocks_the_video(self):
+        self.reviewer([], verdict="khong_dung_duoc", note="Kho quay toàn cảnh khác sản phẩm")
+        plan = batch.plan_beats({"title": "T"}, self.beats, self.shots, {}, True, True)
+        self.assertIn("Kho quay toàn cảnh khác", plan["blocked"])
+
+    def test_ai_failure_keeps_the_original_plan(self):
+        def boom(*a, **k):
+            raise ai.AIError("hết hạn mức")
+        ai.review_plan = boom
+        plan = batch.plan_beats({"title": "T"}, self.beats, self.shots, {}, True, True)
+        self.assertEqual(len(plan["picks"]), 4)
+        self.assertEqual(plan["blocked"], "")
+        self.assertTrue(any("Soát lại" in w for w in plan["warnings"]))
+
+    def test_estimate_follows_the_spoken_words(self):
+        self.assertAlmostEqual(assemble.plan_seconds([{"voice": " ".join(["từ"] * 120)}]), 30.5, places=1)
+
+
+class Looks(unittest.TestCase):
+    """Phông chữ lấy từ máy, màu chữ chọn sẵn, nhạc riêng upload lên."""
+
+    def test_bundled_font_is_always_available(self):
+        families = [f["family"] for f in fonts.system_fonts(refresh=True)]
+        self.assertIn("DejaVu Sans", families)
+        self.assertTrue(fonts.files_for("DejaVu Sans"))
+        self.assertTrue(fonts.system_fonts()[0]["recommended"])  # phông gợi ý xếp lên đầu
+
+    def test_unknown_font_falls_back_to_the_bundled_one(self):
+        self.assertEqual(fonts.files_for("Phông Không Có Trên Máy"), [])
+        with tempfile.TemporaryDirectory() as tmp:
+            folder, family = assemble.fonts_dir("Phông Không Có Trên Máy", tmp)
+            self.assertEqual(family, "DejaVu Sans")
+            self.assertEqual(folder, make_videos.FONTS_DIR)
+
+    def test_chosen_font_is_copied_next_to_the_bundled_ones(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder, family = assemble.fonts_dir("DejaVu Sans", tmp)
+            self.assertEqual(family, "DejaVu Sans")
+            self.assertTrue(any(f.lower().endswith((".ttf", ".otf")) for f in os.listdir(folder)))
+
+    def test_colour_becomes_ass_bgr_and_dark_text_gets_a_light_edge(self):
+        self.assertEqual(make_videos.ass_color("#FFD24A"), "4AD2FF")
+        self.assertEqual(make_videos.ass_color("rác"), "FFFFFF")
+        self.assertFalse(make_videos.is_dark("#FFD24A"))
+        self.assertTrue(make_videos.is_dark("#111111"))
+
+    def test_text_colour_and_style_reach_the_subtitle_file(self):
+        path = os.path.join(_TMP, "mau.ass")
+        make_videos.build_ass({**make_videos.DEFAULTS, "text_color": "#FFD24A", "sub_color": "#111111",
+                               "text_style": "outline", "captions": [{"start": 0, "end": 1, "text": "x", "pos": "bottom"}]},
+                              1080, 1920, 2.0, path)
+        with open(path, encoding="utf-8") as f:
+            styles = {line.split(",")[0].split(": ")[1]: line for line in f if line.startswith("Style:")}
+        self.assertIn("&H004AD2FF", styles["Caption"])          # màu chữ
+        self.assertIn("&H00111111", styles["Sub"])              # màu phụ đề
+        self.assertEqual(styles["Caption"].split(",")[15], "1")  # BorderStyle 1 = chữ viền, không nền hộp
+        self.assertIn("&H00FFFFFF", styles["Sub"].split(",")[5])  # phụ đề màu tối thì viền sáng
+
+    def test_uploaded_music_is_listed_and_paths_outside_are_refused(self):
+        folder = os.path.join(store.DATA_DIR, "music")
+        os.makedirs(folder, exist_ok=True)
+        open(os.path.join(folder, "abc123_nhac tet.mp3"), "wb").close()
+        open(os.path.join(folder, "ghi_chu.txt"), "wb").close()
+        items = library.music_list()
+        self.assertEqual([i["name"] for i in items], ["nhac tet.mp3"])  # chỉ nhận file nhạc
+        self.assertTrue(library.music_path("abc123_nhac tet.mp3"))
+        self.assertIsNone(library.music_path("../../settings.json"))
+        self.assertIsNone(library.music_path("khong_co.mp3"))
 
 
 if __name__ == "__main__":
