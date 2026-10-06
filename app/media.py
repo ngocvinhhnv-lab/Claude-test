@@ -44,12 +44,13 @@ def split_shots(path, info):
     cuts = [0.0] + [t for t in detect_scenes(path, 0.3) if 0.5 < t < duration - 0.5] + [duration]
     step = max(3.0, duration / MAX_SHOTS)
     shots = []
-    for start, end in zip(cuts, cuts[1:]):
+    for scene, (start, end) in enumerate(zip(cuts, cuts[1:])):
         if end - start < 0.4:
             continue
         parts = max(1, round((end - start) / step))
         piece = (end - start) / parts
-        shots += [(start + k * piece, start + (k + 1) * piece) for k in range(parts)]
+        # (bắt đầu, kết thúc, số thứ tự cảnh gốc, đầu cảnh gốc, cuối cảnh gốc)
+        shots += [(start + k * piece, start + (k + 1) * piece, scene, start, end) for k in range(parts)]
     return shots
 
 
@@ -63,9 +64,10 @@ def ingest_source(item):
                                 os.path.join(folder, "poster.jpg"), 360)
     item["proxy"] = make_proxy(path, info, os.path.join(folder, "proxy.mp4"))
     shots = []
-    for i, (start, end) in enumerate(split_shots(path, info)):
+    for i, (start, end, scene, scene_start, scene_end) in enumerate(split_shots(path, info)):
         thumb = grab_frame(path, info, (start + end) / 2, os.path.join(folder, f"shot_{i:03d}.jpg"), 240)
-        shots.append({"start": round(start, 2), "end": round(end, 2), "thumb": thumb})
+        shots.append({"start": round(start, 2), "end": round(end, 2), "thumb": thumb, "scene": scene,
+                      "scene_start": round(scene_start, 2), "scene_end": round(scene_end, 2)})
     item["shots"] = shots
     return item
 

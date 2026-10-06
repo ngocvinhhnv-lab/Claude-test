@@ -75,6 +75,7 @@ class Collection:
 sources = Collection("sources")
 scripts = Collection("scripts")
 projects = Collection("projects")
+batches = Collection("batches")
 
 SETTINGS_FILE = os.path.join(DATA_DIR, "settings.json")
 DEFAULT_SETTINGS = {

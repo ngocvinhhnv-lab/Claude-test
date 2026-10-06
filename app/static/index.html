@@ -11,7 +11,8 @@
 <header class="top">
   <div class="brand">TikTok <span>Video</span> Studio</div>
   <nav class="tabs" id="tabs">
-    <button data-page="scripts" class="on">1. Kịch bản</button>
+    <button data-page="batch" class="on">Tạo hàng loạt</button>
+    <button data-page="scripts">1. Kịch bản</button>
     <button data-page="sources">2. Video nguồn</button>
     <button data-page="studio">3. Dựng video</button>
     <button data-page="settings">Cài đặt</button>
@@ -20,8 +21,48 @@
 </header>
 
 <main>
+  <!-- ========== TẠO HÀNG LOẠT ========== -->
+  <section class="page on" id="page-batch">
+    <div class="stack">
+      <div class="card stack">
+        <div><h3>Bước 1 · Thả video bạn đã quay</h3>
+          <p class="muted small">Thả tất cả video quay được vào đây, quay dọc càng tốt. Ghi chú sản phẩm cho từng video (không bắt buộc) giúp AI chọn cảnh đúng hơn.</p></div>
+        <div class="drop" id="bt-drop">Kéo thả video vào đây hoặc bấm để chọn (chọn được nhiều file)
+          <input type="file" id="bt-file" accept="video/*" multiple hidden></div>
+        <div class="list" id="bt-sources"></div>
+      </div>
+
+      <div class="card stack">
+        <div class="row"><h3 class="grow">Bước 2 · Chọn kịch bản <span class="muted small" id="bt-selcount"></span></h3>
+          <button class="btn sm" id="bt-all">Chọn tất cả đang hiện</button>
+          <button class="btn sm" id="bt-none">Bỏ chọn</button></div>
+        <div class="row">
+          <input type="search" id="bt-search" class="grow" placeholder="Tìm: mã (L1, K3), sản phẩm, kênh (NS, TV)…" autocomplete="off">
+          <div class="row" id="bt-channels" style="gap:6px"></div>
+        </div>
+        <div class="list bt-scripts" id="bt-scripts"></div>
+      </div>
+
+      <div class="card stack">
+        <h3>Bước 3 · Tạo video</h3>
+        <div class="fields">
+          <label class="f">Giọng đọc<select id="bt-voice">
+            <option value="one">Một giọng chung (theo Cài đặt)</option>
+            <option value="channel">Mỗi kênh một giọng và tốc độ khác nhau</option></select></label>
+          <label class="f">Nhạc nền<select id="bt-music">
+            <option value="auto">Tự tạo nhạc Tết, mỗi video một nhịp khác</option>
+            <option value="none">Không nhạc</option></select></label>
+        </div>
+        <div class="hint" id="bt-estimate"></div>
+        <div class="row"><button class="btn primary" id="bt-start">Bắt đầu tạo video</button><span class="err" id="bt-err"></span></div>
+      </div>
+
+      <div id="bt-run"></div>
+    </div>
+  </section>
+
   <!-- ========== KỊCH BẢN ========== -->
-  <section class="page on" id="page-scripts">
+  <section class="page" id="page-scripts">
     <div class="split">
       <div class="stack">
         <div class="card stack">

@@ -16,7 +16,18 @@ Hướng dẫn từng bước cho nhân viên (Windows): [`HUONG_DAN_WINDOWS.pdf
 
 App mở tại http://127.0.0.1:8000. Để máy khác trong mạng nội bộ dùng chung: `./chay_app.sh --host 0.0.0.0`. Dữ liệu (video, kịch bản, video xuất ra) lưu trong thư mục `data/`.
 
-### Quy trình
+### Cách nhanh: tạo video hàng loạt
+
+Tab **Tạo hàng loạt** (mở sẵn): thả video đã quay, chọn nhiều kịch bản, bấm một nút. App tự làm toàn bộ và dựng lần lượt từng video ở nền:
+
+1. AI mô tả từng đoạn video bạn quay (một lần, kết quả được lưu lại), nên ghép cảnh cho cả chục kịch bản chỉ cần gửi chữ.
+2. Mỗi kịch bản được ghép cảnh quay phù hợp (ưu tiên đoạn ít được dùng ở video khác), tạo giọng đọc, chữ, phụ đề, nhạc rồi dựng. Mỗi video là một dự án bình thường nên mở ra chỉnh tay được.
+3. Kịch bản còn ô `[kiểm tra]` trong lời đọc bị giữ lại để sửa rồi **Tiếp tục**; cảnh kho video chưa có sẽ được liệt kê ở **Cần quay thêm**.
+4. **Tải tất cả (ZIP)** gồm các video, `noi_dung_dang.txt` (caption, hashtag, điều cần kiểm tra) và `can_quay_them.txt`.
+
+Tiến độ lưu trong `data/batches`, đóng trình duyệt hay tắt app đều tiếp tục được. Không có API key thì vẫn tạo được video nhưng chỉ ghép cảnh đơn giản.
+
+### Quy trình từng video (thủ công)
 
 1. **Kịch bản.** Upload video đối thủ (tải từ TikTok về) hoặc dán link TikTok/Facebook (app tự tải bằng yt-dlp, được cập nhật mỗi lần mở app). AI xem khung hình, đọc chữ, nghe lời thoại, rồi tách thành từng cảnh: cảnh quay gì, lời đọc, chữ trên màn hình, độ dài. Sau đó bấm **Viết lại cho sản phẩm của tôi**: AI giữ cấu trúc và nhịp nhưng viết lời mới, không bịa giá hay khuyến mãi. Thư viện có sẵn 3 kịch bản mẫu KB1–KB3 và 40 kịch bản của kế hoạch tuần 05–11/10/2026 (`kich_ban/tuan_2026_10_05.json`), có ô tìm kiếm theo mã, sản phẩm, kênh. Kịch bản còn ô `[kiểm tra]` trong lời đọc sẽ bị chặn xuất video cho tới khi điền thông tin thật.
 2. **Video nguồn.** Upload video tự quay, được nhiều file một lúc. App tạo bản xem thử, chia thành các đoạn ngắn và tự chuyển màu video HDR của iPhone.

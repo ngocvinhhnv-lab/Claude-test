@@ -95,8 +95,8 @@ def build_voice_track(parts, out):
     return out
 
 
-def make_music(seconds, out):
-    audio = tao_nhac.compose(seconds, 104)
+def make_music(seconds, out, bpm=104):
+    audio = tao_nhac.compose(seconds, bpm)
     pcm = (audio * 32767).astype(np.int16)
     wav = out + ".wav"
     with wave.open(wav, "wb") as w:
@@ -111,15 +111,20 @@ def make_music(seconds, out):
 
 
 def fit_clip(clip, source, target):
-    """Điều chỉnh đoạn cắt cho vừa độ dài cảnh: kéo dài trong nguồn, quay chậm, rồi giữ khung cuối."""
+    """Điều chỉnh đoạn cắt cho vừa độ dài cảnh: kéo dài trong nguồn, quay chậm, rồi giữ khung cuối.
+
+    Chỉ kéo dài trong cùng một cảnh quay (scene_start..scene_end) để không lẫn sang cảnh khác.
+    """
     duration = source["info"]["duration"]
-    start = max(0.0, float(clip["start"]))
-    end = min(duration, float(clip["end"]))
+    lo = max(0.0, float(clip.get("scene_start", 0.0)))
+    hi = min(duration, float(clip.get("scene_end", duration)))
+    start = max(lo, float(clip["start"]))
+    end = min(hi, float(clip["end"]))
     if end - start >= target:
         return {"source": source["path"], "start": start, "end": start + target}
-    end = min(duration, start + target)
-    if end - start < target and duration >= target:
-        start = max(0.0, end - target)  # lùi điểm bắt đầu nếu cảnh nằm sát cuối video
+    end = min(hi, start + target)
+    if end - start < target:
+        start = max(lo, end - target)  # lùi điểm bắt đầu nếu đoạn nằm sát cuối cảnh
     length = end - start
     if length >= target:
         return {"source": source["path"], "start": start, "end": end}
@@ -185,7 +190,7 @@ def render_project(project, log=print):
         music = None
         if ps["music"] == "auto":
             log("Tạo nhạc nền")
-            music = make_music(total + 1.5, os.path.join(tmp, "music.m4a"))
+            music = make_music(total + 1.5, os.path.join(tmp, "music.m4a"), ps.get("music_bpm") or 104)
         elif ps["music"] and ps["music"] != "none" and os.path.exists(ps["music"]):
             music = ps["music"]
         logo = settings.get("logo") if ps["logo_on"] and settings.get("logo") else None

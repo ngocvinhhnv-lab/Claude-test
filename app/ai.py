@@ -85,8 +85,8 @@ def _image(path):
     return {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": data}}
 
 
-def _ask(content, schema):
-    """Gọi Claude với đầu ra JSON theo schema, trả về dict."""
+def _ask(content, schema, effort=None):
+    """Gọi Claude với đầu ra JSON theo schema, trả về dict. effort: low|medium|high (mặc định high)."""
     client = _client()
     try:
         response = client.beta.messages.create(
@@ -96,7 +96,8 @@ def _ask(content, schema):
             fallbacks="default",
             thinking={"type": "adaptive"},
             system=SYSTEM,
-            output_config={"format": {"type": "json_schema", "schema": schema}},
+            output_config={"format": {"type": "json_schema", "schema": schema},
+                           **({"effort": effort} if effort else {})},
             messages=[{"role": "user", "content": content}],
         )
     except anthropic.AuthenticationError as err:
@@ -168,19 +169,64 @@ def rewrite_script(script, product):
     return _ask(content, REWRITE_SCHEMA)
 
 
-def match_clips(beats, shots):
-    """Chọn đoạn source phù hợp cho từng cảnh. shots: [{id, label, thumb, start, end}]."""
-    content = [{"type": "text", "text": "Các đoạn video nguồn shop đã quay (mỗi đoạn một ảnh giữa đoạn):"}]
-    for shot in shots:
-        content.append({"type": "text", "text": f"{shot['id']}: {shot['label']}"})
-        content.append(_image(shot["thumb"]))
-    lines = "\n".join(f"Cảnh {i}: {b.get('shot') or '(không mô tả)'} — lời: {b.get('voice') or '-'}"
-                      for i, b in enumerate(beats))
+def label_shots(items, note=""):
+    """Mô tả từng đoạn quay bằng chữ để ghép cảnh về sau không cần gửi lại ảnh.
+
+    items: [(số thứ tự, đường dẫn ảnh giữa đoạn)]. Trả về {số thứ tự: {"desc", "product"}}.
+    """
+    content = [{"type": "text", "text": (
+        "Đây là các đoạn video shop tự quay để bán hàng (tranh, liễn, lịch, thời khóa biểu, trà...). "
+        f"Ghi chú của người quay: {note or '(không có)'}.\n"
+        "Mỗi đoạn có một ảnh giữa đoạn:")}]
+    for index, path in items:
+        content.append({"type": "text", "text": f"Đoạn {index}:"})
+        content.append(_image(path))
     content.append({"type": "text", "text": (
-        f"Kịch bản cần dựng:\n{lines}\n\n"
-        "Chọn cho mỗi cảnh một đoạn nguồn phù hợp nhất với mô tả. Một đoạn có thể dùng lại nếu không có "
-        "lựa chọn khác, nhưng ưu tiên đa dạng. Nếu không có đoạn nào hợp, chọn 'none' và mô tả cảnh cần "
-        "quay bổ sung.")})
+        "Với mỗi đoạn, viết mô tả ngắn bằng tiếng Việt (tối đa 20 từ) cho biết: có sản phẩm gì (loại, màu, cỡ nếu thấy), "
+        "góc máy (toàn cảnh, cận, từ trên xuống), hành động (tay cầm, lật, treo, bóc hộp, máy đang chạy...), "
+        "bối cảnh. Chỉ tả điều nhìn thấy, không đoán. Trường product là tên sản phẩm chính nhìn thấy, "
+        "để trống nếu không có.")})
+    schema = {
+        "type": "object",
+        "properties": {"shots": {"type": "array", "items": {
+            "type": "object",
+            "properties": {"index": {"type": "integer"}, "desc": {"type": "string"}, "product": {"type": "string"}},
+            "required": ["index", "desc", "product"], "additionalProperties": False}}},
+        "required": ["shots"], "additionalProperties": False,
+    }
+    result = _ask(content, schema, effort="low")
+    return {s["index"]: s for s in result["shots"]}
+
+
+def match_clips(beats, shots, script=None, used=None):
+    """Chọn đoạn source phù hợp cho từng cảnh.
+
+    shots: [{id, label, thumb, desc, note, length, scene}]. Đoạn đã có mô tả chữ thì chỉ gửi chữ;
+    đoạn chưa có mô tả mới gửi kèm ảnh. used: {id đoạn: số lần đã dùng ở các video trước}.
+    """
+    script, used = script or {}, used or {}
+    content = [{"type": "text", "text": "Kho đoạn video shop đã quay:"}]
+    for shot in shots:
+        line = f"{shot['id']}: {shot['desc'] or '(chưa có mô tả, xem ảnh)'} · dài {shot['length']:.0f}s"
+        if shot.get("note"):
+            line += f" · ghi chú video: {shot['note']}"
+        if used.get(shot["id"]):
+            line += f" · đã dùng {used[shot['id']]} lần ở video khác"
+        content.append({"type": "text", "text": line})
+        if not shot["desc"]:
+            content.append(_image(shot["thumb"]))
+    lines = "\n".join(
+        f"Cảnh {i} (cần ~{b.get('duration') or 3:.0f}s): {b.get('shot') or '(không mô tả)'} — lời: {b.get('voice') or '-'}"
+        for i, b in enumerate(beats))
+    content.append({"type": "text", "text": (
+        f"Kịch bản: {script.get('title', '')}. Sản phẩm: {script.get('product') or '(không rõ)'}. "
+        f"Bối cảnh: {script.get('summary', '')}\n{lines}\n\n"
+        "Chọn cho mỗi cảnh một đoạn phù hợp nhất với mô tả cảnh quay, ưu tiên đúng sản phẩm. "
+        "Khi nhiều đoạn phù hợp ngang nhau, chọn đoạn ít được dùng hơn để các video không giống nhau, "
+        "và không dùng cùng một đoạn cho hai cảnh trong cùng kịch bản nếu còn lựa chọn. "
+        "fit: 'tot' nếu đoạn đúng sản phẩm và đúng việc cần quay; 'tam' nếu chỉ dùng tạm được "
+        "(đúng sản phẩm nhưng khác góc hoặc hành động); 'khong' nếu kho không có đoạn nào hợp thì chọn 'none'. "
+        "Mục missing: mô tả cảnh cần quay bổ sung, ngắn gọn, đủ để người khác quay được.")})
     ids = [s["id"] for s in shots] + ["none"]
     schema = {
         "type": "object",
@@ -190,9 +236,10 @@ def match_clips(beats, shots):
                 "properties": {
                     "beat": {"type": "integer"},
                     "shot_id": {"type": "string", "enum": ids},
+                    "fit": {"type": "string", "enum": ["tot", "tam", "khong"]},
                     "reason": {"type": "string"},
                 },
-                "required": ["beat", "shot_id", "reason"],
+                "required": ["beat", "shot_id", "fit", "reason"],
                 "additionalProperties": False,
             }},
             "missing": {"type": "array", "items": {"type": "string"}},
@@ -200,4 +247,22 @@ def match_clips(beats, shots):
         "required": ["matches", "missing"],
         "additionalProperties": False,
     }
-    return _ask(content, schema)
+    return _ask(content, schema, effort="medium")
+
+
+def simple_match(beats, shots, used=None):
+    """Ghép đơn giản không cần AI: lần lượt chọn đoạn ít được dùng nhất, ưu tiên đoạn kế tiếp trong cùng video.
+
+    Dùng khi chưa có API key hoặc AI lỗi. Không hiểu nội dung nên mọi cảnh đều ở mức 'tam'.
+    """
+    used, matches, prev = dict(used or {}), [], None
+    for i, _ in enumerate(beats):
+        def rank(sh):
+            follows = 0 if prev and sh["id"] != prev["id"] and sh["source_id"] == prev["source_id"] \
+                and sh["start"] >= prev["end"] - 0.01 else 1
+            return (used.get(sh["id"], 0), follows, sh["source_id"], sh["start"])
+        pick = min(shots, key=rank)
+        used[pick["id"]] = used.get(pick["id"], 0) + 1
+        prev = pick
+        matches.append({"beat": i, "shot_id": pick["id"], "fit": "tam", "reason": "ghép tự động đơn giản"})
+    return {"matches": matches, "missing": []}

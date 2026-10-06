@@ -4,6 +4,7 @@ import json
 import os
 import re
 import tempfile
+import time
 
 from make_videos import probe
 
@@ -128,15 +129,57 @@ def rewrite(script_id, product, log=print):
     return store.scripts.save(new)
 
 
-def auto_match(project_id, source_ids, log=print):
-    project = store.projects.get(project_id)
+def collect_shots(source_ids):
+    """Danh sách đoạn quay (đã có mô tả nếu đã phân tích) của các video nguồn đã xử lý xong."""
     shots = []
     for sid in source_ids:
         src = store.sources.get(sid)
+        if src.get("status") != "ready":
+            continue
         for k, shot in enumerate(src.get("shots") or []):
             shots.append({"id": f"{sid}_{k}", "source_id": sid, "start": shot["start"], "end": shot["end"],
-                          "thumb": shot["thumb"],
+                          "thumb": shot["thumb"], "desc": shot.get("desc", ""), "note": src.get("note", ""),
+                          "length": shot["end"] - shot["start"], "scene": shot.get("scene"),
+                          "scene_start": shot.get("scene_start", 0.0),
+                          "scene_end": shot.get("scene_end", src["info"]["duration"]),
                           "label": f"{src.get('name', sid)} · {shot['start']:.1f}–{shot['end']:.1f}s"})
+    return shots
+
+
+def clip_from_shot(shot, reason=""):
+    return {"source_id": shot["source_id"], "start": shot["start"], "end": shot["end"],
+            "scene_start": shot["scene_start"], "scene_end": shot["scene_end"], "note": reason}
+
+
+def ensure_shot_labels(source_ids, log=print, chunk=20):
+    """Nhờ AI mô tả các đoạn quay chưa có mô tả (chạy một lần cho mỗi đoạn, kết quả được lưu lại)."""
+    todo = []
+    for sid in source_ids:
+        src = store.sources.get(sid)
+        todo += [(sid, k) for k, sh in enumerate(src.get("shots") or []) if not sh.get("desc")]
+    done = 0
+    for i in range(0, len(todo), chunk):
+        part = todo[i:i + chunk]
+        log(f"AI mô tả các đoạn quay ({done}/{len(todo)})")
+        by_source = {}
+        for sid, k in part:
+            by_source.setdefault(sid, []).append(k)
+        for sid, ks in by_source.items():
+            src = store.sources.get(sid)
+            result = ai.label_shots([(k, src["shots"][k]["thumb"]) for k in ks], src.get("note", ""))
+            for k in ks:
+                label = result.get(k)
+                if label:
+                    src["shots"][k]["desc"] = label["desc"]
+                    src["shots"][k]["product"] = label.get("product", "")
+            store.sources.save(src)
+        done += len(part)
+    return len(todo)
+
+
+def auto_match(project_id, source_ids, log=print):
+    project = store.projects.get(project_id)
+    shots = collect_shots(source_ids)
     if not shots:
         raise ValueError("Chưa có video nguồn nào đã xử lý xong")
     log("AI đang xem các đoạn video nguồn")
@@ -144,9 +187,7 @@ def auto_match(project_id, source_ids, log=print):
     by_id = {s["id"]: s for s in shots}
     for m in result["matches"]:
         if 0 <= m["beat"] < len(project["beats"]) and m["shot_id"] in by_id:
-            s = by_id[m["shot_id"]]
-            project["beats"][m["beat"]]["clip"] = {"source_id": s["source_id"], "start": s["start"],
-                                                   "end": s["end"], "note": m["reason"]}
+            project["beats"][m["beat"]]["clip"] = clip_from_shot(by_id[m["shot_id"]], m["reason"])
     project["missing"] = result["missing"]
     return store.projects.save(project)
 
@@ -199,11 +240,13 @@ def seed_weekly():
             continue
         with open(os.path.join(folder, name), encoding="utf-8") as f:
             batch = json.load(f)
-        for script in batch.get("scripts", []):
+        base = time.time() + 2  # mới hơn các kịch bản mẫu nạp ngay trước đó
+        for index, script in enumerate(batch.get("scripts", [])):
             key = script.get("key")
             if not key or key in done:
                 continue
-            store.scripts.save(dict(script))
+            # created giảm dần theo thứ tự trong file để thư viện (mới nhất lên đầu) hiện đúng thứ tự kế hoạch
+            store.scripts.save({**script, "created": base - index * 0.01})
             done.add(key)
             added += 1
     if added:

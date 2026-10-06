@@ -72,6 +72,7 @@ $("#tabs").addEventListener("click", (e) => { if (e.target.dataset.page) showPag
 async function loadScripts(selectId) {
   S.scripts = await api("GET", "/api/scripts");
   renderScriptList();
+  if (typeof renderBatchScripts === "function") renderBatchScripts();
   if (selectId) selectScript(selectId);
   if (S.scripts.some((s) => s.status === "processing")) setTimeout(() => loadScripts(), 4000);
 }
@@ -245,6 +246,7 @@ async function loadSources() {
 }
 
 function renderSources() {
+  renderBatchSources();
   $("#source-grid").innerHTML = S.sources.length ? S.sources.map((s) => `
     <div class="src">
       ${s.poster ? `<img src="${esc(s.poster)}" alt="">` : `<div class="thumb-ph" style="width:100%;height:auto;aspect-ratio:9/12;display:grid;place-items:center">${s.status === "processing" ? `<span class="spin"></span>` : ""}</div>`}
@@ -275,9 +277,17 @@ async function uploadSources(files) {
     loadSources();
   } catch (err) { toast(err.message); }
 }
+function wireDrop(zone, input) {
+  zone.addEventListener("click", () => input.click());
+  input.addEventListener("change", (e) => { uploadSources(e.target.files); e.target.value = ""; });
+  zone.addEventListener("dragover", (e) => { e.preventDefault(); zone.classList.add("over"); });
+  zone.addEventListener("dragleave", () => zone.classList.remove("over"));
+  zone.addEventListener("drop", (e) => { e.preventDefault(); zone.classList.remove("over"); uploadSources(e.dataTransfer.files); });
+}
+wireDrop($("#bt-drop"), $("#bt-file"));
 const drop = $("#drop");
-drop.addEventListener("click", () => $("#src-file").click());
 $("#src-file").addEventListener("change", (e) => { uploadSources(e.target.files); e.target.value = ""; });
+drop.addEventListener("click", () => $("#src-file").click());
 drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("over"); });
 drop.addEventListener("dragleave", () => drop.classList.remove("over"));
 drop.addEventListener("drop", (e) => { e.preventDefault(); drop.classList.remove("over"); uploadSources(e.dataTransfer.files); });
@@ -623,13 +633,222 @@ $("#set-logo").addEventListener("change", async (e) => {
 });
 $("#set-logo-del").addEventListener("click", async () => { S.settings = await api("DELETE", "/api/settings/logo"); renderSettings(); });
 
+
+// ================= TẠO HÀNG LOẠT =================
+const BT_STATUS = { pending: ["Đang chờ", ""], matching: ["Ghép cảnh", "running"], rendering: ["Đang dựng", "running"],
+  done: ["Xong", "ok"], blocked: ["Cần điền", "warn"], error: ["Lỗi", "error"] };
+const BT_RUN = { running: "Đang chạy", done: "Hoàn tất", cancelled: "Đã dừng", interrupted: "Bị ngắt", error: "Lỗi" };
+S.btSel = new Set();
+S.btChannel = "";
+S.batches = [];
+S.batchId = null;
+let btPoll;
+
+function blanksOfScript(s) {
+  return [...new Set((s.beats || []).flatMap((b) => `${b.voice || ""} ${b.text || ""}`.match(PLACEHOLDER) || []))];
+}
+
+function renderBatchSources() {
+  const box = $("#bt-sources");
+  if (!box) return;
+  box.innerHTML = S.sources.length ? S.sources.map((s) => {
+    const shots = s.shots || [], labelled = shots.filter((x) => x.desc).length;
+    return `<div class="src-row" data-id="${s.id}">
+      ${s.poster ? `<img src="${esc(s.poster)}" alt="">` : `<div class="thumb-ph" style="width:36px;height:62px"></div>`}
+      <div class="grow"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.name)}</div>
+        <div class="row small muted" style="gap:6px">
+          ${s.status === "processing" ? `<span class="chip processing">Đang xử lý</span>` : ""}
+          ${s.status === "error" ? `<span class="chip error" title="${esc(s.error)}">Lỗi</span>` : ""}
+          ${s.info ? `<span>${fmt(s.info.duration)} · ${shots.length} đoạn${labelled ? ` · AI đã mô tả ${labelled}` : ""}</span>` : ""}</div></div>
+      <input type="text" data-note="${s.id}" value="${esc(s.note || "")}" placeholder="Ghi chú sản phẩm: VD lịch bloc 14,5×20,5">
+      <button class="btn ghost sm" data-del="${s.id}" title="Xoá">✕</button></div>`;
+  }).join("") : `<div class="empty small">Chưa có video nguồn. Thả video vào khung trên.</div>`;
+  renderBatchEstimate();
+}
+$("#bt-sources").addEventListener("input", (e) => {
+  const id = e.target.dataset.note;
+  if (!id) return;
+  clearTimeout(e.target._t);
+  e.target._t = setTimeout(() => {
+    api("PUT", `/api/sources/${id}`, { note: e.target.value }).then((src) => {
+      const i = S.sources.findIndex((x) => x.id === id); if (i >= 0) S.sources[i] = src;
+    }).catch((err) => toast(err.message));
+  }, 600);
+});
+$("#bt-sources").addEventListener("click", async (e) => {
+  const id = e.target.dataset.del;
+  if (!id || !confirm("Xoá video nguồn này?")) return;
+  await api("DELETE", `/api/sources/${id}`); loadSources();
+});
+
+function btVisibleScripts() {
+  const q = $("#bt-search").value;
+  return S.scripts.filter((s) => s.status === "ready" && (s.beats || []).length && scriptMatches(s, q)
+    && (!S.btChannel || s.channel === S.btChannel));
+}
+
+function renderBatchScripts() {
+  const channels = [...new Set(S.scripts.map((s) => s.channel).filter(Boolean))];
+  $("#bt-channels").innerHTML = ["", ...channels].map((c) =>
+    `<button class="chip ${S.btChannel === c ? "on" : ""}" data-ch="${esc(c)}">${c ? esc(c) : "Tất cả kênh"}</button>`).join("");
+  const list = btVisibleScripts();
+  $("#bt-scripts").innerHTML = list.length ? list.map((s) => {
+    const blanks = blanksOfScript(s);
+    return `<label class="item" data-id="${s.id}"><input type="checkbox" ${S.btSel.has(s.id) ? "checked" : ""}>
+      <div class="grow"><div class="t">${esc(s.title)}</div>
+        <div class="small muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.product || s.summary || "")}</div></div>
+      ${blanks.length ? `<span class="chip warn" title="${esc(blanks.join(" "))}">Còn ${blanks.length} ô trống</span>` : ""}
+      <span class="chip ${s.origin}">${s.channel ? esc(s.channel) + " · " : ""}${ORIGIN[s.origin] || ""}</span></label>`;
+  }).join("") : `<div class="empty small">Không có kịch bản khớp</div>`;
+  renderBatchEstimate();
+}
+
+function renderBatchEstimate() {
+  const n = S.btSel.size;
+  const blocked = [...S.btSel].map((id) => S.scripts.find((s) => s.id === id)).filter((s) => s && blanksOfScript(s).length).length;
+  const ready = S.sources.filter((s) => s.status === "ready").length;
+  $("#bt-selcount").textContent = n ? `· đã chọn ${n}` : "";
+  const parts = [];
+  if (n) parts.push(`<b>${n}</b> video, dựng khoảng <b>${Math.max(1, Math.round(n * 0.8))}–${Math.max(2, n * 2)} phút</b> tuỳ máy. Có thể để máy chạy và làm việc khác.`);
+  else parts.push("Chọn ít nhất một kịch bản ở Bước 2.");
+  if (blocked) parts.push(`${blocked} kịch bản còn ô <code>[kiểm tra]</code> trong lời đọc sẽ được giữ lại, sửa xong bấm Tiếp tục.`);
+  if (!ready) parts.push("Chưa có video nguồn nào xử lý xong.");
+  if (!S.settings.ai_ready) parts.push("Chưa có Anthropic API key: app vẫn tạo được video nhưng ghép cảnh đơn giản, không hiểu nội dung video.");
+  $("#bt-estimate").innerHTML = parts.join("<br>");
+  const running = S.batches.some((b) => b.status === "running");
+  $("#bt-start").disabled = !n || !ready || running;
+  $("#bt-start").textContent = running ? "Đang có một đợt chạy…" : n ? `Bắt đầu tạo ${n} video` : "Bắt đầu tạo video";
+}
+
+$("#bt-search").addEventListener("input", renderBatchScripts);
+$("#bt-channels").addEventListener("click", (e) => { if (e.target.dataset.ch !== undefined) { S.btChannel = e.target.dataset.ch; renderBatchScripts(); } });
+$("#bt-scripts").addEventListener("change", (e) => {
+  const id = e.target.closest(".item").dataset.id;
+  e.target.checked ? S.btSel.add(id) : S.btSel.delete(id);
+  renderBatchEstimate();
+});
+$("#bt-all").addEventListener("click", () => { btVisibleScripts().forEach((s) => S.btSel.add(s.id)); renderBatchScripts(); });
+$("#bt-none").addEventListener("click", () => { S.btSel.clear(); renderBatchScripts(); });
+
+$("#bt-start").addEventListener("click", async () => {
+  $("#bt-err").textContent = "";
+  const order = S.scripts.filter((s) => S.btSel.has(s.id)).map((s) => s.id);
+  try {
+    const b = await api("POST", "/api/batches", { script_ids: order, options: { voice_mode: $("#bt-voice").value, music: $("#bt-music").value } });
+    S.btSel.clear(); renderBatchScripts();
+    await loadBatches(b.id);
+    $("#bt-run").scrollIntoView({ behavior: "smooth" });
+  } catch (err) { $("#bt-err").textContent = err.message; }
+});
+
+async function loadBatches(selectId) {
+  S.batches = await api("GET", "/api/batches");
+  if (selectId) S.batchId = selectId;
+  else if (!S.batchId || !S.batches.some((b) => b.id === S.batchId)) {
+    const running = S.batches.find((b) => b.status === "running");
+    S.batchId = (running || S.batches[0] || {}).id || null;
+  }
+  renderBatchRun();
+  renderBatchEstimate();
+  clearTimeout(btPoll);
+  if (S.batches.some((b) => b.status === "running")) btPoll = setTimeout(pollBatch, 2500);
+}
+
+async function pollBatch() {
+  try {
+    const running = S.batches.find((b) => b.status === "running");
+    if (running) {
+      const fresh = await api("GET", `/api/batches/${running.id}`);
+      S.batches[S.batches.findIndex((b) => b.id === fresh.id)] = fresh;
+      if (fresh.status !== "running") { await loadBatches(); loadProjects(); return; }
+      renderBatchRun();
+    }
+  } catch (e) { /* mạng chập chờn: thử lại lần sau */ }
+  btPoll = setTimeout(pollBatch, 2500);
+}
+
+function itemHtml(it, i, b) {
+  const [label, cls] = BT_STATUS[it.status] || [it.status, ""];
+  const q = it.status === "done" ? (it.quality === "ok" ? `<span class="chip ok">Ghép cảnh tốt</span>` : `<span class="chip warn" title="Có cảnh chưa thật khớp hoặc dùng tạm, nên xem video và đổi cảnh nếu cần">Nên xem lại</span>`) : "";
+  const open = S.openVideos && S.openVideos.has(`${b.id}:${i}`);
+  return `<div class="run-item" data-i="${i}">
+    <div class="row" style="gap:8px">
+      <span class="chip ${cls}">${label}</span>${q}
+      <div class="grow"><b>${esc(it.title)}</b>
+        <div class="small ${it.status === "error" || it.status === "blocked" ? "err" : "muted"}">${esc(it.status === "done" ? "" : it.message)}</div></div>
+      ${it.status === "done" ? `<button class="btn sm" data-act="view">${open ? "Ẩn video" : "Xem"}</button>
+        <a class="btn sm" href="${esc(it.render.path)}" download>Tải về</a>` : ""}
+      ${it.project_id ? `<button class="btn sm" data-act="project">Mở để chỉnh</button>` : ""}
+      ${it.status === "blocked" ? `<button class="btn sm" data-act="script">Sửa kịch bản</button>` : ""}
+    </div>
+    ${(it.warnings || []).length ? `<div class="small" style="color:var(--wn);margin-top:4px">${it.warnings.map(esc).join("<br>")}</div>` : ""}
+    ${open ? `<video src="${esc(it.render.path)}" controls playsinline preload="metadata"></video>` : ""}</div>`;
+}
+
+function renderBatchRun() {
+  const box = $("#bt-run");
+  const b = S.batches.find((x) => x.id === S.batchId);
+  if (!b) { box.innerHTML = ""; return; }
+  S.openVideos = S.openVideos || new Set();
+  const total = b.items.length;
+  const finished = b.items.filter((i) => ["done", "blocked", "error"].includes(i.status)).length;
+  const done = b.items.filter((i) => i.status === "done").length;
+  const stuck = b.items.filter((i) => ["blocked", "error"].includes(i.status)).length;
+  const head = `
+    <div class="row"><h3 class="grow">${esc(b.name)} <span class="chip ${b.status === "running" ? "running" : b.status === "done" ? "ok" : "warn"}">${BT_RUN[b.status] || b.status}</span></h3>
+      ${S.batches.length > 1 ? `<select id="bt-pick" style="width:auto">${S.batches.map((x) => `<option value="${x.id}" ${x.id === b.id ? "selected" : ""}>${esc(x.name)} (${x.items.filter((i) => i.status === "done").length}/${x.items.length})</option>`).join("")}</select>` : ""}
+      ${b.status === "running" ? `<button class="btn" data-act="cancel">Dừng</button>` : ""}
+      ${b.status !== "running" && (b.items.some((i) => ["pending", "blocked", "error"].includes(i.status))) ? `<button class="btn primary" data-act="resume">Tiếp tục${stuck ? " (kiểm tra lại các video bị giữ)" : ""}</button>` : ""}
+      ${done ? `<a class="btn primary" href="/api/batches/${b.id}/zip" download>Tải tất cả (${done} video, ZIP)</a>` : ""}
+      ${b.status !== "running" ? `<button class="btn ghost" data-act="delete" title="Xoá đợt này">✕</button>` : ""}</div>
+    <div class="bar"><i style="width:${total ? (finished / total) * 100 : 0}%"></i></div>
+    <div class="small muted">${finished}/${total} · ${done} video xong${stuck ? ` · ${stuck} cần xử lý` : ""} · ${esc(b.message || "")}</div>
+    ${(b.notes || []).map((n) => `<div class="warn">${esc(n)}</div>`).join("")}
+    ${(b.missing || []).length ? `<div class="warn"><b>Cần quay thêm để video đẹp hơn:</b><ul style="margin:6px 0 0">${b.missing.map((m) => `<li>${esc(m.text)} <span class="muted">(cho ${m.codes.map(esc).join(", ")})</span></li>`).join("")}</ul></div>` : ""}`;
+  let host = $("#bt-run-card");
+  if (!host || host.dataset.id !== b.id) {
+    box.innerHTML = `<div class="card stack" id="bt-run-card" data-id="${b.id}"><div id="bt-run-head" class="stack"></div><div class="stack" id="bt-items"></div></div>`;
+    host = $("#bt-run-card");
+  }
+  $("#bt-run-head").innerHTML = head;
+  // chỉ thay hàng nào thay đổi để video đang xem không bị tải lại
+  const list = $("#bt-items");
+  b.items.forEach((it, i) => {
+    const html = itemHtml(it, i, b);
+    let row = list.children[i];
+    if (!row) { list.insertAdjacentHTML("beforeend", html); return; }
+    if (row.dataset.html !== html) { row.outerHTML = html; row = list.children[i]; }
+    row.dataset.html = html;
+  });
+  [...list.children].forEach((row, i) => { row.dataset.html = itemHtml(b.items[i], i, b); });
+}
+
+$("#bt-run").addEventListener("change", (e) => { if (e.target.id === "bt-pick") { S.batchId = e.target.value; $("#bt-run").innerHTML = ""; renderBatchRun(); } });
+$("#bt-run").addEventListener("click", async (e) => {
+  const btn = e.target.closest("[data-act]");
+  if (!btn) return;
+  const b = S.batches.find((x) => x.id === S.batchId);
+  const row = btn.closest(".run-item");
+  const it = row ? b.items[+row.dataset.i] : null;
+  try {
+    if (btn.dataset.act === "cancel") { await api("POST", `/api/batches/${b.id}/cancel`); toast("Sẽ dừng sau khi dựng xong video đang chạy"); }
+    else if (btn.dataset.act === "resume") { await api("POST", `/api/batches/${b.id}/resume`); await loadScripts(); await loadBatches(b.id); }
+    else if (btn.dataset.act === "delete") { if (!confirm("Xoá đợt này? Các video đã xuất vẫn còn trong từng dự án.")) return; await api("DELETE", `/api/batches/${b.id}`); S.batchId = null; await loadBatches(); }
+    else if (btn.dataset.act === "view") { const k = `${b.id}:${row.dataset.i}`; S.openVideos.has(k) ? S.openVideos.delete(k) : S.openVideos.add(k); renderBatchRun(); }
+    else if (btn.dataset.act === "project") { await loadProjects(); await selectProject(it.project_id); showPage("studio"); }
+    else if (btn.dataset.act === "script") { await loadScripts(it.script_id); showPage("scripts"); }
+  } catch (err) { toast(err.message); }
+});
+
 // ================= KHỞI ĐỘNG =================
 (async function init() {
   const st = await api("GET", "/api/state");
   Object.assign(S, { settings: st.settings, voices: st.voices, providers: st.providers });
   renderSettings();
   await Promise.all([loadScripts(), loadSources(), loadProjects()]);
+  renderBatchScripts();
+  await loadBatches();
   const page = location.hash.slice(1);
-  if (["scripts", "sources", "studio", "settings"].includes(page)) showPage(page);
+  if (["batch", "scripts", "sources", "studio", "settings"].includes(page)) showPage(page);
   if (!S.settings.ai_ready) toast("Chưa có Anthropic API key: nhập trong Cài đặt để dùng các tính năng AI");
 })();

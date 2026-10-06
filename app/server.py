@@ -16,7 +16,7 @@ from fastapi import Body, FastAPI, File, Form, HTTPException, UploadFile  # noqa
 from fastapi.responses import FileResponse  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
-from . import assemble, jobs, library, media, store, tts  # noqa: E402
+from . import assemble, batch, jobs, library, media, store, tts  # noqa: E402
 
 app = FastAPI(title="TikTok Video Studio")
 STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
@@ -68,6 +68,7 @@ def _save_upload(upload, path):
 def startup():
     library.seed_templates()
     library.seed_weekly()
+    batch.recover()
 
 
 @app.get("/")
@@ -133,6 +134,16 @@ def upload_sources(files: List[UploadFile] = File(...)):
         item["job"] = jobs.submit("source", library.process_source, item["id"], ref=item["id"])["id"]
         created.append(item)
     return urlify(created)
+
+
+@app.put("/api/sources/{source_id}")
+def update_source(source_id: str, data: dict = Body(...)):
+    """Chỉ cho sửa tên và ghi chú (sản phẩm, bối cảnh) của video nguồn."""
+    item = _get(store.sources, source_id)
+    for key in ("name", "note"):
+        if key in data:
+            item[key] = str(data[key])[:300]
+    return urlify(store.sources.save(item))
 
 
 @app.delete("/api/sources/{source_id}")
@@ -296,3 +307,56 @@ def get_job(job_id: str):
     if not job:
         raise HTTPException(404, "Không tìm thấy tác vụ")
     return urlify(job)
+
+
+# ---------- Tạo video hàng loạt ----------
+
+@app.get("/api/batches")
+def list_batches():
+    return urlify(store.batches.list())
+
+
+@app.post("/api/batches")
+def create_batch(data: dict = Body(...)):
+    try:
+        return urlify(batch.create(data.get("script_ids") or [], data.get("options")))
+    except ValueError as err:
+        raise HTTPException(409, str(err)) from None
+
+
+@app.get("/api/batches/{batch_id}")
+def get_batch(batch_id: str):
+    return urlify(_get(store.batches, batch_id))
+
+
+@app.post("/api/batches/{batch_id}/cancel")
+def cancel_batch(batch_id: str):
+    _get(store.batches, batch_id)
+    batch.cancel(batch_id)
+    return {"ok": True}
+
+
+@app.post("/api/batches/{batch_id}/resume")
+def resume_batch(batch_id: str):
+    _get(store.batches, batch_id)
+    try:
+        return urlify(batch.resume(batch_id))
+    except ValueError as err:
+        raise HTTPException(409, str(err)) from None
+
+
+@app.get("/api/batches/{batch_id}/zip")
+def zip_batch(batch_id: str):
+    _get(store.batches, batch_id)
+    return FileResponse(batch.build_zip(batch_id), media_type="application/zip",
+                        filename=f"video_{batch_id}.zip")
+
+
+@app.delete("/api/batches/{batch_id}")
+def delete_batch(batch_id: str):
+    b = _get(store.batches, batch_id)
+    if b["status"] == "running":
+        raise HTTPException(409, "Đợt đang chạy, bấm Dừng trước")
+    store.batches.delete(batch_id)
+    shutil.rmtree(os.path.join(store.DATA_DIR, "batches", batch_id), ignore_errors=True)
+    return {"ok": True}
