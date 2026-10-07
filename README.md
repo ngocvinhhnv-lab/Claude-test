@@ -44,6 +44,16 @@ Tiến độ lưu trong `data/batches`, đóng trình duyệt hay tắt app đ�
 - Các đoạn có phụ đề cháy sẵn không phù hợp được loại trước khi viết.
 - Kịch bản mới nằm trong thư viện với nhãn **Từ video của bạn**, mở ở tab **1. Kịch bản** để sửa lời, hoặc bấm **Dựng video từ kịch bản này** (các cảnh đã có đoạn, chỉ cần xuất).
 
+### Video quay bằng iPhone (.MOV) và các định dạng khác
+
+App đọc được **.MOV** (kể cả viết hoa `.MOV`), **.MP4, .M4V, .MKV, .AVI, .WEBM, .3GP, .3G2, .MTS, .M2TS, .MPG, .MPEG, .WMV, .FLV**. Video iPhone HDR (HLG) tự được đổi màu về SDR, video quay dọc tự xoay đúng chiều, file có thêm track âm thanh phụ vẫn đọc bình thường.
+
+- **Hộp chọn file khai rõ từng đuôi** (không chỉ "video/*" như trước): Windows hay ẩn file `.mov` khi chỉ khai kiểu chung, nên trước đây có máy không thấy file iPhone trong hộp chọn.
+- **Tải từng file một, có phần trăm** (thanh trên cùng hiện `2/16 · IMG_1342.MOV (765 MB) · 40%`). File iPhone nặng cả trăm MB, tải gộp một lần mà đứt giữa chừng là mất sạch; tải riêng thì file nào lỗi chỉ mất file đó, các file còn lại vẫn vào.
+- **File không phải video** (ảnh, Word, PDF…) bị bỏ qua và báo tên file; nếu vẫn gửi lên máy chủ thì bị từ chối kèm danh sách đuôi hợp lệ.
+- **File hỏng hoặc chép dở** từ điện thoại không làm treo app nữa: video đó hiện nhãn **Lỗi** kèm lý do ngay trong danh sách (trước đây kẹt mãi ở "Đang xử lý"). Chép lại file rồi thả lại.
+- **Video 4K nặng chạy nhanh hơn**: dò chuyển cảnh ở khổ nhỏ, làm bản xem thử 30 khung/giây, và video HDR được thu nhỏ **trước** khi đổi màu (đổi màu ở khổ 4K rất chậm), dựng nhanh gần gấp đôi với hình giống hệt.
+
 ### Cập nhật thư viện kịch bản
 
 Ở tab **1. Kịch bản** (hoặc nút **+ Nhập kịch bản mới** ở tab Tạo hàng loạt), thẻ **Nhập kịch bản từ file hoặc link**: upload Word, PDF, Excel, HTML, CSV, TXT, MD, JSON, dán link, hoặc dán nội dung. AI tự tách từng kịch bản thành các cảnh. Kịch bản trùng mã được **cập nhật**, không nhân đôi. Lưu ý:

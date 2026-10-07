@@ -9,6 +9,18 @@ from .store import data_path
 
 MAX_SHOTS = 60
 
+# Đuôi file video nhận được. iPhone quay ra .MOV (có khi viết hoa); Android và máy ảnh hay ra .MP4, .3GP, .MTS.
+# Hộp chọn file chỉ khai "video/*" thì Windows hay ẩn file .mov, nên khai rõ từng đuôi.
+VIDEO_EXT = (".mov", ".mp4", ".m4v", ".mkv", ".avi", ".webm", ".3gp", ".3g2", ".mts", ".m2ts", ".mpg", ".mpeg",
+             ".wmv", ".flv")
+SCENE_WIDTH = 320     # dò chuyển cảnh ở khổ nhỏ cho nhanh, video 4K của iPhone rất nặng
+PROXY_FPS = 30        # bản xem thử không cần 60 khung/giây
+
+
+def is_video_name(name, content_type=""):
+    """File này có phải video không: theo đuôi (không phân biệt hoa thường), hoặc trình duyệt báo video/*."""
+    return os.path.splitext(name or "")[1].lower() in VIDEO_EXT or str(content_type or "").startswith("video/")
+
 
 def _run(cmd):
     result = subprocess.run(cmd, capture_output=True, text=True)
@@ -17,7 +29,8 @@ def _run(cmd):
 
 
 def _vf(info, extra):
-    return (TONEMAP + "," if info["hdr"] else "") + extra
+    """Chuỗi lọc hình. Video HDR được thu nhỏ trước rồi mới đổi màu, vì đổi màu ở khổ 4K rất chậm."""
+    return extra + ("," + TONEMAP if info["hdr"] else "")
 
 
 def grab_frame(path, info, t, out, width=320):
@@ -47,7 +60,7 @@ def shot_strip(path, info, start, end, out, width=320):
 def make_proxy(path, info, out):
     """Bản H.264 nhẹ để xem trên trình duyệt (video iPhone HEVC không phát được trên Chrome)."""
     _run([FFMPEG, "-hide_banner", "-loglevel", "error", "-y", "-i", path,
-          "-vf", _vf(info, "scale='if(gt(iw,ih),-2,540)':'if(gt(iw,ih),540,-2)'"),
+          "-vf", _vf(info, f"scale='if(gt(iw,ih),-2,540)':'if(gt(iw,ih),540,-2)',fps={PROXY_FPS}"),
           "-map", "0:v:0", "-map", "0:a:0?", "-c:v", "libx264", "-preset", "veryfast",
           "-crf", "28", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "96k",
           "-movflags", "+faststart", out])
@@ -57,7 +70,7 @@ def make_proxy(path, info, out):
 def split_shots(path, info):
     """Chia video thành các đoạn ngắn theo chuyển cảnh; cảnh dài được chia nhỏ ~3 giây."""
     duration = info["duration"]
-    cuts = [0.0] + [t for t in detect_scenes(path, 0.3) if 0.5 < t < duration - 0.5] + [duration]
+    cuts = [0.0] + [t for t in detect_scenes(path, 0.3, SCENE_WIDTH) if 0.5 < t < duration - 0.5] + [duration]
     step = max(3.0, duration / MAX_SHOTS)
     shots = []
     for scene, (start, end) in enumerate(zip(cuts, cuts[1:])):
@@ -91,7 +104,7 @@ def ingest_source(item):
 def sample_frames(path, info, out_dir, max_frames=24, width=384):
     """Lấy khung hình mẫu để AI đọc nội dung: tại các điểm chuyển cảnh và rải đều mỗi giây."""
     duration = info["duration"]
-    scenes = detect_scenes(path, 0.3)
+    scenes = detect_scenes(path, 0.3, SCENE_WIDTH)
     times = sorted(set([round(t + 0.2, 1) for t in scenes if t < duration - 0.3]
                        + [round(t * 1.0, 1) for t in range(int(duration) + 1)]))
     if len(times) > max_frames:

@@ -26,7 +26,7 @@ def submit(kind, fn, *args, ref=None):
             job["result"] = fn(*args, log=log)
             job["status"] = "done"
             job["message"] = "Xong"
-        except Exception as err:  # báo lỗi lên giao diện thay vì làm sập luồng nền
+        except (Exception, SystemExit) as err:  # báo lỗi lên giao diện thay vì làm tác vụ treo mãi ở "Đang chạy"
             job["status"] = "error"
             job["error"] = str(err) or err.__class__.__name__
             job["message"] = "Lỗi"

@@ -128,7 +128,7 @@ COLORS = [
 @app.get("/api/state")
 def state():
     return {"settings": public_settings(), "voices": tts.VOICES, "providers": tts.PROVIDER_NAMES,
-            "jobs": jobs.active(), "version": __version__, "colors": COLORS,
+            "jobs": jobs.active(), "version": __version__, "colors": COLORS, "video_ext": list(media.VIDEO_EXT),
             "fonts": [{"family": f["family"], "recommended": f["recommended"]} for f in fonts.system_fonts()],
             "music": urlify(library.music_list()),
             "ffmpeg": {"path": make_videos.FFMPEG, "problems": make_videos.ffmpeg_problems()}}
@@ -192,6 +192,10 @@ def list_sources():
 
 @app.post("/api/sources")
 def upload_sources(files: List[UploadFile] = File(...)):
+    for upload in files:
+        if not media.is_video_name(upload.filename, upload.content_type):
+            raise HTTPException(400, f"{upload.filename or 'File'} không phải video. Nhận các đuôi: "
+                                     + ", ".join(e.lstrip(".").upper() for e in media.VIDEO_EXT) + ".")
     created = []
     for upload in files:
         item = store.sources.save({"name": upload.filename, "status": "processing"})

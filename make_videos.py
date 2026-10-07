@@ -119,14 +119,19 @@ def fmt_time(seconds):
     return f"{int(m):02d}:{s:05.2f}"
 
 
+class ProbeError(RuntimeError):
+    """ffmpeg không đọc được file (hỏng, chép dở dang, hoặc không phải video)."""
+
+
 def probe(path):
     """Lấy thời lượng, kích thước và việc có âm thanh hay không."""
     out = subprocess.run([FFMPEG, "-hide_banner", "-i", path],
                          capture_output=True, text=True).stderr
     dur = re.search(r"Duration: (\d+):(\d+):([\d.]+)", out)
     size = re.search(r"Video: .*?(\d{2,5})x(\d{2,5})", out)
-    if not dur and not size:
-        sys.exit(f"Không đọc được file: {path}\n{out}")
+    if not dur or not size:
+        raise ProbeError(f"Không đọc được video trong file {os.path.basename(path)}. File có thể bị hỏng, "
+                         "chép chưa xong từ điện thoại, hoặc không phải video.")
     if size and re.search(r"rotation of -?90", out):
         size = (None, size[2], size[1])  # video quay dọc: ffmpeg tự xoay khi xuất
     return {
@@ -313,15 +318,38 @@ def probe_cached(path):
     return _PROBE_CACHE[key]
 
 
-def crop_filter(crop):
-    """Cắt bỏ một dải trên/dưới khung hình (để bỏ chữ cháy sẵn của bản dựng cũ)."""
+def crop_bands(crop):
+    """(dải trên, dải dưới) cần cắt, tính theo tỉ lệ chiều cao khung hình."""
     top = max(0.0, min(0.4, float((crop or {}).get("top", 0) or 0)))
     bottom = max(0.0, min(0.4, float((crop or {}).get("bottom", 0) or 0)))
+    return top, bottom
+
+
+def crop_filter(crop):
+    """Cắt bỏ một dải trên/dưới khung hình (để bỏ chữ cháy sẵn của bản dựng cũ)."""
+    top, bottom = crop_bands(crop)
     if not top and not bottom:
         return ""
     keep = max(0.3, 1.0 - top - bottom)
     # trunc(.../2)*2: giữ kích thước chẵn, nếu không libx264 báo lỗi
     return f",crop=iw:trunc(ih*{keep:.4f}/2)*2:0:trunc(ih*{top:.4f}/2)*2"
+
+
+def hdr_prescale(sinfo, w, h, fit, crop=None):
+    """Thu nhỏ video HDR về đúng khổ cần dùng TRƯỚC khi đổi màu.
+
+    Đổi màu HDR làm việc ở số thực 32 bit cho từng điểm ảnh nên video 4K cực chậm; thu nhỏ trước thì
+    nhanh hơn nhiều lần mà hình xuất ra giống hệt vì dù sao cũng phải thu nhỏ về khung đích.
+    """
+    iw, ih = sinfo.get("width"), sinfo.get("height")
+    if not iw or not ih:
+        return ""
+    top, bottom = crop_bands(crop)
+    keep = max(0.3, 1.0 - top - bottom)       # phần chiều cao còn lại sau khi cắt dải chữ cũ
+    scale = max(w / iw, h / (ih * keep)) if fit == "crop" else min(w / iw, h / ih)
+    if scale >= 0.95:
+        return ""
+    return f"scale={max(2, round(iw * scale / 2) * 2)}:{max(2, round(ih * scale / 2) * 2)}:flags=bicubic,"
 
 
 def clip_segments(source, info, clips):
@@ -374,7 +402,8 @@ def render(source, info, opts, ratio, out_path, tmpdir):
         # Đoạn đã cắt bỏ dải chữ cũ thì phóng cho đầy khung, không để viền mờ lộ ra chỗ vừa cắt.
         fit = "crop" if crop_filter(crop) else opts["fit"]
         ff, _, _ = frame_filter(ratio, fit, first["width"], first["height"], tag=str(i))
-        vf = (f"[{i}:v]{TONEMAP + ',' if sinfo['hdr'] else ''}setpts=(PTS-STARTPTS)/{sp},fps={opts['fps']}"
+        pre = hdr_prescale(sinfo, w, h, fit, crop) if sinfo["hdr"] else ""
+        vf = (f"[{i}:v]{pre}{TONEMAP + ',' if sinfo['hdr'] else ''}setpts=(PTS-STARTPTS)/{sp},fps={opts['fps']}"
               + crop_filter(crop))
         if pad > 0:
             vf += f",tpad=stop_mode=clone:stop_duration={pad:.3f}"
@@ -482,10 +511,15 @@ def render(source, info, opts, ratio, out_path, tmpdir):
     return total
 
 
-def detect_scenes(source, threshold):
-    """Trả về danh sách mốc chuyển cảnh (giây)."""
+def detect_scenes(source, threshold, width=None):
+    """Trả về danh sách mốc chuyển cảnh (giây).
+
+    width: thu nhỏ hình trước khi so sánh. Video 4K của iPhone nặng nên dò ở khổ nhỏ nhanh hơn nhiều
+    mà vẫn bắt đúng các điểm cắt.
+    """
+    shrink = f"scale={int(width)}:-2:flags=fast_bilinear," if width else ""
     cmd = [FFMPEG, "-hide_banner", "-i", source, "-an",
-           "-vf", f"select='gt(scene,{threshold})',showinfo", "-f", "null", "-"]
+           "-vf", f"{shrink}select='gt(scene,{threshold})',showinfo", "-f", "null", "-"]
     out = subprocess.run(cmd, capture_output=True, text=True).stderr
     return [float(t) for t in re.findall(r"pts_time:([\d.]+)", out)]
 
@@ -637,13 +671,19 @@ def main():
     else:
         if not (args.every or args.scenes):
             p.error("với video gốc, cần chọn --every N hoặc --scenes (hoặc dùng file .json)")
-        config = build_jobs_from_args(args)
+        try:
+            config = build_jobs_from_args(args)
+        except ProbeError as err:
+            sys.exit(str(err))
         base_dir = os.getcwd()
 
     if args.print_config:
         print(json.dumps(config, ensure_ascii=False, indent=2))
         return
-    run(config, base_dir, dry_run=args.dry_run)
+    try:
+        run(config, base_dir, dry_run=args.dry_run)
+    except ProbeError as err:
+        sys.exit(str(err))
 
 
 if __name__ == "__main__":

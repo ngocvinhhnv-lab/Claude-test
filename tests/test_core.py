@@ -18,7 +18,7 @@ os.environ["VIDEO_APP_CONFIG"] = os.path.join(_TMP, "config")
 sys.path.insert(0, ROOT)
 
 import make_videos  # noqa: E402
-from app import ai, assemble, batch, docs, fonts, library, store  # noqa: E402
+from app import ai, assemble, batch, docs, fonts, jobs, library, media, store  # noqa: E402
 
 
 def load_tool(name):
@@ -592,6 +592,139 @@ class CutQuality(unittest.TestCase):
                   "duration": 3, "shot_id": "s_0"}] * 3
         plan = batch.plan_beats({"title": "T"}, beats, [self.shot(20.0)], {}, False, False, review=False)
         self.assertFalse(any("lời dài hơn" in w for w in plan["warnings"]))
+
+
+class MovFiles(unittest.TestCase):
+    """Video quay bằng iPhone (.MOV, có khi viết hoa, nặng cả trăm MB) phải chọn được, tải được và báo lỗi rõ khi hỏng."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.folder = tempfile.mkdtemp()
+        cls.good = os.path.join(cls.folder, "IMG_1327.MOV")
+        make_videos_run = [make_videos.FFMPEG, "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi",
+                           "-i", "testsrc2=size=320x568:duration=3:rate=24", "-f", "lavfi",
+                           "-i", "sine=frequency=440:duration=3", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                           "-c:a", "aac", "-shortest", "-f", "mov", cls.good]
+        import subprocess
+        subprocess.run(make_videos_run, check=True)
+        cls.broken = os.path.join(cls.folder, "IMG_1329.MOV")
+        with open(cls.good, "rb") as f, open(cls.broken, "wb") as out:
+            out.write(f.read(4000))   # chép dở dang từ điện thoại
+
+    def client(self):
+        try:
+            from starlette.testclient import TestClient
+        except Exception:
+            self.skipTest("cần httpx để thử máy chủ web: pip install httpx")
+        from app.server import app
+        return TestClient(app)
+
+    def wait(self, client, item, seconds=60):
+        import time
+        for _ in range(seconds * 4):
+            job = jobs.get(item["job"])
+            if job["status"] != "running":
+                break
+            time.sleep(0.25)
+        return job, next(x for x in client.get("/api/sources").json() if x["id"] == item["id"])
+
+    def test_extension_check_ignores_case_and_falls_back_to_the_browser_type(self):
+        for name in ("IMG_1327.MOV", "a.mov", "b.Mp4", "c.3GP", "d.MTS"):
+            self.assertTrue(media.is_video_name(name), name)
+        self.assertTrue(media.is_video_name("khongduoi", "video/quicktime"))
+        for name in ("a.jpg", "b.pdf", "c.docx", ""):
+            self.assertFalse(media.is_video_name(name), name)
+
+    def test_every_file_picker_lists_the_extensions_explicitly(self):
+        # Windows hay ẩn .mov khi chỉ khai video/*, nên khai rõ từng đuôi, cả viết hoa
+        with open(os.path.join(ROOT, "app", "static", "index.html"), encoding="utf-8") as f:
+            html = f.read()
+        for field in ('id="bt-file"', 'id="src-file"', 'id="imp-file"'):
+            tag = html[html.index(field):].split(">", 1)[0]
+            for ext in media.VIDEO_EXT:
+                self.assertIn(ext + ",", tag + ",", f"{field} thiếu {ext}")
+                self.assertIn(ext.upper(), tag, f"{field} thiếu {ext.upper()}")
+
+    def test_server_advertises_the_same_list_to_the_page(self):
+        with self.client() as client:
+            self.assertEqual(client.get("/api/state").json()["video_ext"], list(media.VIDEO_EXT))
+
+    def test_an_uppercase_mov_uploads_and_becomes_ready(self):
+        with self.client() as client, open(self.good, "rb") as f:
+            res = client.post("/api/sources", files=[("files", ("IMG_1327.MOV", f, "video/quicktime"))])
+            self.assertEqual(res.status_code, 200)
+            job, source = self.wait(client, res.json()[0])
+        self.assertEqual(job["status"], "done", job.get("error"))
+        self.assertEqual(source["status"], "ready")
+        self.assertGreater(len(source["shots"]), 0)
+        self.assertEqual((source["info"]["width"], source["info"]["height"]), (320, 568))
+
+    def test_a_half_copied_mov_reports_an_error_instead_of_hanging(self):
+        with self.client() as client, open(self.broken, "rb") as f:
+            res = client.post("/api/sources", files=[("files", ("IMG_1329.MOV", f, "video/quicktime"))])
+            job, source = self.wait(client, res.json()[0])
+        self.assertEqual(job["status"], "error")           # trước đây treo mãi ở "running"
+        self.assertEqual(source["status"], "error")
+        self.assertIn("không đọc được video", source["error"].lower())
+
+    def test_pictures_and_documents_are_refused_up_front(self):
+        with self.client() as client:
+            res = client.post("/api/sources", files=[("files", ("anh.jpg", b"x", "image/jpeg"))])
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("không phải video", res.json()["detail"])
+        self.assertIn("MOV", res.json()["detail"])
+
+    def test_unreadable_media_raises_an_error_not_a_process_exit(self):
+        with self.assertRaises(make_videos.ProbeError):
+            make_videos.probe(self.broken)
+
+    def test_a_background_job_that_exits_is_reported_not_left_running(self):
+        def quits(log=print):
+            raise SystemExit("thoát giữa chừng")
+        job = jobs.submit("test", quits)
+        import time
+        for _ in range(40):
+            if job["status"] != "running":
+                break
+            time.sleep(0.1)
+        self.assertEqual(job["status"], "error")
+        self.assertIn("thoát giữa chừng", job["error"])
+
+    def test_big_hdr_clips_are_shrunk_before_the_slow_colour_conversion(self):
+        info = {"width": 2160, "height": 3840}
+        self.assertEqual(make_videos.hdr_prescale(info, 1080, 1920, "blur"), "scale=1080:1920:flags=bicubic,")
+        self.assertEqual(make_videos.hdr_prescale({"width": 3840, "height": 2160}, 1080, 1920, "blur"),
+                         "scale=1080:608:flags=bicubic,")
+        self.assertEqual(make_videos.hdr_prescale({"width": 1080, "height": 1920}, 1080, 1920, "blur"), "")
+        # cắt mất 22% chiều cao thì phần còn lại phải phóng lên 1920 px: khung thu nhỏ trước phải cao
+        # 1920 / 0,78 = 2462 px, nhỏ hơn thế là hình bị mờ
+        self.assertEqual(make_videos.hdr_prescale(info, 1080, 1920, "crop", {"bottom": 0.22}),
+                         "scale=1384:2462:flags=bicubic,")
+
+    def test_the_render_graph_shrinks_before_tonemapping_and_scene_detection_runs_small(self):
+        seen = []
+
+        class Done:
+            returncode, stderr = 0, ""
+
+        real = make_videos.subprocess.run
+        make_videos.subprocess.run = lambda cmd, **k: (seen.append(cmd), Done())[1]
+        try:
+            info = {"duration": 6.0, "width": 2160, "height": 3840, "has_audio": False, "hdr": True}
+            make_videos.render("x.MOV", info, {**make_videos.DEFAULTS, "clips": [{"start": 0, "end": 3}]},
+                               "9:16", "out.mp4", self.folder)
+            make_videos.detect_scenes("x.MOV", 0.3, 320)
+        finally:
+            make_videos.subprocess.run = real
+        graph = seen[0][seen[0].index("-filter_complex") + 1]
+        self.assertLess(graph.index("scale=1080:1920"), graph.index("zscale"))
+        scene = seen[1][seen[1].index("-vf") + 1]
+        self.assertLess(scene.index("scale=320"), scene.index("select="))
+
+    def test_hdr_previews_also_shrink_first(self):
+        chain = media._vf({"hdr": True}, "scale=240:-2")
+        self.assertLess(chain.index("scale=240"), chain.index("zscale"))
+        self.assertEqual(media._vf({"hdr": False}, "scale=240:-2"), "scale=240:-2")
 
 
 class ApiErrors(unittest.TestCase):

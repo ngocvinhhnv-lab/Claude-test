@@ -7,7 +7,8 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const fmt = (t) => (t == null ? "–" : `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, "0")}`);
 
 const S = { settings: {}, voices: {}, providers: {}, scripts: [], sources: [], projects: [],
-  fonts: [], colors: [], music: [], scriptId: null, script: null, project: null, jobs: new Map() };
+  fonts: [], colors: [], music: [], videoExt: [".mov", ".mp4", ".m4v", ".mkv", ".avi", ".webm", ".3gp"],
+  scriptId: null, script: null, project: null, jobs: new Map() };
 
 const ORIGIN = { competitor: "Đối thủ", template: "Mẫu", rewrite: "Đã viết lại", manual: "Tự viết", weekly: "Kế hoạch tuần", imported: "Nhập tài liệu", auto: "Từ video của bạn" };
 const PLACEHOLDER = /\[[^\]]+\]/g;
@@ -297,19 +298,61 @@ $("#source-grid").addEventListener("click", async (e) => {
   loadSources();
 });
 
-async function uploadSources(files) {
-  if (!files.length) return;
-  const form = new FormData();
-  [...files].forEach((f) => form.append("files", f));
-  toast(`Đang tải lên ${files.length} video…`);
-  try {
-    const items = await api("POST", "/api/sources", undefined, form);
-    items.forEach((it) => watchJob({ id: it.job, message: "Đang xử lý" }, `Xử lý ${it.name}`, loadSources, loadSources));
-    loadSources();
-  } catch (err) { toast(err.message); }
+// Tải một file lên và báo phần trăm (fetch không cho biết tiến độ tải lên, mà video iPhone nặng cả trăm MB)
+function xhrUpload(path, form, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", path);
+    xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(e.loaded / e.total); };
+    xhr.onload = () => {
+      let data = {};
+      try { data = JSON.parse(xhr.responseText); } catch (e) { /* phản hồi không phải JSON */ }
+      if (xhr.status >= 200 && xhr.status < 300) resolve(data);
+      else reject(new Error(data.detail || `Lỗi ${xhr.status}`));
+    };
+    xhr.onerror = () => reject(new Error("Mất kết nối khi tải lên. Kiểm tra cửa sổ đen của app còn mở không rồi thử lại."));
+    xhr.send(form);
+  });
+}
+
+const extOf = (name) => (/\.[^.]+$/.exec(name || "") || [""])[0].toLowerCase();
+const isVideoFile = (f) => (f.type || "").startsWith("video/") || S.videoExt.includes(extOf(f.name));
+const mb = (bytes) => bytes >= 1e9 ? `${(bytes / 1e9).toFixed(1)} GB` : `${Math.round(bytes / 1e6)} MB`;
+
+let uploadChain = Promise.resolve();   // thả thêm file khi đang tải thì xếp hàng, không tải chồng lên nhau
+function uploadSources(files) {
+  const all = [...files];
+  const videos = all.filter(isVideoFile), skipped = all.filter((f) => !isVideoFile(f));
+  if (skipped.length) toast(`Bỏ qua ${skipped.length} file không phải video: ${skipped.slice(0, 3).map((f) => f.name).join(", ")}${skipped.length > 3 ? "…" : ""}`);
+  if (!videos.length) return uploadChain;
+  uploadChain = uploadChain.then(() => uploadOneByOne(videos));
+  return uploadChain;
+}
+
+async function uploadOneByOne(videos) {
+  const failed = [];
+  for (const [i, file] of videos.entries()) {
+    const label = `${i + 1}/${videos.length} · ${file.name} (${mb(file.size)})`;
+    S.jobs.set("upload", { label: "Tải lên", message: `${label} · 0%` });
+    renderJobs();
+    const form = new FormData();
+    form.append("files", file);
+    try {
+      const items = await xhrUpload("/api/sources", form, (p) => {
+        S.jobs.set("upload", { label: "Tải lên", message: `${label} · ${Math.round(p * 100)}%` });
+        renderJobs();
+      });
+      items.forEach((it) => watchJob({ id: it.job, message: "Đang xử lý" }, `Xử lý ${it.name}`, loadSources, loadSources));
+      loadSources();
+    } catch (err) { failed.push(`${file.name}: ${err.message}`); }
+  }
+  S.jobs.delete("upload");
+  renderJobs();
+  if (failed.length) toast(`Không tải lên được ${failed.length} file. ${failed[0]}`);
 }
 function wireDrop(zone, input) {
-  zone.addEventListener("click", () => input.click());
+  // ô chọn file nằm trong vùng thả: cú bấm giả do input.click() nổi bọt ngược lên vùng thả, nên bỏ qua để không mở hộp chọn hai lần
+  zone.addEventListener("click", (e) => { if (e.target !== input) input.click(); });
   input.addEventListener("change", (e) => { uploadSources(e.target.files); e.target.value = ""; });
   zone.addEventListener("dragover", (e) => { e.preventDefault(); zone.classList.add("over"); });
   zone.addEventListener("dragleave", () => zone.classList.remove("over"));
@@ -318,7 +361,7 @@ function wireDrop(zone, input) {
 wireDrop($("#bt-drop"), $("#bt-file"));
 const drop = $("#drop");
 $("#src-file").addEventListener("change", (e) => { uploadSources(e.target.files); e.target.value = ""; });
-drop.addEventListener("click", () => $("#src-file").click());
+drop.addEventListener("click", (e) => { if (e.target !== $("#src-file")) $("#src-file").click(); });
 drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("over"); });
 drop.addEventListener("dragleave", () => drop.classList.remove("over"));
 drop.addEventListener("drop", (e) => { e.preventDefault(); drop.classList.remove("over"); uploadSources(e.dataTransfer.files); });
@@ -797,7 +840,7 @@ function renderBatchSources() {
       <div class="grow"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.name)}</div>
         <div class="row small muted" style="gap:6px">
           ${s.status === "processing" ? `<span class="chip processing">Đang xử lý</span>` : ""}
-          ${s.status === "error" ? `<span class="chip error" title="${esc(s.error)}">Lỗi</span>` : ""}
+          ${s.status === "error" ? `<span class="chip error">Lỗi</span><span class="err">${esc(s.error)}</span>` : ""}
           ${s.info ? `<span>${fmt(s.info.duration)} · ${shots.length} đoạn${labelled ? ` · AI đã mô tả ${labelled}` : ""}</span>` : ""}
           ${burned.length ? `<span class="chip warn" title="${esc(burned.map((x) => x.sub || x.marks).join(" · "))}">${burnedLabel(burned.length)}</span>` : ""}</div></div>
       <input type="text" data-note="${s.id}" value="${esc(s.note || "")}" placeholder="Ghi chú sản phẩm: VD lịch bloc 14,5×20,5">
@@ -1071,7 +1114,8 @@ $("#bt-run").addEventListener("click", async (e) => {
 (async function init() {
   const st = await api("GET", "/api/state");
   Object.assign(S, { settings: st.settings, voices: st.voices, providers: st.providers,
-    fonts: st.fonts || [], colors: st.colors || [], music: st.music || [] });
+    fonts: st.fonts || [], colors: st.colors || [], music: st.music || [],
+    videoExt: st.video_ext || S.videoExt });
   $("#ver").textContent = st.version ? `v${st.version}` : "";
   if (st.ffmpeg && st.ffmpeg.problems.length) {
     const box = $("#env-warn");

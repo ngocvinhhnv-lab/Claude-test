@@ -30,7 +30,7 @@
         <div><h3>Bước 1 · Thả video bạn đã quay</h3>
           <p class="muted small">Thư viện kịch bản chỉ để tham khảo: app chọn kịch bản rồi tự viết lại cảnh nào chưa có video khớp. Thả tất cả video quay được vào đây, quay dọc càng tốt. Ghi chú sản phẩm cho từng video (không bắt buộc) giúp AI chọn cảnh đúng hơn.</p></div>
         <div class="drop" id="bt-drop">Kéo thả video vào đây hoặc bấm để chọn (chọn được nhiều file)
-          <input type="file" id="bt-file" accept="video/*" multiple hidden></div>
+          <input type="file" id="bt-file" accept="video/*,.mov,.MOV,.mp4,.MP4,.m4v,.M4V,.mkv,.MKV,.avi,.AVI,.webm,.WEBM,.3gp,.3GP,.3g2,.3G2,.mts,.MTS,.m2ts,.M2TS,.mpg,.MPG,.mpeg,.MPEG,.wmv,.WMV,.flv,.FLV" multiple hidden></div>
         <div class="list" id="bt-sources"></div>
       </div>
 
@@ -106,7 +106,7 @@
             <h3>Bóc kịch bản từ video đối thủ</h3>
             <p class="muted small">Upload video đối thủ (tải từ TikTok về) hoặc dán link. AI xem khung hình, nghe lời thoại, tách thành từng cảnh.</p>
           </div>
-          <label class="f">Video đối thủ<input type="file" id="imp-file" accept="video/*"></label>
+          <label class="f">Video đối thủ<input type="file" id="imp-file" accept="video/*,.mov,.MOV,.mp4,.MP4,.m4v,.M4V,.mkv,.MKV,.avi,.AVI,.webm,.WEBM,.3gp,.3GP,.3g2,.3G2,.mts,.MTS,.m2ts,.M2TS,.mpg,.MPG,.mpeg,.MPEG,.wmv,.WMV,.flv,.FLV"></label>
           <label class="f">hoặc link video<input type="url" id="imp-url" placeholder="https://www.tiktok.com/@..."></label>
           <label class="f">Ghi chú (tuỳ chọn)<input type="text" id="imp-notes" placeholder="VD: top 1 ngách tranh Nề Nếp, 1,4 tr view"></label>
           <button class="btn primary" id="imp-go">Phân tích kịch bản</button>
@@ -143,7 +143,7 @@
         <div><h3>Video nguồn tự quay</h3>
           <p class="muted small">Upload video quay bằng điện thoại (quay dọc là tốt nhất). App tự tạo bản xem thử và chia thành các đoạn ngắn để chọn cảnh. Video iPhone HDR được chuyển màu tự động.</p></div>
         <div class="drop" id="drop">Kéo thả video vào đây hoặc bấm để chọn (chọn được nhiều file)
-          <input type="file" id="src-file" accept="video/*" multiple hidden></div>
+          <input type="file" id="src-file" accept="video/*,.mov,.MOV,.mp4,.MP4,.m4v,.M4V,.mkv,.MKV,.avi,.AVI,.webm,.WEBM,.3gp,.3GP,.3g2,.3G2,.mts,.MTS,.m2ts,.M2TS,.mpg,.MPG,.mpeg,.MPEG,.wmv,.WMV,.flv,.FLV" multiple hidden></div>
       </div>
       <div class="grid" id="source-grid"></div>
     </div>
