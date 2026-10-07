@@ -54,6 +54,21 @@ App đọc được **.MOV** (kể cả viết hoa `.MOV`), **.MP4, .M4V, .MKV, 
 - **File hỏng hoặc chép dở** từ điện thoại không làm treo app nữa: video đó hiện nhãn **Lỗi** kèm lý do ngay trong danh sách (trước đây kẹt mãi ở "Đang xử lý"). Chép lại file rồi thả lại.
 - **Video 4K nặng chạy nhanh hơn**: dò chuyển cảnh ở khổ nhỏ, làm bản xem thử 30 khung/giây, và video HDR được thu nhỏ **trước** khi đổi màu (đổi màu ở khổ 4K rất chậm), dựng nhanh gần gấp đôi với hình giống hệt.
 
+### Khi trình duyệt báo "Failed to fetch"
+
+Đây là lời trình duyệt nói khi **không nhận được phản hồi từ app** — hầu như luôn là app đã dừng hoặc trang đang chạy bản giao diện cũ. App xử lý từng nguyên nhân:
+
+- **Thanh đỏ "Mất kết nối với app"** hiện ngay trên đầu trang khi app ngừng trả lời (cửa sổ đen bị đóng, máy ngủ, app sập). Mở lại `chay_app.bat` là trang **tự nối lại**, các video và dữ liệu đã có không mất. Mọi lỗi mạng khác trong app cũng báo bằng câu tiếng Việt nói rõ việc cần làm, không còn chữ "Failed to fetch" khó hiểu.
+- **Cập nhật xong vẫn chạy bản cũ**: trước đây trình duyệt có thể giữ file giao diện cũ cả giờ liền (máy chủ bản mới + giao diện bản cũ gây lỗi lạ). Nay máy chủ bắt trình duyệt luôn hỏi lại, và địa chỉ file giao diện gắn số phiên bản (`app.js?v=2026.10.14`) nên có bản mới là tự dùng bản mới. Số phiên bản hiện góc trên bên phải.
+- **Cửa sổ đen bị "đóng băng" khi lỡ bấm chuột vào** (chế độ chọn chữ của Windows tạm dừng chương trình): app tự tắt chế độ này lúc khởi động.
+- **Tải video nặng**: tải thẳng từng khối xuống đĩa (không qua file tạm nên không tốn gấp đôi ổ đĩa), **hỏi trước** ổ đĩa còn đủ chỗ không, đứt mạng giữa chừng thì chờ app rồi **tự thử lại tới 3 lần**; tải đứt thì xoá file dở, không để lại video ma.
+- **App tắt đột ngột giữa chừng**: lần mở sau, video đang xử lý dở được **xử lý tiếp**, việc bóc kịch bản dở dang được báo để làm lại, đợt tạo video dở bấm **Tiếp tục**. Trước đây các video này kẹt mãi ở "Đang xử lý".
+- **Khoá file của Windows** (OneDrive, diệt virus giữ file trong chốc lát) không làm app báo lỗi nữa: ghi file được thử lại, đọc và ghi dùng chung một khoá, bản ghi hỏng bị bỏ qua thay vì làm hỏng cả danh sách.
+- **App đặt trong OneDrive hoặc ổ đĩa gần đầy** được cảnh báo ngay đầu trang (OneDrive đồng bộ video nặng làm app đứng; nên đặt app ở `D:\`).
+- **Bấm đúp `chay_app.bat` lần hai** không còn báo lỗi cổng: app nhận ra bản đang chạy và chỉ mở lại trang.
+- **Nhật ký lỗi**: mọi lỗi được ghi vào file `app.log` (và `crash.log` nếu tiến trình sập hẳn) cạnh file cài đặt; tab **Cài đặt**, nút **Xem nhật ký lỗi**, để gửi cho người hỗ trợ.
+- `requirements.txt` khoá phiên bản tối thiểu của thư viện: thư mục `.venv` cũ không tự nâng cấp nên máy đã cài từ trước từng giữ thư viện quá cũ.
+
 ### Cập nhật thư viện kịch bản
 
 Ở tab **1. Kịch bản** (hoặc nút **+ Nhập kịch bản mới** ở tab Tạo hàng loạt), thẻ **Nhập kịch bản từ file hoặc link**: upload Word, PDF, Excel, HTML, CSV, TXT, MD, JSON, dán link, hoặc dán nội dung. AI tự tách từng kịch bản thành các cảnh. Kịch bản trùng mã được **cập nhật**, không nhân đôi. Lưu ý:

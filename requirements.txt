@@ -1,9 +1,10 @@
-# Bắt buộc
-fastapi
-uvicorn
-python-multipart
-anthropic
-numpy
+# Bắt buộc. Có số phiên bản tối thiểu vì thư mục .venv cũ KHÔNG tự nâng cấp: máy đã cài từ trước mà giữ
+# thư viện cũ thì app chạy lỗi lạ (ví dụ anthropic cũ không có tính năng dự phòng khi mô hình từ chối).
+fastapi>=0.110
+uvicorn>=0.29
+python-multipart>=0.0.9
+anthropic>=1.8.0
+numpy>=1.24
 edge-tts
 imageio-ffmpeg   # ffmpeg dự phòng nếu máy chưa cài ffmpeg
 

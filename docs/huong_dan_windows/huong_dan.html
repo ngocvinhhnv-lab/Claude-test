@@ -401,13 +401,15 @@
     <td>Nhập API key ở tab Cài đặt. Nếu tài liệu đúng là có kịch bản mà vẫn báo không thấy, thử xuất lại thành file Word hoặc PDF, hoặc dán nội dung vào ô “dán nội dung kịch bản”.</td></tr>
   <tr><td>C20</td><td>Video ở trạng thái <b>Thiếu video quay</b></td>
     <td>Hơn nửa kịch bản chưa có cảnh quay phù hợp (thường chưa quay sản phẩm đó). Quay thêm theo mục “Gợi ý quay thêm”, thả vào Bước 1 rồi bấm <b>Tiếp tục</b>; hoặc bỏ qua kịch bản.</td></tr>
-  <tr><td>C21</td><td>Không thấy file <b>.MOV</b> trong hộp chọn file, hoặc video hiện nhãn <b>Lỗi</b> “Không đọc được video trong file…”</td>
+  <tr><td>C21</td><td>Trình duyệt báo <b>“Failed to fetch”</b>, hoặc hiện thanh đỏ <b>“Mất kết nối với app”</b></td>
+    <td>Nghĩa là trang không nói chuyện được với app. Làm lần lượt: <b>(1)</b> Nhìn cửa sổ đen <code>chay_app.bat</code>: nếu đã tắt hoặc có dòng chữ đỏ, bấm đúp <code>chay_app.bat</code> mở lại và <b>giữ cửa sổ đen mở</b>. Trang tự nối lại, video và dữ liệu đã có không mất. <b>(2)</b> Nếu cửa sổ đen vẫn mở: bấm <b>Ctrl + F5</b> để tải lại trang, rồi nhìn số phiên bản góc trên bên phải có đúng bản mới không. <b>(3)</b> Tải video báo lỗi: app tự thử lại 3 lần; vẫn lỗi thì kiểm tra ổ đĩa còn trống ít nhất vài GB và <b>không để app trong thư mục OneDrive</b>. <b>(4)</b> Vẫn lỗi: vào tab <b>Cài đặt</b>, bấm <b>Xem nhật ký lỗi</b>, chụp màn hình gửi người hỗ trợ (nếu trang không mở được thì gửi ảnh cửa sổ đen). <b>Mẹo:</b> đừng bấm chuột vào bên trong cửa sổ đen khi đang chạy; nếu lỡ bấm, bản mới đã tự chống đứng, bản cũ thì bấm phím <b>Enter</b> để nó chạy tiếp.</td></tr>
+  <tr><td>C22</td><td>Không thấy file <b>.MOV</b> trong hộp chọn file, hoặc video hiện nhãn <b>Lỗi</b> “Không đọc được video trong file…”</td>
     <td>Bản mới khai rõ đuôi .MOV nên hộp chọn file phải hiện; nếu vẫn không thấy, đổi ô loại file ở góc dưới hộp chọn sang <i>All files</i>. Nhãn Lỗi nghĩa là file hỏng hoặc chép <b>chưa xong</b> từ điện thoại (kích thước nhỏ bất thường): chép lại file từ điện thoại rồi thả lại, các video khác không bị ảnh hưởng. Video 4K dài vài trăm MB cần vài phút để xử lý, đợi nhãn <i>Đang xử lý</i> biến mất.</td></tr>
-  <tr><td>C22</td><td>Báo <i>“Tài khoản Anthropic đã hết tiền”</i>, hoặc hiện khối chữ lạ có “credit balance is too low”</td>
+  <tr><td>C23</td><td>Báo <i>“Tài khoản Anthropic đã hết tiền”</i>, hoặc hiện khối chữ lạ có “credit balance is too low”</td>
     <td>Key AI dùng tới đâu trả tiền tới đó và tài khoản đã hết. Vào <b>console.anthropic.com</b>, mục <b>Plans &amp; Billing</b>, nạp thêm, rồi quay lại bấm <b>Tiếp tục</b> — app làm tiếp đúng chỗ dở dang. Chưa nạp được thì vẫn tạo video được, nhưng app chỉ ghép cảnh theo thứ tự chứ không hiểu nội dung, và không tự viết được kịch bản.</td></tr>
-  <tr><td>C23</td><td>Trong video có chữ lạ, chữ cụt (ví dụ “nu”) hoặc chữ của video cũ</td>
+  <tr><td>C24</td><td>Trong video có chữ lạ, chữ cụt (ví dụ “nu”) hoặc chữ của video cũ</td>
     <td>Bản mới tự bỏ mấy mẩu chữ vô nghĩa và tự đặt lại lời cho đúng ô. Nếu vẫn thấy chữ lạ, đó là chữ cháy sẵn trong file quay: thả file quay gốc thay vì file đã dựng. Chỉ có file đã dựng thì để ô <b>Đoạn quay còn chữ hoặc sticker cũ</b> ở <i>Luôn xào nấu</i> để app cắt bỏ dải chữ cũ khỏi khung hình.</td></tr>
-  <tr><td>C24</td><td>Bấm <b>Phân tích video và viết kịch bản</b> báo <i>“Video đã quay chưa đủ phân đoạn”</i> hoặc <i>“AI chưa viết được kịch bản nào”</i></td>
+  <tr><td>C25</td><td>Bấm <b>Phân tích video và viết kịch bản</b> báo <i>“Video đã quay chưa đủ phân đoạn”</i> hoặc <i>“AI chưa viết được kịch bản nào”</i></td>
     <td>Cần ít nhất 3 đoạn quay dùng được. Thả thêm video vào Bước 1 (hoặc quay dài hơn, nhiều góc hơn), và gõ thông tin sản phẩm vào ô <b>Thông tin được phép nói</b> rồi làm lại. Nếu nhiều đoạn bị bỏ vì có phụ đề cháy sẵn, hãy quay mới thay vì quay lại màn hình video cũ.</td></tr>
 </table>
 <div class="box tip"><b>Khi cần báo lỗi cho quản lý, gửi kèm</b>

@@ -156,3 +156,8 @@ button.chip { cursor: pointer; background: none; }
 .sw.on { border-color: var(--ink); box-shadow: 0 0 0 2px var(--sf), 0 0 0 4px var(--ac); }
 .preview-text { background: #222; border-radius: 10px; padding: 18px; text-align: center; }
 .preview-text span { font-size: 22px; font-weight: 700; padding: 4px 10px; border-radius: 6px; display: inline-block; }
+
+/* Thanh báo mất kết nối với app */
+.net-banner { position: sticky; top: 0; z-index: 60; background: #b3261e; color: #fff; padding: 10px 20px; font-size: 14px; line-height: 1.5; }
+.net-banner code { background: rgba(255,255,255,.2); color: #fff; padding: 0 5px; border-radius: 4px; }
+.net-banner .muted { color: rgba(255,255,255,.8); }

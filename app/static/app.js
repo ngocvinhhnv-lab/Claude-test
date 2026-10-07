@@ -17,23 +17,81 @@ const POS = { top: "Trên", center: "Giữa", bottom: "Dưới" };
 const PROJECT_DEFAULTS = { ratio: "9:16", fit: "blur", voice_on: true, subtitles: true, music: "auto",
   music_volume: 0.35, source_volume: 0.3, logo_on: true, fade: 0.25 };
 
+const NET_HELP = "Không kết nối được tới app. Cửa sổ đen (chay_app.bat) có thể đã bị đóng hoặc app vừa dừng. " +
+  "Mở lại chay_app.bat, giữ cửa sổ đen mở, rồi tải lại trang (F5).";
+
+// Đọc dữ liệu cho các bộ tự làm mới: mất kết nối thì giữ dữ liệu đang hiện (thanh đỏ trên đầu trang đã báo lỗi rồi,
+// khỏi ném thêm lỗi). Lỗi khác vẫn báo như thường.
+async function readQuiet(path, current) {
+  try { return await api("GET", path); } catch (e) { if (e.network) return current; throw e; }
+}
+
 async function api(method, path, body, form) {
-  const opt = { method, headers: {} };
+  const opt = { method, headers: {}, cache: "no-store" };
   if (form) opt.body = form;
   else if (body !== undefined) { opt.body = JSON.stringify(body); opt.headers["Content-Type"] = "application/json"; }
-  const res = await fetch(path, opt);
+  let res;
+  try { res = await fetch(path, opt); } catch (e) {
+    // trình duyệt chỉ nói "Failed to fetch" cho mọi lỗi mạng; ở đây nguyên nhân gần như luôn là app đã dừng
+    const err = new Error(NET_HELP);
+    err.network = true;
+    throw err;
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.detail || `Lỗi ${res.status}`);
   return data;
 }
 
 let toastTimer;
-function toast(msg) {
+function toast(msg, ms) {
   let el = $(".toast");
   if (!el) { el = document.createElement("div"); el.className = "toast"; document.body.append(el); }
   el.textContent = msg;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.remove(), 3500);
+  // thông báo lỗi dài cần thời gian đọc: dài hơn thì ở lâu hơn
+  toastTimer = setTimeout(() => el.remove(), ms || Math.min(14000, Math.max(3500, msg.length * 70)));
+}
+
+// ---------- Theo dõi kết nối với app ----------
+const NET = { down: false, fails: 0, boot: null };
+
+function showNetBanner(show) {
+  const el = $("#net-banner");
+  if (el) el.hidden = !show;
+}
+
+async function refreshAll() {
+  await Promise.all([loadScripts(), loadSources(), loadProjects()]);
+  await loadBatches();
+}
+
+async function heartbeat() {
+  try {
+    const res = await fetch("/api/ping", { cache: "no-store" });
+    const data = await res.json();
+    NET.fails = 0;
+    const restarted = NET.boot && data.boot !== NET.boot;
+    NET.boot = data.boot;
+    if (NET.down || restarted) {
+      NET.down = false;
+      showNetBanner(false);
+      toast(restarted ? "App vừa khởi động lại. Video đang xử lý dở được làm tiếp, đợt tạo video dở bấm Tiếp tục." : "Đã kết nối lại với app.");
+      refreshAll().catch(() => {});
+    }
+  } catch (e) {
+    if (++NET.fails >= 2 && !NET.down) { NET.down = true; showNetBanner(true); }
+  }
+  setTimeout(heartbeat, NET.down ? 2000 : 5000);
+}
+
+// chờ app sống lại (dùng khi tải file đứt giữa chừng); trả về true nếu app trả lời trong thời gian cho phép
+async function waitForServer(ms) {
+  const end = Date.now() + ms;
+  while (Date.now() < end) {
+    try { const r = await fetch("/api/ping", { cache: "no-store" }); if (r.ok) return true; } catch (e) { /* chưa lên */ }
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+  return false;
 }
 
 // ---------- Tác vụ nền ----------
@@ -54,7 +112,7 @@ function watchJob(job, label, onDone, onError) {
     S.jobs.delete(job.id);
     renderJobs();
     if (j.status === "done") onDone && onDone(j.result);
-    else { toast(`${label}: ${j.error}`); onError && onError(j.error); }
+    else { toast(`${label}: ${j.error}`, 12000); onError && onError(j.error); }
   };
   setTimeout(tick, 1000);
 }
@@ -76,7 +134,7 @@ $("#tabs").addEventListener("click", (e) => { if (e.target.dataset.page) showPag
 
 // ================= KỊCH BẢN =================
 async function loadScripts(selectId) {
-  S.scripts = await api("GET", "/api/scripts");
+  S.scripts = await readQuiet("/api/scripts", S.scripts);
   renderScriptList();
   if (typeof renderBatchScripts === "function") renderBatchScripts();
   if (selectId) selectScript(selectId);
@@ -272,7 +330,7 @@ $("#script-new").addEventListener("click", async () => {
 
 // ================= VIDEO NGUỒN =================
 async function loadSources() {
-  S.sources = await api("GET", "/api/sources");
+  S.sources = await readQuiet("/api/sources", S.sources);
   renderSources();
   if (S.sources.some((s) => s.status === "processing")) setTimeout(loadSources, 3000);
 }
@@ -298,11 +356,13 @@ $("#source-grid").addEventListener("click", async (e) => {
   loadSources();
 });
 
-// Tải một file lên và báo phần trăm (fetch không cho biết tiến độ tải lên, mà video iPhone nặng cả trăm MB)
-function xhrUpload(path, form, onProgress) {
+// Tải một file lên dưới dạng dữ liệu thô và báo phần trăm (fetch không cho biết tiến độ tải lên,
+// mà video iPhone nặng cả trăm MB). Lỗi mạng gắn cờ network để biết đường thử lại.
+function xhrUpload(path, file, onProgress) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", path);
+    xhr.setRequestHeader("Content-Type", "application/octet-stream");
     xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(e.loaded / e.total); };
     xhr.onload = () => {
       let data = {};
@@ -310,9 +370,27 @@ function xhrUpload(path, form, onProgress) {
       if (xhr.status >= 200 && xhr.status < 300) resolve(data);
       else reject(new Error(data.detail || `Lỗi ${xhr.status}`));
     };
-    xhr.onerror = () => reject(new Error("Mất kết nối khi tải lên. Kiểm tra cửa sổ đen của app còn mở không rồi thử lại."));
-    xhr.send(form);
+    const fail = () => { const err = new Error(NET_HELP); err.network = true; reject(err); };
+    xhr.onerror = fail; xhr.ontimeout = fail; xhr.onabort = fail;
+    xhr.send(file);
   });
+}
+
+// Hỏi máy chủ trước (đuôi file, ổ đĩa còn chỗ không) rồi mới tải; đứt mạng giữa chừng thì chờ app sống lại rồi tải lại.
+async function uploadVideo(file, onState) {
+  await api("POST", "/api/sources/precheck", { name: file.name, size: file.size });
+  let last;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      return await xhrUpload(`/api/sources/stream?name=${encodeURIComponent(file.name)}`, file, (p) => onState(Math.round(p * 100)));
+    } catch (err) {
+      last = err;
+      if (!err.network || attempt === 3) break;
+      onState(`mất kết nối, đợi app rồi thử lại (${attempt + 1}/3)`);
+      if (!(await waitForServer(30000))) break;
+    }
+  }
+  throw last;
 }
 
 const extOf = (name) => (/\.[^.]+$/.exec(name || "") || [""])[0].toLowerCase();
@@ -333,22 +411,20 @@ async function uploadOneByOne(videos) {
   const failed = [];
   for (const [i, file] of videos.entries()) {
     const label = `${i + 1}/${videos.length} · ${file.name} (${mb(file.size)})`;
-    S.jobs.set("upload", { label: "Tải lên", message: `${label} · 0%` });
-    renderJobs();
-    const form = new FormData();
-    form.append("files", file);
+    const show = (state) => {
+      S.jobs.set("upload", { label: "Tải lên", message: `${label} · ${typeof state === "number" ? state + "%" : state}` });
+      renderJobs();
+    };
+    show(0);
     try {
-      const items = await xhrUpload("/api/sources", form, (p) => {
-        S.jobs.set("upload", { label: "Tải lên", message: `${label} · ${Math.round(p * 100)}%` });
-        renderJobs();
-      });
+      const items = await uploadVideo(file, show);
       items.forEach((it) => watchJob({ id: it.job, message: "Đang xử lý" }, `Xử lý ${it.name}`, loadSources, loadSources));
       loadSources();
     } catch (err) { failed.push(`${file.name}: ${err.message}`); }
   }
   S.jobs.delete("upload");
   renderJobs();
-  if (failed.length) toast(`Không tải lên được ${failed.length} file. ${failed[0]}`);
+  if (failed.length) toast(`Không tải lên được ${failed.length}/${videos.length} file. ${failed[0]}`, 14000);
 }
 function wireDrop(zone, input) {
   // ô chọn file nằm trong vùng thả: cú bấm giả do input.click() nổi bọt ngược lên vùng thả, nên bỏ qua để không mở hộp chọn hai lần
@@ -368,7 +444,7 @@ drop.addEventListener("drop", (e) => { e.preventDefault(); drop.classList.remove
 
 // ================= DỰNG VIDEO =================
 async function loadProjects() {
-  S.projects = await api("GET", "/api/projects");
+  S.projects = await readQuiet("/api/projects", S.projects);
   renderProjectList();
 }
 
@@ -1004,7 +1080,7 @@ $("#bt-start").addEventListener("click", async () => {
 });
 
 async function loadBatches(selectId) {
-  S.batches = await api("GET", "/api/batches");
+  S.batches = await readQuiet("/api/batches", S.batches);
   if (selectId) S.batchId = selectId;
   else if (!S.batchId || !S.batches.some((b) => b.id === S.batchId)) {
     const running = S.batches.find((b) => b.status === "running");
@@ -1117,11 +1193,14 @@ $("#bt-run").addEventListener("click", async (e) => {
     fonts: st.fonts || [], colors: st.colors || [], music: st.music || [],
     videoExt: st.video_ext || S.videoExt });
   $("#ver").textContent = st.version ? `v${st.version}` : "";
+  const notes = [];
   if (st.ffmpeg && st.ffmpeg.problems.length) {
-    const box = $("#env-warn");
-    box.hidden = false;
-    box.innerHTML = `<b>ffmpeg trên máy thiếu chức năng, video có thể dựng lỗi:</b><ul style="margin:6px 0 0">${st.ffmpeg.problems.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>Cài lại bản ffmpeg đầy đủ theo hướng dẫn (bước 2 phần A).`;
+    notes.push(`<b>ffmpeg trên máy thiếu chức năng, video có thể dựng lỗi:</b><ul style="margin:6px 0 0">${st.ffmpeg.problems.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>Cài lại bản ffmpeg đầy đủ theo hướng dẫn (bước 2 phần A).`);
   }
+  (st.warnings || []).forEach((w) => notes.push(`<b>Lưu ý:</b> ${esc(w)}`));
+  if (notes.length) { const box = $("#env-warn"); box.hidden = false; box.innerHTML = notes.join("<hr style='border:0;border-top:1px solid var(--bd);margin:8px 0'>"); }
+  NET.boot = st.boot;
+  setTimeout(heartbeat, 5000);
   renderSettings();
   await Promise.all([loadScripts(), loadSources(), loadProjects()]);
   renderBatchScripts();

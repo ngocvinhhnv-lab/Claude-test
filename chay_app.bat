@@ -17,6 +17,10 @@ pip install -q "yt-dlp[default,curl-cffi]" >nul 2>nul || pip install -q yt-dlp >
 pip install -q -U --pre --no-deps yt-dlp >nul 2>nul
 pip install -q -U edge-tts >nul 2>nul
 echo.
+title TikTok Video Studio - GIU CUA SO NAY MO
 echo App dang chay. GIU CUA SO NAY MO trong luc dung app. Dong cua so = tat app.
+echo Neu trinh duyet bao "Failed to fetch": cua so nay da bi dong hoac app da dung. Mo lai chay_app.bat.
 python -m app %*
+echo.
+echo App da dung. Neu co dong chu do o tren, chup man hinh gui nguoi ho tro. Mo lai chay_app.bat de chay tiep.
 pause

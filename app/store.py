@@ -1,6 +1,7 @@
 """Lưu dữ liệu dạng file JSON trong thư mục data/ (không cần cài database)."""
 
 import json
+import logging
 import os
 import shutil
 import threading
@@ -10,7 +11,21 @@ import uuid
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.environ.get("VIDEO_APP_DATA", os.path.join(ROOT, "data"))
 
-_lock = threading.Lock()
+_lock = threading.RLock()
+log = logging.getLogger("studio")
+
+
+def replace_file(tmp, target, tries=8):
+    """os.replace có thử lại. Trên Windows việc đổi tên đè lên file hay báo PermissionError nếu có chương trình
+    (diệt virus, OneDrive, trình lập chỉ mục) đang giữ file đó trong chốc lát."""
+    for attempt in range(tries):
+        try:
+            os.replace(tmp, target)
+            return
+        except PermissionError:
+            if attempt == tries - 1:
+                raise
+            time.sleep(0.05 * (attempt + 1))
 
 
 def data_path(*parts):
@@ -35,20 +50,43 @@ class Collection:
             raise KeyError(item_id)
         return os.path.join(self.dir, f"{item_id}.json")
 
+    def _read(self, path):
+        """Đọc một bản ghi. Bản ghi hỏng (mất điện giữa chừng, bị phần mềm diệt virus đụng vào) trả về None."""
+        for attempt in range(4):
+            try:
+                with open(path, encoding="utf-8") as f:
+                    return json.load(f)
+            except FileNotFoundError:
+                raise
+            except PermissionError:
+                time.sleep(0.05 * (attempt + 1))   # Windows: file đang bị chương trình khác giữ trong giây lát
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                log.warning("Bỏ qua bản ghi hỏng: %s", path)
+                return None
+        return None
+
     def list(self):
         items = []
-        for name in os.listdir(self.dir):
-            if name.endswith(".json"):
-                with open(os.path.join(self.dir, name), encoding="utf-8") as f:
-                    items.append(json.load(f))
+        with _lock:   # đọc và ghi cùng một khoá: trên Windows file đang mở thì không đổi tên đè lên được
+            for name in os.listdir(self.dir):
+                if name.endswith(".json"):
+                    try:
+                        item = self._read(os.path.join(self.dir, name))
+                    except FileNotFoundError:
+                        continue
+                    if isinstance(item, dict):
+                        items.append(item)
         return sorted(items, key=lambda x: x.get("created", 0), reverse=True)
 
     def get(self, item_id):
-        try:
-            with open(self._file(item_id), encoding="utf-8") as f:
-                return json.load(f)
-        except FileNotFoundError:
-            raise KeyError(item_id) from None
+        with _lock:
+            try:
+                item = self._read(self._file(item_id))
+            except FileNotFoundError:
+                raise KeyError(item_id) from None
+        if not isinstance(item, dict):
+            raise KeyError(item_id)
+        return item
 
     def save(self, item):
         item.setdefault("id", new_id())
@@ -58,7 +96,7 @@ class Collection:
             tmp = self._file(item["id"]) + ".tmp"
             with open(tmp, "w", encoding="utf-8") as f:
                 json.dump(item, f, ensure_ascii=False, indent=2)
-            os.replace(tmp, self._file(item["id"]))
+            replace_file(tmp, self._file(item["id"]))
         return item
 
     def update(self, item_id, **fields):

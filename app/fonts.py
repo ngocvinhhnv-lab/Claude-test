@@ -106,7 +106,7 @@ def system_fonts(refresh=False):
                 path = os.path.join(base, name)
                 try:
                     families = _read(path)
-                except OSError:
+                except Exception:      # file phông lạ hoặc hỏng thì bỏ qua, không được làm hỏng cả trang
                     continue
                 for family in families:
                     found.setdefault(family, []).append(path)

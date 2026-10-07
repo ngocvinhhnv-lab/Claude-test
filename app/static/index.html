@@ -20,6 +20,10 @@
   <div class="jobs" id="jobs"></div>
   <span class="muted small" id="ver"></span>
 </header>
+<div class="net-banner" id="net-banner" hidden role="alert">
+  <b>⚠ Mất kết nối với app.</b> Thường là do cửa sổ đen (<code>chay_app.bat</code>) đã bị đóng, hoặc máy vừa ngủ.
+  Mở lại <code>chay_app.bat</code> và giữ cửa sổ đen mở: trang này tự nối lại, video và dữ liệu đã có không mất.
+  <span class="muted">Đang tự thử lại…</span></div>
 <div class="warn" id="env-warn" hidden style="margin:12px 20px 0"></div>
 
 <main>
@@ -212,6 +216,11 @@
         <div class="row"><img id="set-logo-img" alt="" style="max-height:48px" hidden>
           <label class="btn">Upload logo (PNG nền trong)<input type="file" id="set-logo" accept="image/png,image/*" hidden></label>
           <button class="btn ghost" id="set-logo-del" hidden>Bỏ logo</button></div>
+      </div>
+      <div class="card stack">
+        <h3>Khi app báo lỗi lạ</h3>
+        <p class="muted small">App ghi mọi lỗi vào một file nhật ký. Mở ra, chụp màn hình hoặc sao chép nội dung gửi cho người hỗ trợ.</p>
+        <div><a class="btn" href="/api/log" target="_blank" rel="noopener">Xem nhật ký lỗi</a></div>
       </div>
       <div class="row"><button class="btn primary" id="set-save">Lưu cài đặt</button><span class="muted small" id="set-msg"></span></div>
     </div>

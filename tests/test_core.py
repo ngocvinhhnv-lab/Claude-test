@@ -18,7 +18,7 @@ os.environ["VIDEO_APP_CONFIG"] = os.path.join(_TMP, "config")
 sys.path.insert(0, ROOT)
 
 import make_videos  # noqa: E402
-from app import ai, assemble, batch, docs, fonts, jobs, library, media, store  # noqa: E402
+from app import ai, assemble, batch, diag, docs, fonts, jobs, library, media, store  # noqa: E402
 
 
 def load_tool(name):
@@ -594,22 +594,32 @@ class CutQuality(unittest.TestCase):
         self.assertFalse(any("lời dài hơn" in w for w in plan["warnings"]))
 
 
+_SAMPLES = {}
+
+
+def sample_movs():
+    """(file .MOV nhỏ đọc được, file .MOV cắt dở), tạo một lần cho cả bộ test."""
+    if not _SAMPLES:
+        import subprocess
+        folder = tempfile.mkdtemp()
+        good = os.path.join(folder, "IMG_1327.MOV")
+        subprocess.run([make_videos.FFMPEG, "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi",
+                        "-i", "testsrc2=size=320x568:duration=3:rate=24", "-f", "lavfi",
+                        "-i", "sine=frequency=440:duration=3", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                        "-c:a", "aac", "-shortest", "-f", "mov", good], check=True)
+        broken = os.path.join(folder, "IMG_1329.MOV")
+        with open(good, "rb") as f, open(broken, "wb") as out:
+            out.write(f.read(4000))   # chép dở dang từ điện thoại
+        _SAMPLES.update(folder=folder, good=good, broken=broken)
+    return _SAMPLES
+
+
 class MovFiles(unittest.TestCase):
     """Video quay bằng iPhone (.MOV, có khi viết hoa, nặng cả trăm MB) phải chọn được, tải được và báo lỗi rõ khi hỏng."""
 
     @classmethod
     def setUpClass(cls):
-        cls.folder = tempfile.mkdtemp()
-        cls.good = os.path.join(cls.folder, "IMG_1327.MOV")
-        make_videos_run = [make_videos.FFMPEG, "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi",
-                           "-i", "testsrc2=size=320x568:duration=3:rate=24", "-f", "lavfi",
-                           "-i", "sine=frequency=440:duration=3", "-c:v", "libx264", "-pix_fmt", "yuv420p",
-                           "-c:a", "aac", "-shortest", "-f", "mov", cls.good]
-        import subprocess
-        subprocess.run(make_videos_run, check=True)
-        cls.broken = os.path.join(cls.folder, "IMG_1329.MOV")
-        with open(cls.good, "rb") as f, open(cls.broken, "wb") as out:
-            out.write(f.read(4000))   # chép dở dang từ điện thoại
+        cls.folder, cls.good, cls.broken = (sample_movs()[k] for k in ("folder", "good", "broken"))
 
     def client(self):
         try:
@@ -725,6 +735,256 @@ class MovFiles(unittest.TestCase):
         chain = media._vf({"hdr": True}, "scale=240:-2")
         self.assertLess(chain.index("scale=240"), chain.index("zscale"))
         self.assertEqual(media._vf({"hdr": False}, "scale=240:-2"), "scale=240:-2")
+
+
+class Connection(unittest.TestCase):
+    """"Failed to fetch": app dừng, trình duyệt chạy bản giao diện cũ, tải file nặng đứt giữa chừng, khoá file trên Windows."""
+
+    def client(self, **kw):
+        try:
+            from starlette.testclient import TestClient
+        except Exception:
+            self.skipTest("cần httpx để thử máy chủ web: pip install httpx")
+        from app.server import app
+        return TestClient(app, **kw)
+
+    def wait(self, client, item, seconds=60):
+        import time
+        for _ in range(seconds * 4):
+            job = jobs.get(item["job"])
+            if job["status"] != "running":
+                break
+            time.sleep(0.25)
+        return job, next(x for x in client.get("/api/sources").json() if x["id"] == item["id"])
+
+    # ---- trình duyệt không được giữ bản giao diện cũ ----
+    def test_page_and_scripts_are_never_served_from_the_browsers_cache(self):
+        from app import __version__
+        with self.client() as client:
+            page = client.get("/")
+            self.assertEqual(page.headers["cache-control"], "no-cache")
+            self.assertIn(f"/static/app.js?v={__version__}", page.text)   # có bản mới là địa chỉ đổi theo
+            self.assertIn(f"/static/style.css?v={__version__}", page.text)
+            self.assertEqual(client.get("/static/app.js").headers["cache-control"], "no-cache")
+            self.assertEqual(client.get("/api/state").headers["cache-control"], "no-cache")
+
+    def test_ping_answers_with_the_version_and_a_restart_marker(self):
+        from app import __version__
+        with self.client() as client:
+            first = client.get("/api/ping").json()
+        self.assertEqual((first["ok"], first["version"]), (True, __version__))
+        self.assertTrue(first["boot"])   # đổi mỗi lần app khởi động để trang biết app vừa chạy lại
+
+    def test_cross_site_writes_are_still_blocked_by_the_new_middleware(self):
+        with self.client() as client:
+            evil = client.post("/api/sources/precheck", json={"name": "a.mov", "size": 1},
+                               headers={"origin": "http://evil.example"})
+            ok = client.post("/api/sources/precheck", json={"name": "a.mov", "size": 1},
+                             headers={"origin": "http://testserver"})
+        self.assertEqual(evil.status_code, 403)
+        self.assertEqual(ok.status_code, 200)
+
+    def test_an_unexpected_error_comes_back_as_readable_json_not_a_blank_500(self):
+        from app.server import app
+
+        @app.get("/api/_boom")
+        def boom():
+            raise ZeroDivisionError("chia cho 0")
+        with self.client(raise_server_exceptions=False) as client:
+            res = client.get("/api/_boom")
+        self.assertEqual(res.status_code, 500)
+        self.assertIn("ZeroDivisionError", res.json()["detail"])
+        self.assertIn("nhật ký", res.json()["detail"])
+
+    # ---- tải video nặng ----
+    def test_streamed_upload_becomes_a_ready_source(self):
+        with self.client() as client, open(sample_movs()["good"], "rb") as f:
+            data = f.read()
+            res = client.post("/api/sources/stream?name=IMG_1327.MOV", content=data,
+                              headers={"content-type": "application/octet-stream"})
+            self.assertEqual(res.status_code, 200)
+            job, source = self.wait(client, res.json()[0])
+        self.assertEqual((job["status"], source["status"]), ("done", "ready"))
+        self.assertEqual(source["name"], "IMG_1327.MOV")
+
+    def test_streamed_upload_cannot_write_outside_the_data_folder(self):
+        with self.client() as client:
+            res = client.post("/api/sources/stream?name=../../evil.mov", content=b"x" * 100)
+            sources = client.get("/api/sources").json()
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(all(".." not in s["path"] for s in sources))
+        self.assertFalse(os.path.exists(os.path.join(ROOT, "evil.mov")))
+
+    def test_streamed_upload_refuses_non_video_and_empty_files_and_leaves_nothing_behind(self):
+        with self.client() as client:
+            before = len(client.get("/api/sources").json())
+            self.assertEqual(client.post("/api/sources/stream?name=anh.jpg", content=b"x" * 50).status_code, 400)
+            empty = client.post("/api/sources/stream?name=rong.mov", content=b"")
+            self.assertEqual(empty.status_code, 400)
+            self.assertIn("rỗng", empty.json()["detail"])
+            self.assertEqual(len(client.get("/api/sources").json()), before)   # không có video ma
+        leftovers = [n for _, _, files in os.walk(os.path.join(store.DATA_DIR, "sources"))
+                     for n in files if n.endswith(".part")]
+        self.assertEqual(leftovers, [])
+
+    def test_precheck_reports_a_full_disk_before_anything_is_sent(self):
+        import shutil as _sh
+        real = _sh.disk_usage
+        _sh.disk_usage = lambda p: type("U", (), {"total": 10**12, "used": 10**12 - 10**8, "free": 10**8})()
+        try:
+            with self.client() as client:
+                res = client.post("/api/sources/precheck", json={"name": "IMG_1351.MOV", "size": 800_000_000})
+        finally:
+            _sh.disk_usage = real
+        self.assertEqual(res.status_code, 507)
+        self.assertIn("còn trống", res.json()["detail"])
+        self.assertIn("IMG_1351.MOV", res.json()["detail"])
+
+    def test_precheck_refuses_a_non_video_with_the_list_of_extensions(self):
+        with self.client() as client:
+            res = client.post("/api/sources/precheck", json={"name": "ghi_chu.txt", "size": 10})
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("MOV", res.json()["detail"])
+
+    # ---- Windows: khoá file, file hỏng, app tắt giữa chừng ----
+    def test_replacing_a_file_is_retried_when_windows_says_permission_denied(self):
+        calls = []
+        real = os.replace
+
+        def flaky(a, b):
+            calls.append(1)
+            if len(calls) < 3:
+                raise PermissionError(13, "Access is denied")
+            return real(a, b)
+        os.replace = flaky
+        try:
+            item = store.scripts.save({"title": "thử khoá file", "beats": []})
+        finally:
+            os.replace = real
+        self.assertEqual(len(calls), 3)
+        self.assertEqual(store.scripts.get(item["id"])["title"], "thử khoá file")
+
+    def test_a_corrupt_record_is_skipped_instead_of_breaking_the_whole_list(self):
+        good = store.scripts.save({"title": "bản tốt", "beats": []})
+        bad = os.path.join(store.scripts.dir, "hong12345.json")
+        with open(bad, "w", encoding="utf-8") as f:
+            f.write('{"title": "cụt giữa chừng')
+        try:
+            titles = [s["title"] for s in store.scripts.list()]
+            with self.assertRaises(KeyError):
+                store.scripts.get("hong12345")
+        finally:
+            os.remove(bad)
+        self.assertIn("bản tốt", titles)
+        self.assertTrue(good)
+
+    def test_reading_while_saving_never_fails(self):
+        import threading
+        item = store.scripts.save({"title": "đọc ghi cùng lúc", "beats": []})
+        errors, stop = [], threading.Event()
+
+        def writer():
+            n = 0
+            while not stop.is_set():
+                n += 1
+                try:
+                    store.scripts.save({**item, "n": n})
+                except Exception as err:
+                    errors.append(err)
+
+        t = threading.Thread(target=writer)
+        t.start()
+        try:
+            for _ in range(300):
+                store.scripts.list()
+                store.scripts.get(item["id"])
+        except Exception as err:
+            errors.append(err)
+        finally:
+            stop.set()
+            t.join()
+        self.assertEqual(errors, [])
+
+    def test_videos_left_processing_by_a_crash_are_picked_up_again_or_reported(self):
+        from app import server
+        alive = store.sources.save({"name": "con.mov", "status": "processing", "path": sample_movs()["good"]})
+        gone = store.sources.save({"name": "mat.mov", "status": "processing", "path": "/khong/co/file.mov"})
+        analysing = store.scripts.save({"title": "dở dang", "status": "processing", "beats": []})
+        server.recover_interrupted()
+        self.assertEqual(store.sources.get(gone["id"])["status"], "error")
+        self.assertIn("tải lại", store.sources.get(gone["id"])["error"])
+        self.assertEqual(store.scripts.get(analysing["id"])["status"], "error")
+        import time
+        for _ in range(240):
+            if store.sources.get(alive["id"])["status"] != "processing":
+                break
+            time.sleep(0.25)
+        self.assertEqual(store.sources.get(alive["id"])["status"], "ready")   # được xử lý lại, không kẹt mãi
+
+    def test_a_failing_startup_step_does_not_stop_the_app(self):
+        from app import server
+        server._safely(lambda: 1 / 0, "thử")   # chỉ ghi nhật ký, không ném lỗi ra ngoài
+
+    def test_the_font_list_survives_a_broken_font_file(self):
+        real = fonts._read
+
+        def broken(path):
+            raise ValueError("file phông hỏng")
+        fonts._read = broken
+        try:
+            fonts.system_fonts(refresh=True)       # không được ném lỗi
+        finally:
+            fonts._read = real
+            fonts.system_fonts(refresh=True)
+
+    # ---- chẩn đoán ----
+    def test_errors_are_written_to_the_log_file_and_can_be_read_back(self):
+        import logging
+        diag.setup_logging()
+        logging.getLogger("studio").error("lỗi thử nghiệm 12345")
+        for h in logging.getLogger("studio").handlers:
+            h.flush()
+        self.assertIn("lỗi thử nghiệm 12345", diag.tail_log())
+        with self.client() as client:
+            self.assertIn("lỗi thử nghiệm 12345", client.get("/api/log").text)
+
+    def test_a_port_just_released_by_a_killed_app_counts_as_free(self):
+        # lỗi thật gặp khi thử: tắt app đột ngột rồi bật lại ngay thì cổng còn TIME_WAIT, thử chiếm cổng báo "bận" oan
+        import socket
+        from app import __main__ as launcher
+        server = socket.socket()
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server.bind(("127.0.0.1", 0))
+        server.listen()
+        port = server.getsockname()[1]
+        self.assertTrue(launcher.port_in_use("127.0.0.1", port))        # đang có app lắng nghe
+        client = socket.create_connection(("127.0.0.1", port))
+        conn, _ = server.accept()
+        conn.close()                                                     # phía máy chủ đóng trước => TIME_WAIT
+        client.close()
+        server.close()
+        self.assertFalse(launcher.port_in_use("127.0.0.1", port))       # app đã tắt: được phép bật lại
+
+    def test_console_quick_edit_fix_is_a_no_op_away_from_windows(self):
+        if os.name != "nt":
+            self.assertFalse(diag.disable_quickedit())
+
+    def test_a_onedrive_folder_and_a_nearly_full_disk_are_called_out(self):
+        real_dir, real_usage = store.DATA_DIR, diag.shutil.disk_usage
+        store.DATA_DIR = r"C:\Users\Lan\OneDrive\Desktop\TikTokVideoStudio\data"
+        diag.shutil.disk_usage = lambda p: type("U", (), {"free": 3 * 10**9})()
+        try:
+            warnings = diag.env_warnings()
+        finally:
+            store.DATA_DIR, diag.shutil.disk_usage = real_dir, real_usage
+        self.assertTrue(any("OneDrive" in w for w in warnings))
+        self.assertTrue(any("3.0 GB" in w for w in warnings))
+
+    def test_the_state_endpoint_carries_warnings_and_the_restart_marker(self):
+        with self.client() as client:
+            state = client.get("/api/state").json()
+        self.assertIn("warnings", state)
+        self.assertEqual(state["boot"], client.get("/api/ping").json()["boot"])
 
 
 class ApiErrors(unittest.TestCase):

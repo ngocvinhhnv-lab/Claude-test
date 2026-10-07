@@ -3,24 +3,32 @@
 Chạy:  python -m app            (mặc định http://127.0.0.1:8000)
 """
 
+import logging
 import os
 import shutil
 import sys
+import time
 from typing import List, Optional
+
+import anyio
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from fastapi import Body, FastAPI, File, Form, HTTPException, UploadFile  # noqa: E402
-from fastapi.responses import FileResponse, JSONResponse  # noqa: E402
+from fastapi import Body, FastAPI, File, Form, HTTPException, Request, UploadFile  # noqa: E402
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
 from starlette.background import BackgroundTask  # noqa: E402
+from starlette.datastructures import Headers, MutableHeaders  # noqa: E402
 
 import make_videos  # noqa: E402
 
-from . import __version__, assemble, batch, fonts, jobs, library, media, store, tts  # noqa: E402
+from . import __version__, assemble, batch, diag, fonts, jobs, library, media, store, tts  # noqa: E402
+
+log = logging.getLogger("studio")
+BOOT = f"{store.new_id()}{int(time.time())}"   # đổi mỗi lần app khởi động, để trang biết app vừa chạy lại
 
 app = FastAPI(title="TikTok Video Studio")
 STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
@@ -79,30 +87,108 @@ def _save_upload(upload, path):
     return path
 
 
-@app.middleware("http")
-async def same_origin_only(request, call_next):
-    """Chặn trang web lạ trong trình duyệt gửi lệnh ghi vào app (CSRF): yêu cầu thay đổi dữ liệu mà
-    có Origin thì Origin phải trùng địa chỉ app đang được truy cập."""
-    if request.method not in ("GET", "HEAD", "OPTIONS"):
-        origin = request.headers.get("origin")
-        if origin and origin.split("://", 1)[-1] != request.headers.get("host"):
-            return JSONResponse({"detail": "Yêu cầu từ trang web khác bị chặn"}, status_code=403)
-    return await call_next(request)
+class Guard:
+    """Middleware ASGI thuần, làm hai việc:
+
+    1. Chặn trang web lạ trong trình duyệt gửi lệnh ghi vào app (CSRF): yêu cầu thay đổi dữ liệu mà có Origin
+       thì Origin phải trùng địa chỉ app đang được truy cập.
+    2. Bắt trình duyệt luôn hỏi lại trước khi dùng file giao diện đã lưu. Không có dòng này, sau khi cập nhật app
+       trình duyệt có thể chạy tiếp bản giao diện cũ cả giờ liền với máy chủ bản mới và báo lỗi lạ.
+
+    Viết bằng ASGI thuần thay vì @app.middleware vì kiểu BaseHTTPMiddleware bọc lại luồng dữ liệu, dễ đứt
+    kết nối khi tải lên file video nặng cả trăm MB.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+        headers = Headers(scope=scope)
+        if scope["method"] not in ("GET", "HEAD", "OPTIONS"):
+            origin = headers.get("origin")
+            if origin and origin.split("://", 1)[-1] != headers.get("host"):
+                response = JSONResponse({"detail": "Yêu cầu từ trang web khác bị chặn"}, status_code=403)
+                return await response(scope, receive, send)
+
+        async def send_with_cache_header(message):
+            if message["type"] == "http.response.start":
+                MutableHeaders(scope=message).setdefault("Cache-Control", "no-cache")
+            await send(message)
+
+        await self.app(scope, receive, send_with_cache_header)
+
+
+app.add_middleware(Guard)
+
+
+@app.exception_handler(Exception)
+async def unhandled(request, exc):
+    """Lỗi bất ngờ trong app trả về câu tiếng Việt kèm tên lỗi, thay vì trang lỗi trống làm giao diện báo "Lỗi 500"."""
+    log.exception("Lỗi ở %s %s", request.method, request.url.path)
+    return JSONResponse({"detail": f"App gặp lỗi ở bước này ({exc.__class__.__name__}: {str(exc)[:160]}). "
+                                   "Chi tiết đã ghi vào nhật ký, xem ở tab Cài đặt."}, status_code=500)
+
+
+def _safely(step, name):
+    """Chạy một bước khởi động; bước nào lỗi chỉ ghi nhật ký, không được làm app không mở lên được."""
+    try:
+        step()
+    except Exception:
+        log.exception("Bước khởi động '%s' lỗi", name)
+
+
+def recover_interrupted():
+    """App tắt đột ngột giữa chừng (mất điện, đóng cửa sổ): video nguồn đang xử lý dở được xử lý lại,
+    việc bóc kịch bản dở dang được báo lỗi để bấm làm lại, thay vì kẹt mãi ở trạng thái "đang xử lý"."""
+    for src in store.sources.list():
+        if src.get("status") != "processing":
+            continue
+        if src.get("path") and os.path.exists(src["path"]):
+            jobs.submit("source", library.process_source, src["id"], ref=src["id"])
+        else:
+            src.update(status="error", error="File video không còn trên máy (có thể tải lên chưa xong). Hãy tải lại.")
+            store.sources.save(src)
+    for script in store.scripts.list():
+        if script.get("status") == "processing":
+            script.update(status="error", error="App đã tắt giữa chừng khi đang phân tích. Bấm phân tích lại.")
+            store.scripts.save(script)
 
 
 @app.on_event("startup")
 def startup():
-    store.migrate_settings()
+    diag.setup_logging()
+    _safely(store.migrate_settings, "chuyển cài đặt")
     for problem in make_videos.ffmpeg_problems():
         print(f"CẢNH BÁO ffmpeg thiếu {problem}")
-    library.seed_templates()
-    library.seed_weekly()
-    batch.recover()
+    _safely(library.seed_templates, "kịch bản mẫu")
+    _safely(library.seed_weekly, "kịch bản tuần")
+    _safely(batch.recover, "khôi phục đợt tạo video")
+    _safely(recover_interrupted, "khôi phục video đang xử lý")
+    log.info("Khởi động TikTok Video Studio v%s", __version__)
 
 
 @app.get("/")
 def index():
-    return FileResponse(os.path.join(STATIC, "index.html"))
+    """Trang chính. Gắn số phiên bản vào địa chỉ file giao diện: có bản mới là trình duyệt tự tải lại, không dùng bản cũ."""
+    with open(os.path.join(STATIC, "index.html"), encoding="utf-8") as f:
+        html = f.read()
+    for name in ("style.css", "app.js"):
+        html = html.replace(f"/static/{name}", f"/static/{name}?v={__version__}")
+    return HTMLResponse(html, headers={"Cache-Control": "no-cache"})
+
+
+@app.get("/api/ping")
+async def ping():
+    """Trang gọi liên tục để biết app còn sống không. async để vẫn trả lời nhanh khi các tác vụ nặng đang chạy."""
+    return {"ok": True, "version": __version__, "boot": BOOT}
+
+
+@app.get("/api/log")
+def get_log():
+    """Nhật ký lỗi gần đây, để gửi cho người hỗ trợ."""
+    return PlainTextResponse(diag.tail_log() or "(chưa có lỗi nào được ghi)", media_type="text/plain; charset=utf-8")
 
 
 # ---------- Cài đặt ----------
@@ -125,12 +211,20 @@ COLORS = [
 ]
 
 
+def _font_list():
+    try:
+        return [{"family": f["family"], "recommended": f["recommended"]} for f in fonts.system_fonts()]
+    except Exception:
+        log.exception("Không đọc được danh sách phông chữ")
+        return []
+
+
 @app.get("/api/state")
 def state():
     return {"settings": public_settings(), "voices": tts.VOICES, "providers": tts.PROVIDER_NAMES,
-            "jobs": jobs.active(), "version": __version__, "colors": COLORS, "video_ext": list(media.VIDEO_EXT),
-            "fonts": [{"family": f["family"], "recommended": f["recommended"]} for f in fonts.system_fonts()],
-            "music": urlify(library.music_list()),
+            "jobs": jobs.active(), "version": __version__, "boot": BOOT, "colors": COLORS,
+            "video_ext": list(media.VIDEO_EXT), "fonts": _font_list(), "music": urlify(library.music_list()),
+            "warnings": diag.env_warnings(),
             "ffmpeg": {"path": make_videos.FFMPEG, "problems": make_videos.ffmpeg_problems()}}
 
 
@@ -204,6 +298,77 @@ def upload_sources(files: List[UploadFile] = File(...)):
         item["job"] = jobs.submit("source", library.process_source, item["id"], ref=item["id"])["id"]
         created.append(item)
     return urlify(created)
+
+
+def _gb(n):
+    return f"{n / 1e9:.1f} GB"
+
+
+@app.post("/api/sources/precheck")
+def precheck_upload(data: dict = Body(...)):
+    """Hỏi trước khi tải một video lên: đuôi file có hợp lệ không và ổ đĩa còn đủ chỗ không.
+
+    Báo lỗi ở bước này thay vì giữa chừng lúc đang tải: máy chủ trả lời sớm khi trình duyệt còn đang gửi dở
+    thì trình duyệt chỉ báo "Failed to fetch" chứ không đọc được lý do.
+    """
+    name = os.path.basename(str(data.get("name") or ""))
+    size = int(data.get("size") or 0)
+    if not media.is_video_name(name, ""):
+        raise HTTPException(400, f"{name or 'File'} không phải video. Nhận các đuôi: "
+                                 + ", ".join(e.lstrip(".").upper() for e in media.VIDEO_EXT) + ".")
+    free = shutil.disk_usage(store.DATA_DIR).free
+    need = int(size * 1.3) + 300 * 1024 * 1024        # file gốc + bản xem thử + ảnh + chỗ dự phòng
+    if free < need:
+        raise HTTPException(507, f"Ổ đĩa chứa app chỉ còn trống {_gb(free)}, cần khoảng {_gb(need)} cho video "
+                                 f"{name}. Dọn bớt ổ đĩa hoặc xoá video nguồn cũ rồi tải lại.")
+    return {"ok": True, "free": free}
+
+
+@app.post("/api/sources/stream")
+async def upload_stream(request: Request, name: str):
+    """Tải một video lên dưới dạng dữ liệu thô, ghi thẳng xuống đĩa từng khối.
+
+    Nhẹ hơn nhiều so với form multipart (máy chủ phải nhận hết vào file tạm rồi chép lần nữa, tốn gấp đôi ổ đĩa
+    và thời gian với video iPhone nặng cả trăm MB). Tải đứt giữa chừng thì xoá file dở, không để lại video ma.
+    """
+    name = os.path.basename(name or "")
+    if not media.is_video_name(name, ""):
+        raise HTTPException(400, f"{name or 'File'} không phải video.")
+    declared = request.headers.get("content-length")
+    item_id = store.new_id()
+    path = media.upload_path("sources", item_id, name)
+    part = path + ".part"
+    folder = os.path.dirname(path)
+    written, buffer = 0, bytearray()
+    try:
+        with open(part, "wb") as out:
+            async for chunk in request.stream():
+                buffer += chunk
+                written += len(chunk)
+                if len(buffer) >= 1 << 20:
+                    await anyio.to_thread.run_sync(out.write, bytes(buffer))
+                    buffer.clear()
+            if buffer:
+                await anyio.to_thread.run_sync(out.write, bytes(buffer))
+        if not written:
+            raise HTTPException(400, f"File {name} rỗng (0 byte).")
+        if declared and declared.isdigit() and written != int(declared):
+            raise HTTPException(400, f"File {name} tải lên chưa đủ dữ liệu. Thử lại.")
+        store.replace_file(part, path)
+    except HTTPException:
+        shutil.rmtree(folder, ignore_errors=True)
+        raise
+    except OSError as err:
+        shutil.rmtree(folder, ignore_errors=True)
+        log.exception("Không ghi được video %s", name)
+        raise HTTPException(507, f"Không ghi được file xuống ổ đĩa ({err.strerror or err}). "
+                                 "Kiểm tra ổ đĩa còn trống chỗ không.") from None
+    except BaseException:
+        shutil.rmtree(folder, ignore_errors=True)   # trình duyệt đóng giữa chừng hoặc app đang tắt
+        raise
+    item = store.sources.save({"id": item_id, "name": name, "status": "processing", "path": path})
+    item["job"] = jobs.submit("source", library.process_source, item_id, ref=item_id)["id"]
+    return urlify([item])
 
 
 @app.put("/api/sources/{source_id}")
