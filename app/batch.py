@@ -6,6 +6,7 @@ Trạng thái nằm trong data/batches nên đóng trình duyệt hay tắt app 
 """
 
 import os
+import queue
 import re
 import tempfile
 import threading
@@ -76,7 +77,7 @@ def resume(batch_id):
         raise ValueError("Đang có một đợt tạo video chạy.")
     _cancel.discard(batch_id)
     for item in batch["items"]:
-        if item["status"] in ("error", "blocked", "matching", "rendering"):
+        if item["status"] in ("error", "blocked", "matching", "planned", "rendering"):
             item.update(status="pending", message="Đang chờ")
     batch.update(status="running", message="Tiếp tục")
     store.batches.save(batch)
@@ -89,7 +90,7 @@ def recover():
     for batch in store.batches.list():
         if batch["status"] == "running":
             for item in batch["items"]:
-                if item["status"] in ("matching", "rendering"):
+                if item["status"] in ("matching", "planned", "rendering"):
                     item.update(status="pending", message="Đang chờ")
             batch.update(status="interrupted", message="App đã tắt giữa chừng, bấm Tiếp tục để chạy tiếp")
             store.batches.save(batch)
@@ -147,15 +148,43 @@ def _run(batch_id):
         voice_for = voice_plan(batch["options"], batch["items"])
         _batch(batch_id, message="Đang tạo video", notes=note)
 
-        for index in range(len(batch["items"])):
-            if batch_id in _cancel:
+        # Hai việc chạy gối đầu nhau: một luồng lập kế hoạch (chờ AI, mỗi video vài phút) đi trước tối đa 2 video,
+        # luồng này dựng video (chờ ffmpeg). Thời gian chờ AI của video sau trùm lên thời gian dựng video trước,
+        # nên cả đợt nhanh gần gấp đôi so với làm xong hẳn từng video rồi mới sang video kế tiếp.
+        ready = queue.Queue(maxsize=2)
+
+        def planner():
+            try:
+                for index in range(len(batch["items"])):
+                    if batch_id in _cancel:
+                        break
+                    if store.batches.get(batch_id)["items"][index]["status"] in DONE:
+                        continue
+                    try:
+                        project = _plan_item(batch_id, index, shots, used, voice_for, use_ai)
+                    except Exception as err:  # một video lỗi không làm dừng cả đợt
+                        _item(batch_id, index, status="error", message=str(err) or err.__class__.__name__)
+                        continue
+                    if project:
+                        ready.put((index, project))
+            finally:
+                ready.put(None)
+
+        thread = threading.Thread(target=planner, daemon=True)
+        thread.start()
+        while True:
+            got = ready.get()
+            if got is None:
                 break
-            if store.batches.get(batch_id)["items"][index]["status"] in DONE:
+            index, project = got
+            if batch_id in _cancel:
+                _item(batch_id, index, status="pending", message="Đang chờ")   # đã lập kế hoạch nhưng chưa dựng: để Tiếp tục làm lại
                 continue
             try:
-                _process(batch_id, index, shots, used, voice_for, use_ai)
-            except Exception as err:  # một video lỗi không làm dừng cả đợt
+                _render_item(batch_id, index, project)
+            except Exception as err:
                 _item(batch_id, index, status="error", message=str(err) or err.__class__.__name__)
+        thread.join()
 
         batch = store.batches.get(batch_id)
         missing = {}
@@ -327,23 +356,25 @@ def plan_beats(script, beats, shots, used, use_ai, adapt, note=lambda m: None, r
     return _finish(picks, beats, warnings, changes, missing, salvage)
 
 
-def _process(batch_id, index, shots, used, voice_for, use_ai):
+def _plan_item(batch_id, index, shots, used, voice_for, use_ai):
+    """Phần chờ AI của một video: kiểm tra kịch bản, ghép và soát cảnh, tạo dự án. Trả về dự án sẵn sàng để dựng,
+    hoặc None nếu video này bị giữ lại hoặc lỗi (trạng thái đã được ghi)."""
     batch = store.batches.get(batch_id)
     item, options = batch["items"][index], batch["options"]
     try:
         script = store.scripts.get(item["script_id"])
     except KeyError:
         _item(batch_id, index, status="error", message="Kịch bản đã bị xoá")
-        return
+        return None
     blanks = script_blanks(script)
     if blanks:
         _item(batch_id, index, status="blocked", blanks=blanks, block_kind="blank",
               message="Còn ô chưa điền trong lời đọc: " + " ".join(blanks) + ". Sửa kịch bản rồi bấm Tiếp tục.")
-        return
+        return None
     beats = script.get("beats") or []
     if not beats:
         _item(batch_id, index, status="error", message="Kịch bản chưa có cảnh nào")
-        return
+        return None
 
     _item(batch_id, index, status="matching", message="Ghép cảnh quay", blanks=[])
     adapt = bool(options.get("adapt", True))
@@ -355,7 +386,7 @@ def _process(batch_id, index, shots, used, voice_for, use_ai):
         kind = "blank" if plan["blocked"].startswith("Còn ô") else "footage"
         _item(batch_id, index, status="blocked", block_kind=kind, message=plan["blocked"],
               warnings=plan["warnings"], missing=plan["missing"], changes=plan["changes"])
-        return
+        return None
     for pick in plan["picks"]:
         used[pick["shot"]["id"]] += 1
 
@@ -384,17 +415,29 @@ def _process(batch_id, index, shots, used, voice_for, use_ai):
         project["id"] = item["project_id"]
         project["renders"] = store.projects.get(item["project_id"]).get("renders", [])
     project = store.projects.save(project)
-    _item(batch_id, index, status="rendering", message="Dựng video", project_id=project["id"],
+    _item(batch_id, index, status="planned", message="Đã lập kế hoạch, chờ dựng", project_id=project["id"],
           warnings=warnings, quality=quality, used=picked, missing=plan["missing"], changes=plan["changes"],
           seconds=seconds,
           adapted=adapted, dropped=sum(1 for c in plan["changes"] if c["kind"] == "drop"),
           matches=[{"beat": i, "fit": f} for i, f in enumerate(fits)])
+    return project
 
+
+def _render_item(batch_id, index, project):
+    """Phần chờ ffmpeg của một video: tạo giọng đọc và dựng file MP4."""
+    _item(batch_id, index, status="rendering", message="Dựng video")
     render = assemble.render_project(project, log=lambda m: _item(batch_id, index, message=m))
     project = store.projects.get(project["id"])
     project["renders"].insert(0, render)
     store.projects.save(project)
     _item(batch_id, index, status="done", message="Xong", render=render)
+
+
+def _process(batch_id, index, shots, used, voice_for, use_ai):
+    """Lập kế hoạch rồi dựng một video, lần lượt (dùng khi cần chạy riêng một video)."""
+    project = _plan_item(batch_id, index, shots, used, voice_for, use_ai)
+    if project:
+        _render_item(batch_id, index, project)
 
 
 def build_zip(batch_id):

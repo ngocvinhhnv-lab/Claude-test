@@ -54,12 +54,23 @@ App đọc được **.MOV** (kể cả viết hoa `.MOV`), **.MP4, .M4V, .MKV, 
 - **File hỏng hoặc chép dở** từ điện thoại không làm treo app nữa: video đó hiện nhãn **Lỗi** kèm lý do ngay trong danh sách (trước đây kẹt mãi ở "Đang xử lý"). Chép lại file rồi thả lại.
 - **Video 4K nặng chạy nhanh hơn**: dò chuyển cảnh ở khổ nhỏ, làm bản xem thử 30 khung/giây, và video HDR được thu nhỏ **trước** khi đổi màu (đổi màu ở khổ 4K rất chậm), dựng nhanh gần gấp đôi với hình giống hệt.
 
+### Tốc độ: vì sao phân tích video và viết kịch bản nhanh hơn
+
+Thời gian chờ nằm ở hai chỗ: ffmpeg đọc video nặng, và chờ AI trả lời. App rút ngắn cả hai:
+
+- **Video chỉ phải giải mã một lần.** File gốc (4K, HEVC, HDR, nặng cả trăm MB) chỉ được đọc đúng một lần để làm bản xem thử nhỏ 540p; chia cảnh, ảnh nhỏ và ảnh 3 khung hình đều lấy từ bản nhỏ đó. Trước đây file gốc bị mở lại 4 lần và mở lại cho từng ảnh. Đo trên một file 4K HDR dọc 40 giây: **105 giây xuống còn 25 giây**, điểm cắt cảnh khớp 100% với cách cũ.
+- **AI mô tả đoạn quay gửi song song** (4 yêu cầu cùng lúc, mỗi yêu cầu 12 đoạn) thay vì lần lượt, kèm thanh tiến độ `đã mô tả 24/60 đoạn, 18 giây`. Mỗi yêu cầu xong là lưu ngay: bị ngắt giữa chừng thì lần sau chỉ làm phần còn lại.
+- **Mô hình nhanh để nhìn ảnh.** Việc nhìn ảnh để mô tả đoạn quay dùng mô hình nhanh và rẻ hơn (Cài đặt, mục *Tốc độ phân tích video*: **Nhanh** mặc định, hoặc **Chính xác nhất** dùng mô hình mạnh nhất). Nếu tài khoản không dùng được mô hình nhanh, app tự dùng mô hình chính. Viết kịch bản và soát logic vẫn do mô hình mạnh nhất làm.
+- **Kịch bản được soát lại song song** (3 kịch bản cùng lúc thay vì lần lượt), và viết kịch bản ở mức suy nghĩ vừa vì bước soát lại ngay sau đó mới là chỗ kiểm tra logic kỹ.
+- **Kho đoạn quay được AI nhớ lại.** Hàng chục kịch bản dùng chung một kho đoạn quay, nên phần kho được đánh dấu để các lần gọi sau không phải đọc lại: nhanh hơn và rẻ hơn. Số lần mỗi đoạn đã dùng được đặt sau phần được nhớ để không làm hỏng việc này.
+- **Đợt tạo video chạy gối đầu:** trong lúc dựng video này, app đã lập kế hoạch (chờ AI) cho video kế tiếp, nên thời gian chờ AI không cộng dồn vào thời gian dựng. Video đã lập kế hoạch nhưng chưa dựng hiện nhãn **Chờ dựng**; bấm Dừng thì chúng quay về hàng chờ để **Tiếp tục** làm lại.
+
 ### Khi trình duyệt báo "Failed to fetch"
 
 Đây là lời trình duyệt nói khi **không nhận được phản hồi từ app** — hầu như luôn là app đã dừng hoặc trang đang chạy bản giao diện cũ. App xử lý từng nguyên nhân:
 
 - **Thanh đỏ "Mất kết nối với app"** hiện ngay trên đầu trang khi app ngừng trả lời (cửa sổ đen bị đóng, máy ngủ, app sập). Mở lại `chay_app.bat` là trang **tự nối lại**, các video và dữ liệu đã có không mất. Mọi lỗi mạng khác trong app cũng báo bằng câu tiếng Việt nói rõ việc cần làm, không còn chữ "Failed to fetch" khó hiểu.
-- **Cập nhật xong vẫn chạy bản cũ**: trước đây trình duyệt có thể giữ file giao diện cũ cả giờ liền (máy chủ bản mới + giao diện bản cũ gây lỗi lạ). Nay máy chủ bắt trình duyệt luôn hỏi lại, và địa chỉ file giao diện gắn số phiên bản (`app.js?v=2026.10.14`) nên có bản mới là tự dùng bản mới. Số phiên bản hiện góc trên bên phải.
+- **Cập nhật xong vẫn chạy bản cũ**: trước đây trình duyệt có thể giữ file giao diện cũ cả giờ liền (máy chủ bản mới + giao diện bản cũ gây lỗi lạ). Nay máy chủ bắt trình duyệt luôn hỏi lại, và địa chỉ file giao diện gắn số phiên bản (`app.js?v=2026.10.15`) nên có bản mới là tự dùng bản mới. Số phiên bản hiện góc trên bên phải.
 - **Cửa sổ đen bị "đóng băng" khi lỡ bấm chuột vào** (chế độ chọn chữ của Windows tạm dừng chương trình): app tự tắt chế độ này lúc khởi động.
 - **Tải video nặng**: tải thẳng từng khối xuống đĩa (không qua file tạm nên không tốn gấp đôi ổ đĩa), **hỏi trước** ổ đĩa còn đủ chỗ không, đứt mạng giữa chừng thì chờ app rồi **tự thử lại tới 3 lần**; tải đứt thì xoá file dở, không để lại video ma.
 - **App tắt đột ngột giữa chừng**: lần mở sau, video đang xử lý dở được **xử lý tiếp**, việc bóc kịch bản dở dang được báo để làm lại, đợt tạo video dở bấm **Tiếp tục**. Trước đây các video này kẹt mãi ở "Đang xử lý".

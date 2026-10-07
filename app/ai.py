@@ -116,10 +116,22 @@ def is_ready():
     return bool(get_settings().get("anthropic_api_key") or os.environ.get("ANTHROPIC_API_KEY"))
 
 
+LABEL_MODEL_FAST = "claude-sonnet-5-5"   # nhìn ảnh để mô tả đoạn quay: nhanh và rẻ hơn nhiều so với MODEL
+
+
+def label_model():
+    """Mô hình dùng để nhìn ảnh mô tả đoạn quay. Cài đặt "Tốc độ phân tích video": nhanh (mặc định) hoặc chính xác nhất."""
+    if os.environ.get("VIDEO_APP_LABEL_MODEL"):
+        return os.environ["VIDEO_APP_LABEL_MODEL"]
+    return MODEL if get_settings().get("ai_speed") == "best" else LABEL_MODEL_FAST
+
+
 def _client():
     key = get_settings().get("anthropic_api_key") or None
     try:
-        return anthropic.Anthropic(api_key=key) if key else anthropic.Anthropic()
+        # max_retries cao hơn mặc định: chạy nhiều yêu cầu song song nên thỉnh thoảng bị giới hạn tần suất (429),
+        # thư viện tự đợi theo yêu cầu của máy chủ rồi gửi lại thay vì báo lỗi
+        return anthropic.Anthropic(api_key=key, max_retries=5) if key else anthropic.Anthropic(max_retries=5)
     except anthropic.AnthropicError as err:
         raise AIError("Chưa có Anthropic API key. Nhập key trong mục Cài đặt.") from err
 
@@ -130,29 +142,39 @@ def _image(path):
     return {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": data}}
 
 
-def _ask(content, schema, effort=None, long_output=False):
+def _ask(content, schema, effort=None, long_output=False, model=None):
     """Gọi Claude với đầu ra JSON theo schema, trả về dict. effort: low|medium|high (mặc định high).
 
     long_output: kết quả có thể rất dài (nhiều kịch bản), dùng streaming và giới hạn đầu ra lớn.
+    model: mô hình riêng cho việc này. Nếu mô hình đó không dùng được (tài khoản chưa có quyền, tên không đúng)
+    thì tự dùng lại MODEL, để chọn mô hình nhanh hơn không bao giờ làm hỏng cả tính năng.
     """
     client = _client()
-    kwargs = dict(
-        model=MODEL,
-        max_tokens=64000 if long_output else 16000,
-        betas=["server-side-fallback-2026-07-01"],
-        fallbacks="default",
-        thinking={"type": "adaptive"},
-        system=SYSTEM,
-        output_config={"format": {"type": "json_schema", "schema": schema},
-                       **({"effort": effort} if effort else {})},
-        messages=[{"role": "user", "content": content}],
-    )
-    try:
+
+    def request(model_name):
+        kwargs = dict(
+            model=model_name,
+            max_tokens=64000 if long_output else 16000,
+            betas=["server-side-fallback-2026-07-01"],
+            fallbacks="default",
+            thinking={"type": "adaptive"},
+            system=SYSTEM,
+            output_config={"format": {"type": "json_schema", "schema": schema},
+                           **({"effort": effort} if effort else {})},
+            messages=[{"role": "user", "content": content}],
+        )
         if long_output:
             with client.beta.messages.stream(**kwargs) as stream:
-                response = stream.get_final_message()
-        else:
-            response = client.beta.messages.create(**kwargs)
+                return stream.get_final_message()
+        return client.beta.messages.create(**kwargs)
+
+    try:
+        try:
+            response = request(model or MODEL)
+        except anthropic.APIStatusError as err:
+            if (model or MODEL) == MODEL or getattr(err, "status_code", 0) not in (400, 403, 404):
+                raise
+            response = request(MODEL)    # mô hình nhanh không dùng được: dùng mô hình chính
     except anthropic.APIStatusError as err:
         raise AIError(friendly_error(err)) from err
     except anthropic.APIConnectionError as err:
@@ -263,12 +285,12 @@ def label_shots(items, note=""):
             "additionalProperties": False}}},
         "required": ["shots"], "additionalProperties": False,
     }
-    result = _ask(content, schema, effort="low")
+    result = _ask(content, schema, effort="low", model=label_model())
     return {s["index"]: s for s in result["shots"]}
 
 
 def _shot_line(shot, used=None):
-    """Một dòng mô tả đoạn quay để gửi cho AI: nội dung, độ dài, ghi chú, chữ cháy sẵn, số lần đã dùng."""
+    """Một dòng mô tả đoạn quay để gửi cho AI: nội dung, độ dài, ghi chú, chữ cháy sẵn (và số lần đã dùng nếu có)."""
     span = max(0.0, float(shot.get("scene_end") or 0) - float(shot.get("scene_start") or 0))
     length = f"dài {shot['length']:.0f}s" + (f", kéo được tới {span:.0f}s" if span > shot["length"] + 0.6 else "")
     line = f"{shot['id']}: {shot.get('desc') or '(chưa có mô tả, xem ảnh)'} · {length}"
@@ -285,6 +307,27 @@ def _shot_line(shot, used=None):
     return line
 
 
+def _cached(content):
+    """Đánh dấu hết phần kho đoạn quay (phần dài và giống hệt nhau giữa các lần gọi) để Claude nhớ lại thay vì đọc lại.
+
+    Hàng chục kịch bản dùng chung một kho đoạn quay: các lần gọi sau chỉ trả phần ngắn khác nhau, nhanh hơn và rẻ hơn
+    nhiều. Chỉ hiệu lực khi phần phía trước hai lần gọi GIỐNG HỆT nhau, nên những thứ đổi theo từng video
+    (số lần đã dùng của từng đoạn) phải để SAU điểm đánh dấu: xem _used_note.
+    """
+    if content:
+        content[-1] = {**content[-1], "cache_control": {"type": "ephemeral"}}
+    return content
+
+
+def _used_note(used):
+    """Số lần mỗi đoạn đã được dùng ở video khác, một khối chữ riêng đặt sau phần được nhớ lại."""
+    pairs = sorted((sid, n) for sid, n in (used or {}).items() if n)
+    if not pairs:
+        return []
+    return [{"type": "text", "text": "Số lần các đoạn đã được dùng ở video khác (ưu tiên đoạn ít dùng hơn): "
+                                     + ", ".join(f"{sid}×{n}" for sid, n in pairs)}]
+
+
 def match_clips(beats, shots, script=None, used=None):
     """Chọn đoạn source phù hợp cho từng cảnh.
 
@@ -294,9 +337,10 @@ def match_clips(beats, shots, script=None, used=None):
     script, used = script or {}, used or {}
     content = [{"type": "text", "text": "Kho đoạn video shop đã quay:"}]
     for shot in shots:
-        content.append({"type": "text", "text": _shot_line(shot, used)})
+        content.append({"type": "text", "text": _shot_line(shot)})
         if not shot["desc"]:
             content.append(_image(shot["thumb"]))
+    content = _cached(content) + _used_note(used)     # kho giống nhau giữa các kịch bản: chỉ đọc kỹ một lần
     lines = "\n".join(
         f"Cảnh {i} (cần ~{b.get('duration') or 3:.0f}s): {b.get('shot') or '(không mô tả)'} — lời: {b.get('voice') or '-'}"
         for i, b in enumerate(beats))
@@ -496,7 +540,8 @@ def suggest_scripts(shots, count=3, note="", channel="", samples=None):
             "additionalProperties": False}}},
         "required": ["scripts"], "additionalProperties": False,
     }
-    return _ask(content, schema, long_output=True)
+    # effort vừa: bước soát lại ngay sau đó (effort cao) mới là chỗ kiểm tra logic từng cảnh với đoạn quay
+    return _ask(content, schema, effort="medium", long_output=True)
 
 
 def adapt_beats(script, beats, shots, used, fix):
@@ -509,7 +554,8 @@ def adapt_beats(script, beats, shots, used, fix):
     by_id = {}
     for shot in shots:
         by_id[shot["id"]] = shot
-        content.append({"type": "text", "text": _shot_line(shot, used)})
+        content.append({"type": "text", "text": _shot_line(shot)})
+    content = _cached(content) + _used_note(used)
     lines = []
     for i, beat in enumerate(beats):
         head = f"Cảnh {i} ({beat.get('part') or '-'}, ~{beat.get('duration') or 3:.0f}s)"
@@ -594,6 +640,7 @@ def review_plan(script, items, shots, seconds, target=(30, 40), salvage=False):
     content = [{"type": "text", "text": "Kho đoạn quay dùng được (chỉ được dùng các đoạn này):"}]
     for shot in shots:
         content.append({"type": "text", "text": _shot_line(shot)})
+    content = _cached(content)
     lines = []
     by_id = {s["id"]: s for s in shots}
     for i, item in enumerate(items):

@@ -4,6 +4,7 @@ Chạy:  python -m unittest discover -s tests -v
 """
 
 import importlib.util
+import json
 import os
 import shutil
 import sys
@@ -18,7 +19,7 @@ os.environ["VIDEO_APP_CONFIG"] = os.path.join(_TMP, "config")
 sys.path.insert(0, ROOT)
 
 import make_videos  # noqa: E402
-from app import ai, assemble, batch, diag, docs, fonts, jobs, library, media, store  # noqa: E402
+from app import ai, assemble, batch, diag, docs, fonts, jobs, library, media, store, tts  # noqa: E402
 
 
 def load_tool(name):
@@ -735,6 +736,393 @@ class MovFiles(unittest.TestCase):
         chain = media._vf({"hdr": True}, "scale=240:-2")
         self.assertLess(chain.index("scale=240"), chain.index("zscale"))
         self.assertEqual(media._vf({"hdr": False}, "scale=240:-2"), "scale=240:-2")
+
+
+class ProbeKinds(unittest.TestCase):
+    """probe() đo cả video, file âm thanh (giọng đọc) lẫn ảnh (logo). Lỗi thật: bản 10.13 bắt mọi file phải có hình
+    và có độ dài, làm hỏng nút Nghe thử và mọi video dựng có chèn logo."""
+
+    @classmethod
+    def setUpClass(cls):
+        import subprocess
+        cls.folder = tempfile.mkdtemp()
+        cls.mp3 = os.path.join(cls.folder, "giong.mp3")
+        cls.png = os.path.join(cls.folder, "logo.png")
+        run = lambda *a: subprocess.run([make_videos.FFMPEG, "-hide_banner", "-loglevel", "error", "-y", *a], check=True)
+        run("-f", "lavfi", "-i", "sine=frequency=440:duration=2", cls.mp3)
+        run("-f", "lavfi", "-i", "color=c=red:s=300x120", "-frames:v", "1", cls.png)
+
+    def test_an_audio_file_has_a_length_but_no_picture(self):
+        info = make_videos.probe(self.mp3)
+        self.assertAlmostEqual(info["duration"], 2.0, delta=0.15)
+        self.assertIsNone(info["width"])
+        self.assertTrue(info["has_audio"])
+
+    def test_a_logo_image_has_a_size_but_no_length(self):
+        info = make_videos.probe(self.png)
+        self.assertEqual((info["width"], info["height"]), (300, 120))
+        self.assertEqual(info["duration"], 0.0)
+
+    def test_a_source_video_must_have_a_picture_and_a_length(self):
+        with self.assertRaises(make_videos.ProbeError) as ctx:
+            make_videos.probe_video(self.mp3)
+        self.assertIn("chỉ có âm thanh", str(ctx.exception))
+        self.assertEqual(make_videos.probe_video(sample_movs()["good"])["height"], 568)
+
+    def test_a_file_that_cannot_be_read_at_all_is_still_an_error(self):
+        with self.assertRaises(make_videos.ProbeError):
+            make_videos.probe(sample_movs()["broken"])
+
+    def test_a_voice_file_gets_its_length_through_the_listen_button(self):
+        # Nghe thử: nhà cung cấp giọng trả về .mp3, app đo độ dài bằng probe()
+        real = tts._edge
+        tts._edge = lambda text, voice, rate, out: shutil.copyfile(self.mp3, out)
+        try:
+            path, seconds = tts.synthesize("Xin chào, đây là giọng đọc thử.", "edge", "vi-VN-HoaiMyNeural", 0, {})
+        finally:
+            tts._edge = real
+        self.assertTrue(path.endswith(".mp3"))
+        self.assertAlmostEqual(seconds, 2.0, delta=0.15)
+
+    def test_the_preview_endpoint_answers_for_an_mp3_voice(self):
+        try:
+            from starlette.testclient import TestClient
+        except Exception:
+            self.skipTest("cần httpx")
+        from app.server import app
+        real = tts._edge
+        tts._edge = lambda text, voice, rate, out: shutil.copyfile(self.mp3, out)
+        try:
+            with TestClient(app) as client:
+                res = client.post("/api/tts/preview", json={"text": "Nghe thử giọng này nha anh chị.", "provider": "edge",
+                                                            "voice": "vi-VN-HoaiMyNeural", "rate": 0})
+        finally:
+            tts._edge = real
+        self.assertEqual(res.status_code, 200, res.text)
+        self.assertGreater(res.json()["duration"], 1.5)
+
+    def test_a_video_with_a_logo_renders(self):
+        out = os.path.join(self.folder, "co_logo.mp4")
+        info = make_videos.probe_video(sample_movs()["good"])
+        opts = {**make_videos.DEFAULTS, "clips": [{"start": 0, "end": 2}], "logo": self.png, "captions": []}
+        total = make_videos.render(sample_movs()["good"], info, opts, "9:16", out, self.folder)
+        self.assertGreater(total, 1.5)
+        self.assertGreater(os.path.getsize(out), 1000)
+
+    def test_an_audio_only_upload_is_reported_as_a_source_error(self):
+        try:
+            from starlette.testclient import TestClient
+        except Exception:
+            self.skipTest("cần httpx")
+        from app.server import app
+        import time
+        with TestClient(app) as client:
+            res = client.post("/api/sources/stream?name=ghi_am.mov", content=open(self.mp3, "rb").read())
+            self.assertEqual(res.status_code, 200)
+            item = res.json()[0]
+            for _ in range(80):
+                if jobs.get(item["job"])["status"] != "running":
+                    break
+                time.sleep(0.25)
+            source = next(x for x in client.get("/api/sources").json() if x["id"] == item["id"])
+        self.assertEqual(source["status"], "error")
+        self.assertIn("chỉ có âm thanh", source["error"])
+
+
+class Speed(unittest.TestCase):
+    """Phân tích video và viết kịch bản chậm vì chờ AI lần lượt, và vì mở lại file 4K gốc cho từng ảnh."""
+
+    def setUp(self):
+        shutil.rmtree(os.path.join(store.DATA_DIR, "sources"), ignore_errors=True)
+        os.makedirs(os.path.join(store.DATA_DIR, "sources"))
+        os.environ["ANTHROPIC_API_KEY"] = "x"
+        self.real = (ai.label_shots, library._strip, ai.review_plan)
+
+    def tearDown(self):
+        ai.label_shots, library._strip, ai.review_plan = self.real
+        os.environ.pop("ANTHROPIC_API_KEY", None)
+
+    def source(self, n=40):
+        shots = [{"start": i * 3.0, "end": i * 3.0 + 3, "thumb": "t.jpg", "scene": i, "scene_start": i * 3.0,
+                  "scene_end": i * 3.0 + 3} for i in range(n)]
+        return store.sources.save({"name": "a.mov", "status": "ready", "path": "x.mov", "info": {"duration": n * 3.0},
+                                   "shots": shots, "note": ""})
+
+    # ---- mô tả đoạn quay chạy song song ----
+    def test_labelling_sends_requests_at_the_same_time_and_labels_every_shot_once(self):
+        import threading
+        import time
+        src = self.source(40)
+        flight = {"now": 0, "peak": 0, "calls": 0}
+        lock = threading.Lock()
+
+        def fake(items, note=""):
+            with lock:
+                flight["now"] += 1
+                flight["calls"] += 1
+                flight["peak"] = max(flight["peak"], flight["now"])
+            time.sleep(0.25)
+            with lock:
+                flight["now"] -= 1
+            return {k: {"index": k, "desc": f"cảnh {k}", "product": "", "sub": "", "sub_pos": "none", "marks": "",
+                        "sub_ok": True, "talking": False} for k, _ in items}
+        ai.label_shots, library._strip = fake, lambda src_, k: "strip.jpg"
+        started = time.time()
+        total = library.ensure_shot_labels([src["id"]])
+        took = time.time() - started
+        shots = store.sources.get(src["id"])["shots"]
+        self.assertEqual(total, 40)
+        self.assertEqual(flight["calls"], 4)                       # 40 đoạn, mỗi yêu cầu 12 đoạn... gộp theo nguồn
+        self.assertTrue(all(sh["desc"] == f"cảnh {k}" and sh["sub_checked"] for k, sh in enumerate(shots)))
+        self.assertGreaterEqual(flight["peak"], 3)                 # thật sự có nhiều yêu cầu cùng bay
+        self.assertLess(took, 0.25 * flight["calls"])              # nhanh hơn gửi lần lượt
+
+    def test_results_of_concurrent_requests_do_not_overwrite_each_other(self):
+        src = self.source(50)
+        ai.label_shots = lambda items, note="": {k: {"index": k, "desc": f"d{k}", "product": "", "sub": "",
+                                                    "sub_pos": "none", "marks": "", "sub_ok": True, "talking": False}
+                                                  for k, _ in items}
+        library._strip = lambda src_, k: "s.jpg"
+        library.ensure_shot_labels([src["id"]], chunk=3, workers=6)
+        self.assertEqual([sh["desc"] for sh in store.sources.get(src["id"])["shots"]], [f"d{k}" for k in range(50)])
+
+    def test_a_shared_failure_stops_sending_the_rest_and_keeps_what_was_done(self):
+        src = self.source(48)
+        calls = []
+
+        def fake(items, note=""):
+            calls.append(1)
+            if len(calls) > 2:
+                raise ai.AIError("Tài khoản Anthropic đã hết tiền.")
+            return {k: {"index": k, "desc": "ok", "product": "", "sub": "", "sub_pos": "none", "marks": "",
+                        "sub_ok": True, "talking": False} for k, _ in items}
+        ai.label_shots, library._strip = fake, lambda src_, k: "s.jpg"
+        with self.assertRaises(ai.AIError):
+            library.ensure_shot_labels([src["id"]], chunk=4, workers=1)
+        done = [sh for sh in store.sources.get(src["id"])["shots"] if sh.get("sub_checked")]
+        self.assertEqual(len(done), 8)                              # 2 yêu cầu đầu đã lưu
+        self.assertLess(len(calls), 12)                             # không gửi nốt cả 12 yêu cầu
+
+    def test_already_described_shots_are_not_sent_again(self):
+        src = self.source(6)
+        s = store.sources.get(src["id"])
+        for sh in s["shots"]:
+            sh.update(desc="đã có", sub_checked=True)
+        store.sources.save(s)
+        ai.label_shots = lambda *a, **k: self.fail("không được gọi AI cho đoạn đã mô tả")
+        self.assertEqual(library.ensure_shot_labels([src["id"]]), 0)
+
+    # ---- ảnh 3 khung lấy từ bản xem thử nhỏ ----
+    def test_three_frame_strips_come_from_the_small_preview_not_the_4k_original(self):
+        seen = []
+        real = media.shot_strip
+        media.shot_strip = lambda path, info, start, end, out, width=320: seen.append((path, info["hdr"]))
+        try:
+            src = {"path": os.path.join(_TMP, "goc.mov"), "proxy": os.path.join(_TMP, "proxy.mp4"),
+                   "info": {"duration": 9.0, "hdr": True}, "shots": [{"start": 0, "end": 3, "thumb": "t.jpg"}]}
+            open(src["proxy"], "wb").close()
+            self.real[1](src, 0)                                    # _strip thật
+        finally:
+            media.shot_strip = real
+        self.assertEqual(seen, [(src["proxy"], False)])             # bản nhỏ, và không đổi màu HDR lần thứ hai
+
+    # ---- mô hình nhanh để nhìn ảnh ----
+    def test_the_fast_model_is_the_default_for_looking_at_pictures_and_best_is_a_setting(self):
+        store.save_settings({"ai_speed": "fast"})
+        self.assertEqual(ai.label_model(), ai.LABEL_MODEL_FAST)
+        store.save_settings({"ai_speed": "best"})
+        self.assertEqual(ai.label_model(), ai.MODEL)
+        store.save_settings({"ai_speed": "fast"})
+
+    def test_a_fast_model_the_account_cannot_use_falls_back_to_the_main_one(self):
+        import httpx
+        import anthropic
+        tried = []
+
+        class Messages:
+            def create(self, **kw):
+                tried.append(kw["model"])
+                if kw["model"] != ai.MODEL:
+                    raise anthropic.NotFoundError("model", response=httpx.Response(404, request=httpx.Request("POST", "http://x")),
+                                                  body={"error": {"message": "model not found"}})
+                return type("R", (), {"stop_reason": "end_turn", "content": [type("B", (), {"type": "text", "text": '{"ok": 1}'})()]})()
+        real = ai._client
+        ai._client = lambda: type("C", (), {"beta": type("B", (), {"messages": Messages()})()})()
+        try:
+            out = ai._ask([{"type": "text", "text": "x"}], {"type": "object"}, model="claude-mô-hình-không-có")
+        finally:
+            ai._client = real
+        self.assertEqual(out, {"ok": 1})
+        self.assertEqual(tried, ["claude-mô-hình-không-có", ai.MODEL])
+
+    def test_the_main_model_failing_is_reported_not_retried_with_itself(self):
+        import httpx
+        import anthropic
+        tried = []
+
+        class Messages:
+            def create(self, **kw):
+                tried.append(kw["model"])
+                raise anthropic.NotFoundError("model", response=httpx.Response(404, request=httpx.Request("POST", "http://x")),
+                                              body={"error": {"message": "nope"}})
+        real = ai._client
+        ai._client = lambda: type("C", (), {"beta": type("B", (), {"messages": Messages()})()})()
+        try:
+            with self.assertRaises(ai.AIError):
+                ai._ask([{"type": "text", "text": "x"}], {"type": "object"})
+        finally:
+            ai._client = real
+        self.assertEqual(tried, [ai.MODEL])
+
+    # ---- bộ nhớ đệm cho kho đoạn quay ----
+    def test_the_shot_inventory_is_identical_between_calls_so_it_can_be_cached(self):
+        shots = [{"id": f"s_{i}", "source_id": "s", "start": 0.0, "end": 3.0, "length": 3.0, "desc": f"đoạn {i}",
+                  "note": "", "thumb": "t.jpg", "scene_start": 0.0, "scene_end": 3.0} for i in range(5)]
+        sent = []
+        real = ai._ask
+        ai._ask = lambda content, schema, **kw: (sent.append(content), {"matches": [], "missing": []})[1]
+        try:
+            ai.match_clips([{"voice": "a", "shot": "x", "duration": 3}], shots, {"title": "Kịch bản A"}, {"s_1": 3})
+            ai.match_clips([{"voice": "b", "shot": "y", "duration": 4}], shots, {"title": "Kịch bản B"}, {"s_2": 1, "s_4": 2})
+        finally:
+            ai._ask = real
+        marks = [[i for i, b in enumerate(c) if "cache_control" in b] for c in sent]
+        self.assertEqual([len(m) for m in marks], [1, 1])           # đúng một điểm đánh dấu mỗi lần gọi
+        prefixes = [json.dumps(c[:m[0] + 1], ensure_ascii=False) for c, m in zip(sent, marks)]
+        self.assertEqual(prefixes[0], prefixes[1])                  # phần kho giống hệt nhau => được nhớ lại
+        self.assertNotIn("đã dùng", prefixes[0])                    # số lần dùng đổi theo từng video nên phải đứng sau
+        after = json.dumps(sent[1][marks[1][0] + 1:], ensure_ascii=False)
+        self.assertIn("s_4×2", after)
+
+    # ---- viết kịch bản: soát lại song song ----
+    def test_scripts_are_reviewed_at_the_same_time_and_keep_their_order(self):
+        import time
+        src = self.source(12)
+        shots = library.collect_shots([src["id"]])
+        for k, sh in enumerate(store.sources.get(src["id"])["shots"]):
+            sh.update(desc=f"đoạn {k}", sub_checked=True)
+        s = store.sources.get(src["id"])
+        for sh in s["shots"]:
+            sh.update(desc="đoạn", sub_checked=True)
+        store.sources.save(s)
+        shots = library.collect_shots([src["id"]])
+        make = lambda n: {"title": f"Hướng {n}", "product": "Lịch", "summary": "", "hook_type": "", "why_it_works": "",
+                          "caption": "", "hashtags": [], "beats": [{"part": "p", "shot_id": shots[(n + i) % 12]["id"],
+                          "voice": f"Câu {i} của hướng {n} nói đủ dài để đọc nha anh chị.", "text": "", "text_pos": "top",
+                          "duration": 4} for i in range(4)]}
+        ai.suggest_scripts = lambda *a, **k: {"scripts": [make(n) for n in range(3)]}
+        calls = []
+
+        def slow_review(script, items, shots_, seconds, target=(30, 40), salvage=False):
+            calls.append(time.time())
+            time.sleep(0.4)
+            return {"verdict": "ok", "note": "", "beats": [{"from": i, "shot_id": it["shot_id"], "part": "p",
+                    "voice": it["voice"], "text": "", "text_pos": "top", "duration": 4, "changed": ""}
+                    for i, it in enumerate(items)]}
+        ai.review_plan = slow_review
+        real_labels, real_ready = library.ensure_shot_labels, ai.is_ready
+        library.ensure_shot_labels, ai.is_ready = (lambda *a, **k: 0), (lambda: True)
+        started = time.time()
+        try:
+            result = library.suggest_from_sources({"count": 3, "mode": "lenient"})
+        finally:
+            library.ensure_shot_labels, ai.is_ready = real_labels, real_ready
+        took = time.time() - started
+        self.assertEqual(result["added"], 3)
+        self.assertLess(took, 0.4 * 3)                                # song song, không phải 1,2 giây lần lượt
+        titles = [store.scripts.get(i)["title"] for i in result["ids"]]
+        self.assertEqual([t.split(" · ")[-1] for t in titles], ["Hướng 0", "Hướng 1", "Hướng 2"])
+
+    # ---- đợt tạo video: lập kế hoạch gối đầu với dựng ----
+    def test_planning_the_next_video_overlaps_with_rendering_the_current_one(self):
+        import time
+        from app import batch as b
+        s = self.source(12)
+        sh = store.sources.get(s["id"])
+        for x in sh["shots"]:
+            x.update(desc="đoạn", sub_checked=True)
+        store.sources.save(sh)
+        for sid in store.scripts.list():
+            pass
+        scripts = [store.scripts.save({"title": f"K{i}", "code": f"K{i}", "channel": "NS", "beats": [
+                   {"voice": "Lời đủ dài để đọc nha anh chị.", "shot": "x", "text": "", "text_pos": "top", "duration": 3}] * 4,
+                   "status": "ready"}) for i in range(4)]
+        events = []
+        real = (b.plan_beats, b.assemble.render_project)
+
+        def slow_plan(script, beats, shots, used, use_ai, adapt, note=lambda m: None, review=True, mode="strict"):
+            events.append(("plan+", script["title"], time.time()))
+            time.sleep(0.4)
+            events.append(("plan-", script["title"], time.time()))
+            picks = [{"shot": shots[i], "fit": "tot", "reason": "", "voice": "Lời đủ dài để đọc nha anh chị.", "text": "",
+                      "text_pos": "top", "orig_voice": "", "adapted": False, "drop": False} for i in range(3)]
+            return {"blocked": "", "warnings": [], "missing": [], "changes": [], "picks": picks,
+                    "beats": [{"part": "", "shot": "", "duration": 3}] * 3}
+
+        def slow_render(project, log=print):
+            events.append(("render+", project["name"], time.time()))
+            time.sleep(0.4)
+            events.append(("render-", project["name"], time.time()))
+            return {"path": "/x.mp4", "duration": 10.0, "created": time.time()}
+        b.plan_beats, b.assemble.render_project = slow_plan, slow_render
+        batch_ = store.batches.save({"name": "t", "status": "running", "message": "", "options": {"voice_mode": "one", "music": "none",
+                                     "review": False}, "items": [{"script_id": x["id"], "code": x["code"], "title": x["title"],
+                                     "channel": "NS", "status": "pending", "message": "", "warnings": [], "quality": "",
+                                     "project_id": None, "render": None, "used": [], "missing": []} for x in scripts]})
+        started = time.time()
+        try:
+            b._run(batch_["id"])
+        finally:
+            b.plan_beats, b.assemble.render_project = real
+        took = time.time() - started
+        done = store.batches.get(batch_["id"])
+        self.assertEqual([i["status"] for i in done["items"]], ["done"] * 4)
+        self.assertEqual(done["status"], "done")
+        self.assertLess(took, 4 * 0.8 - 0.5)                         # tuần tự là 3,2 giây; gối đầu còn khoảng 2 giây
+        plan_starts = {e[1]: e[2] for e in events if e[0] == "plan+"}
+        render_ends = {e[1]: e[2] for e in events if e[0] == "render-"}
+        self.assertLess(plan_starts["K1"], render_ends["K0"])        # đang dựng video 1 thì đã lập kế hoạch video 2
+        order = [e[1] for e in events if e[0] == "render+"]
+        self.assertEqual(order, ["K0", "K1", "K2", "K3"])            # vẫn dựng đúng thứ tự đã chọn
+
+    def test_cancelling_leaves_planned_but_unrendered_videos_to_resume(self):
+        import time
+        from app import batch as b
+        s = self.source(12)
+        sh = store.sources.get(s["id"])
+        for x in sh["shots"]:
+            x.update(desc="đoạn", sub_checked=True)
+        store.sources.save(sh)
+        scripts = [store.scripts.save({"title": f"H{i}", "code": f"H{i}", "channel": "NS", "status": "ready", "beats": [
+                   {"voice": "Lời đủ dài để đọc nha anh chị.", "shot": "x", "text": "", "text_pos": "top", "duration": 3}] * 4})
+                   for i in range(4)]
+        real = (b.plan_beats, b.assemble.render_project)
+        batch_ = store.batches.save({"name": "t", "status": "running", "message": "", "options": {"voice_mode": "one", "music": "none",
+                                     "review": False}, "items": [{"script_id": x["id"], "code": x["code"], "title": x["title"],
+                                     "channel": "NS", "status": "pending", "message": "", "warnings": [], "quality": "",
+                                     "project_id": None, "render": None, "used": [], "missing": []} for x in scripts]})
+
+        def plan(script, beats, shots, used, use_ai, adapt, note=lambda m: None, review=True, mode="strict"):
+            picks = [{"shot": shots[i], "fit": "tot", "reason": "", "voice": "Lời đủ dài để đọc nha anh chị.", "text": "",
+                      "text_pos": "top", "orig_voice": "", "adapted": False, "drop": False} for i in range(3)]
+            return {"blocked": "", "warnings": [], "missing": [], "changes": [], "picks": picks,
+                    "beats": [{"part": "", "shot": "", "duration": 3}] * 3}
+
+        def render(project, log=print):
+            b.cancel(batch_["id"])        # bấm Dừng ngay khi đang dựng video đầu tiên
+            time.sleep(0.3)
+            return {"path": "/x.mp4", "duration": 10.0, "created": time.time()}
+        b.plan_beats, b.assemble.render_project = plan, render
+        try:
+            b._run(batch_["id"])
+        finally:
+            b.plan_beats, b.assemble.render_project = real
+        final = store.batches.get(batch_["id"])
+        statuses = [i["status"] for i in final["items"]]
+        self.assertEqual(statuses[0], "done")
+        self.assertNotIn("planned", statuses)                        # video đã lập kế hoạch mà chưa dựng quay về "chờ"
+        self.assertNotIn("rendering", statuses)
+        self.assertEqual(final["status"], "cancelled")
 
 
 class Connection(unittest.TestCase):

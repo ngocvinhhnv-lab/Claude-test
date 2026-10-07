@@ -2,8 +2,9 @@
 
 import os
 import subprocess
+from concurrent.futures import ThreadPoolExecutor
 
-from make_videos import FFMPEG, TONEMAP, detect_scenes, probe
+from make_videos import FFMPEG, TONEMAP, detect_scenes, probe, probe_video
 
 from .store import data_path
 
@@ -83,21 +84,38 @@ def split_shots(path, info):
     return shots
 
 
-def ingest_source(item):
-    """Đọc thông tin, tạo ảnh bìa, bản xem thử và danh sách cảnh cho một video nguồn."""
+def grab_frames(path, info, jobs, workers=4):
+    """Chụp nhiều khung hình cùng lúc. jobs: [(giây, file đích, độ rộng)]. Dùng cho bản xem thử nhỏ nên mỗi lần chụp
+    chỉ mất vài chục mili giây; chạy song song vì phần lớn thời gian là khởi động ffmpeg."""
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        list(pool.map(lambda j: grab_frame(path, info, j[0], j[1], j[2]), jobs))
+
+
+def ingest_source(item, log=print):
+    """Đọc thông tin, làm bản xem thử, chia cảnh và chụp ảnh nhỏ cho một video nguồn.
+
+    File gốc (có khi 4K, HEVC, HDR, nặng cả trăm MB) chỉ phải giải mã MỘT lần để làm bản xem thử nhỏ 540p.
+    Mọi việc còn lại (dò chuyển cảnh, ảnh nhỏ, ảnh bìa) lấy từ bản nhỏ đó, nhanh hơn hàng chục lần so với
+    mở lại file gốc cho từng ảnh như trước.
+    """
     path = item["path"]
-    info = probe(path)
+    info = probe_video(path)
     folder = os.path.dirname(path)
     item["info"] = info
-    item["poster"] = grab_frame(path, info, min(1.0, info["duration"] / 2),
-                                os.path.join(folder, "poster.jpg"), 360)
-    item["proxy"] = make_proxy(path, info, os.path.join(folder, "proxy.mp4"))
-    shots = []
-    for i, (start, end, scene, scene_start, scene_end) in enumerate(split_shots(path, info)):
-        thumb = grab_frame(path, info, (start + end) / 2, os.path.join(folder, f"shot_{i:03d}.jpg"), 240)
-        shots.append({"start": round(start, 2), "end": round(end, 2), "thumb": thumb, "scene": scene,
-                      "scene_start": round(scene_start, 2), "scene_end": round(scene_end, 2)})
-    item["shots"] = shots
+    log("Làm bản xem thử (bước nặng nhất, chỉ làm một lần)")
+    proxy = make_proxy(path, info, os.path.join(folder, "proxy.mp4"))
+    item["proxy"] = proxy
+    small = {**info, "hdr": False}        # bản xem thử đã đổi màu HDR rồi
+    log("Chia cảnh")
+    cuts = split_shots(proxy, small)
+    item["poster"] = grab_frame(proxy, small, min(1.0, info["duration"] / 2), os.path.join(folder, "poster.jpg"), 360)
+    log(f"Chụp ảnh {len(cuts)} đoạn")
+    grab_frames(proxy, small, [(( start + end) / 2, os.path.join(folder, f"shot_{i:03d}.jpg"), 240)
+                               for i, (start, end, *_rest) in enumerate(cuts)])
+    item["shots"] = [{"start": round(start, 2), "end": round(end, 2),
+                      "thumb": os.path.join(folder, f"shot_{i:03d}.jpg"), "scene": scene,
+                      "scene_start": round(scene_start, 2), "scene_end": round(scene_end, 2)}
+                     for i, (start, end, scene, scene_start, scene_end) in enumerate(cuts)]
     return item
 
 

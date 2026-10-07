@@ -5,9 +5,11 @@ import os
 import re
 import shutil
 import tempfile
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 
-from make_videos import probe
+from make_videos import probe, probe_video
 
 from . import ai, assemble, docs, media, store
 
@@ -18,7 +20,7 @@ def process_source(source_id, log=print):
     item = store.sources.get(source_id)
     log("Đọc video và tạo bản xem thử")
     try:
-        media.ingest_source(item)
+        media.ingest_source(item, log)
         item["status"] = "ready"
     except Exception as err:
         item["status"] = "error"
@@ -98,7 +100,7 @@ def analyze_competitor(script_id, log=print):
             log("Tải video từ link")
             script["video"] = download_url(script["url"], folder, log=log)
         path = script["video"]
-        info = probe(path)
+        info = probe_video(path)
         script["poster"] = media.grab_frame(path, info, min(1.0, info["duration"] / 2),
                                             os.path.join(folder, "poster.jpg"), 360)
         log("Trích khung hình")
@@ -245,30 +247,48 @@ def _strip(src, k):
     shot = src["shots"][k]
     path = os.path.join(os.path.dirname(src["path"]), f"strip_{k:03d}.jpg")
     if not os.path.exists(path):
+        # lấy từ bản xem thử nhỏ (đã đổi màu HDR): nhanh gấp hàng chục lần so với mở lại file gốc 4K ba lần
+        proxy = src.get("proxy")
+        source, info = (proxy, {**src["info"], "hdr": False}) if proxy and os.path.exists(proxy) else (src["path"], src["info"])
         try:
-            media.shot_strip(src["path"], src["info"], shot["start"], shot["end"], path)
+            media.shot_strip(source, info, shot["start"], shot["end"], path)
         except Exception:
             return shot["thumb"]  # máy yếu hoặc file lỗi: quay về ảnh một khung như trước
     return path
 
 
-def ensure_shot_labels(source_ids, log=print, chunk=20):
-    """Nhờ AI mô tả các đoạn quay chưa được xem (chạy một lần cho mỗi đoạn, kết quả được lưu lại)."""
-    todo = []
+_label_lock = threading.Lock()
+
+
+def ensure_shot_labels(source_ids, log=print, chunk=12, workers=4):
+    """Nhờ AI mô tả các đoạn quay chưa được xem (chạy một lần cho mỗi đoạn, kết quả được lưu lại).
+
+    Chia thành nhiều yêu cầu nhỏ và gửi song song: thời gian chờ AI chủ yếu là chờ trả lời nên chạy 4 yêu cầu cùng
+    lúc nhanh gần gấp 4 so với gửi lần lượt. Ảnh 3 khung hình của các đoạn được chuẩn bị song song trước đó.
+    Mỗi yêu cầu xong là lưu ngay, nên bị ngắt giữa chừng thì lần sau chỉ làm tiếp phần còn lại.
+    """
+    by_source = {}
     for sid in source_ids:
         src = store.sources.get(sid)
-        todo += [(sid, k) for k, sh in enumerate(src.get("shots") or [])
-                 if not sh.get("desc") or not sh.get("sub_checked")]
-    done = 0
-    for i in range(0, len(todo), chunk):
-        part = todo[i:i + chunk]
-        log(f"AI mô tả các đoạn quay ({done}/{len(todo)})")
-        by_source = {}
-        for sid, k in part:
-            by_source.setdefault(sid, []).append(k)
-        for sid, ks in by_source.items():
+        ks = [k for k, sh in enumerate(src.get("shots") or []) if not sh.get("desc") or not sh.get("sub_checked")]
+        if ks:
+            by_source[sid] = ks
+    total = sum(len(ks) for ks in by_source.values())
+    if not total:
+        return 0
+    groups = [(sid, ks[i:i + chunk]) for sid, ks in by_source.items() for i in range(0, len(ks), chunk)]
+    started, finished = time.time(), [0]
+
+    def strips(sid, ks):
+        src = store.sources.get(sid)
+        return [(k, _strip(src, k)) for k in ks], src.get("note", "")
+
+    def describe(group):
+        sid, ks = group
+        items, note = strips(sid, ks)
+        result = ai.label_shots(items, note)       # phần chờ AI, chạy song song
+        with _label_lock:                          # phần ghi lại dùng chung một khoá để các yêu cầu không ghi đè nhau
             src = store.sources.get(sid)
-            result = ai.label_shots([(k, _strip(src, k)) for k in ks], src.get("note", ""))
             for k in ks:
                 label = result.get(k)
                 if label:
@@ -277,8 +297,20 @@ def ensure_shot_labels(source_ids, log=print, chunk=20):
                     shot.update({f: bool(label.get(f, f == "sub_ok")) for f in BOOL_FIELDS})
                     shot["sub_checked"] = True
             store.sources.save(src)
-        done += len(part)
-    return len(todo)
+            finished[0] += len(ks)
+            log(f"AI mô tả các đoạn quay ({finished[0]}/{total}, đã {int(time.time() - started)} giây)")
+
+    log(f"AI mô tả {total} đoạn quay, gửi {min(workers, len(groups))} yêu cầu cùng lúc")
+    with ThreadPoolExecutor(max_workers=min(workers, len(groups))) as pool:
+        futures = [pool.submit(describe, g) for g in groups]
+        try:
+            for f in futures:
+                f.result()
+        except BaseException:
+            for f in futures:
+                f.cancel()          # lỗi chung (hết tiền, sai key...) thì khỏi gửi nốt các yêu cầu còn lại
+            raise
+    return total
 
 
 def auto_match(project_id, source_ids, log=print):
@@ -639,12 +671,17 @@ def suggest_from_sources(spec, log=print):
     batch_name = time.strftime("Từ video %d/%m %H:%M")
     base, titles, ids = time.time(), [], []
     scripts = result.get("scripts") or []
+    candidates = []
     for index, raw in enumerate(scripts):
         picked = [b for b in raw.get("beats") or [] if b.get("shot_id") in by_id]
-        if len(picked) < 3:
-            continue
-        log(f"AI đang soát lại kịch bản {index + 1}/{len(scripts)} cho khớp cảnh quay")
-        picked = review_beats(raw, picked, shots, log=log)["beats"]
+        if len(picked) >= 3:
+            candidates.append((index, raw, picked))
+    # các kịch bản độc lập nhau nên soát lại cùng lúc: chờ AI một lượt thay vì chờ lần lượt từng kịch bản
+    log(f"AI đang soát lại {len(candidates)} kịch bản cho khớp cảnh quay")
+    if candidates:
+        with ThreadPoolExecutor(max_workers=min(4, len(candidates))) as pool:
+            reviewed = list(pool.map(lambda c: review_beats(c[1], c[2], shots, log=log)["beats"], candidates))
+    for (index, raw, _), picked in zip(candidates, reviewed if candidates else []):
         if len(picked) < 3:
             continue
         item = finalize_script({**raw, "beats": picked, "origin": "auto",

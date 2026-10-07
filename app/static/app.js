@@ -835,6 +835,7 @@ function renderSettings() {
   $("#set-provider").innerHTML = Object.entries(S.providers).map(([k, v]) => `<option value="${k}" ${k === s.tts_provider ? "selected" : ""}>${esc(v)}</option>`).join("");
   $("#set-voice").innerHTML = voiceOptions(s.tts_provider, s.tts_voice);
   $("#set-rate").value = s.tts_rate;
+  $("#set-speed").value = s.ai_speed || "fast";
   $("#set-azure-region").value = s.azure_region || "";
   $("#set-shop").value = s.shop_name || "";
   for (const [id, key] of [["#set-anthropic", "anthropic_api_key_set"], ["#set-azure", "azure_key_set"], ["#set-fpt", "fpt_key_set"]]) {
@@ -860,7 +861,7 @@ $("#set-save").addEventListener("click", async () => {
       tts_voice: $("#set-voice").value, tts_rate: parseInt($("#set-rate").value) || 0,
       azure_key: $("#set-azure").value.trim(), azure_region: $("#set-azure-region").value.trim(),
       fpt_key: $("#set-fpt").value.trim(), shop_name: $("#set-shop").value.trim(),
-      text_font: $("#set-font").value, text_style: $("#set-text-style").value,
+      ai_speed: $("#set-speed").value, text_font: $("#set-font").value, text_style: $("#set-text-style").value,
       text_color: S.settings.text_color, sub_color: S.settings.sub_color });
     renderSettings(); $("#set-msg").textContent = "Đã lưu"; setTimeout(() => ($("#set-msg").textContent = ""), 2500);
     if (S.script) renderScriptDetail();
@@ -885,7 +886,7 @@ $("#set-logo-del").addEventListener("click", async () => { S.settings = await ap
 
 
 // ================= TẠO HÀNG LOẠT =================
-const BT_STATUS = { pending: ["Đang chờ", ""], matching: ["Ghép cảnh", "running"], rendering: ["Đang dựng", "running"],
+const BT_STATUS = { pending: ["Đang chờ", ""], matching: ["Ghép cảnh", "running"], planned: ["Chờ dựng", "running"], rendering: ["Đang dựng", "running"],
   done: ["Xong", "ok"], blocked: ["Cần điền", "warn"], error: ["Lỗi", "error"] };
 const BT_RUN = { running: "Đang chạy", done: "Hoàn tất", cancelled: "Đã dừng", interrupted: "Bị ngắt", error: "Lỗi" };
 S.btSel = new Set();

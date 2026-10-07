@@ -144,6 +144,7 @@ DEFAULT_SETTINGS = {
     "fpt_key": "",
     "shop_name": "",
     "logo": "",
+    "ai_speed": "fast",       # fast: mô hình nhanh để nhìn ảnh mô tả đoạn quay; best: dùng mô hình mạnh nhất, chậm hơn
     # Chữ trên video: phông lấy từ máy, màu có sẵn vài màu đẹp
     "text_font": "DejaVu Sans",
     "text_color": "#FFFFFF",

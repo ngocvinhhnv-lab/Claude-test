@@ -123,14 +123,29 @@ class ProbeError(RuntimeError):
     """ffmpeg không đọc được file (hỏng, chép dở dang, hoặc không phải video)."""
 
 
+def probe_video(path):
+    """probe() cho file phải là video thật: có hình và có độ dài."""
+    message = (f"Không đọc được video trong file {os.path.basename(path)}. File có thể bị hỏng, chép chưa "
+               "xong từ điện thoại, chỉ có âm thanh hoặc không phải video.")
+    try:
+        info = probe(path)
+    except ProbeError:
+        raise ProbeError(message) from None
+    if not info["width"] or not info["duration"]:
+        raise ProbeError(message)
+    return info
+
+
 def probe(path):
     """Lấy thời lượng, kích thước và việc có âm thanh hay không."""
     out = subprocess.run([FFMPEG, "-hide_banner", "-i", path],
                          capture_output=True, text=True).stderr
     dur = re.search(r"Duration: (\d+):(\d+):([\d.]+)", out)
     size = re.search(r"Video: .*?(\d{2,5})x(\d{2,5})", out)
-    if not dur or not size:
-        raise ProbeError(f"Không đọc được video trong file {os.path.basename(path)}. File có thể bị hỏng, "
+    # Chỉ báo lỗi khi không đọc được gì. File âm thanh (giọng đọc .mp3) không có hình, ảnh logo .png không có
+    # độ dài, nên mỗi thứ thiếu một trong hai là chuyện bình thường. Nơi nào cần video thật thì dùng probe_video().
+    if not dur and not size:
+        raise ProbeError(f"Không đọc được file {os.path.basename(path)}. File có thể bị hỏng, "
                          "chép chưa xong từ điện thoại, hoặc không phải video.")
     if size and re.search(r"rotation of -?90", out):
         size = (None, size[2], size[1])  # video quay dọc: ffmpeg tự xoay khi xuất
@@ -548,7 +563,7 @@ def auto_clips(info, args):
 
 
 def build_jobs_from_args(args):
-    info = probe(args.source)
+    info = probe_video(args.source)
     clips = auto_clips(info, args)
     base = os.path.splitext(os.path.basename(args.source))[0]
     shared = {k: v for k, v in {
@@ -595,7 +610,7 @@ def apply_beats(opts, duration):
 def run(config, base_dir, dry_run=False):
     source = os.path.join(base_dir, config["source"])
     out_dir = os.path.join(base_dir, config.get("output_dir", "output"))
-    info = probe(source)
+    info = probe_video(source)
     print(f"Video gốc: {config['source']} — {fmt_time(info['duration'])}, "
           f"{info['width']}x{info['height']}, {'có' if info['has_audio'] else 'không có'} âm thanh")
 
