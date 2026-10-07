@@ -214,6 +214,13 @@ dialog.ed::backdrop{background:var(--scrim)}
 .ed-side{background:var(--sheet);border-left:1px solid var(--line);overflow:auto;padding:14px 16px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px}
 .ed-sec{display:flex;flex-direction:column;gap:8px;padding-bottom:12px;border-bottom:1px dashed var(--line)}
 .ed-sec h4{margin:0;font-family:var(--ff-d);font-size:16px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+#ed-print>summary{cursor:pointer;font-family:var(--ff-d);font-size:16px;font-weight:700;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+#ed-print>summary span{font-family:var(--ff);font-size:11.5px;font-weight:600;color:var(--cyan)}
+#ed-print[open]>summary{margin-bottom:8px}
+.pr-body{display:flex;flex-direction:column;gap:8px}
+#ed-print input,#ed-print select{min-width:0}
+.ed-f select,.ed-f textarea,.ed-f input[type=number]{box-sizing:border-box}
+.ed-f input[type=number]{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:6px 8px;font-size:13.5px;width:100%}
 .ed-sec h4 span{font-family:var(--ff);font-size:11.5px;font-weight:600;color:var(--cyan)}
 .ed-mark{display:flex;gap:6px;align-items:center}
 .ed-mark .num{flex:none;width:26px;height:26px;border-radius:50%;border:0;background:#FF1F4B;color:#fff;font-weight:800;cursor:pointer}
@@ -866,7 +873,8 @@ function setEngine(k){S.engine=k;store.set("xa-engine",k);
   renderEngines(); if(typeof TAB!=="undefined"&&TAB==="edit") renderEditEng()}
 $("k-key").addEventListener("input",e=>{const v=e.target.value.trim(); v?store.set("xa-key-"+S.engine,v):store.del("xa-key-"+S.engine); renderEngines(); $("k-key").focus()});
 function modelOf(k){const e=ENGINES[k]; if(!e||!e.models) return ""; return (store.get("xa-model2-"+k)||e.models[0].id).trim()}
-function resOf(k){return store.get("xa-res-"+k)||"2K"}
+let RES_OV=null;
+function resOf(k){return RES_OV||store.get("xa-res-"+k)||"2K"}
 function openaiLegacy(m){return /^(gpt-image-1|dall-e)/.test(m)}
 $("k-model").addEventListener("change",e=>{
   const v=e.target.value;
@@ -2069,12 +2077,14 @@ function renderEdSide(){
       ${sel&&sel.type==="text"?textProps(sel,ED.sel):""}
       ${sel&&sel.type==="logo"?`<p class="sug-note">Kéo logo để di chuyển, kéo ô vuông góc dưới để đổi cỡ.</p><div class="sug-chips"><button class="btn warn" type="button" data-ed="delobj">Xoá logo</button></div>`:""}
     </section>
+    ${printSec()}
     ${cropSec}
     <div class="ed-foot"><button class="btn go" type="button" data-ed="save">Lưu thành ảnh mới</button><button class="btn" type="button" data-ed="dl">Tải về</button></div>`;
 }
 const side=$("ed-side");
 side.addEventListener("click",async e=>{
   const b=e.target.closest("button"); if(!b) return;
+  if(b.dataset.prsize){const [w,h]=b.dataset.prsize.split("x").map(Number); PR.w=w; PR.h=h; prSave(); side.querySelectorAll("[data-pr=w],[data-pr=h]").forEach(i=>i.value=PR[i.dataset.pr]); prRefresh(); return}
   if(b.dataset.sel!=null){ED.sel=+b.dataset.sel; setEdTool("select"); renderEdSide(); edDraw(); return}
   if(b.dataset.rm!=null){pushUndo(); ED.objs.splice(+b.dataset.rm,1); ED.sel=-1; renderEdSide(); edDraw(); return}
   if(b.dataset.box){ED.boxLabel=b.dataset.box; setEdTool("box"); renderEdSide(); return}
@@ -2092,6 +2102,7 @@ side.addEventListener("click",async e=>{
   if(a==="nocrop"){ED.crop=null; renderEdSide(); edDraw()}
   if(a==="crop") await applyCrop();
   if(a==="ai") edAI();
+  if(a==="print") edPrint();
   if(a==="xb1"&&ED.ext) dlBlob(ED.ext.base,"1-anh-goc.png");
   if(a==="xb2"&&ED.ext) dlBlob(ED.ext.annot,"2-anh-danh-dau.jpg");
   if(a==="stop"&&ED.ctl) ED.ctl.abort();
@@ -2103,6 +2114,7 @@ side.addEventListener("click",async e=>{
 });
 side.addEventListener("input",e=>{
   const t=e.target;
+  if(t.dataset.pr){prSet(t); return}
   if(t.dataset.note!=null){const o=ED.objs[+t.dataset.note]; if(o){o.note=t.value; ED.dirty=true} return}
   if(t.id==="ed-global"){ED.global=t.value; return}
   const p=t.dataset.p; if(!p) return; const o=ED.objs[ED.sel]; if(!o) return;
@@ -2120,6 +2132,7 @@ side.addEventListener("input",e=>{
   edDraw();
   if(p==="text"){const li=side.querySelector(`[data-sel="${ED.sel}"]`); if(li) li.textContent="T · "+String(o.text).slice(0,26)}
 });
+side.addEventListener("toggle",e=>{if(e.target.id==="ed-print"){PR.open=e.target.open; prSave()}},true);
 side.addEventListener("change",e=>{if(e.target.dataset.p==="shadow"||e.target.dataset.p==="bgOn") side.dispatchEvent(new Event("input"))});
 $("ed-logo").addEventListener("change",async e=>{
   const f=e.target.files[0]; e.target.value=""; if(!f||!/^image\//.test(f.type)) return;
@@ -2154,6 +2167,149 @@ async function edSave(toDl){
   if(toDl){await download(rec); return}
   fresh.clear(); fresh.add(rec.id); await addRecords([rec]); renderResults(); ED.rec=rec; ED.dirty=false;
   edStatus("Đã lưu thành ảnh mới trong mục Ảnh đã tạo. Ảnh gốc vẫn còn nguyên.","ok");
+}
+
+/* ---- chuẩn bị file in (PP, canvas bằng máy in kỹ thuật số) ---- */
+const PR=Object.assign({w:60,h:90,dpi:150,bleed:0,fit:"cover",method:"local",fmt:"jpg",open:false},(()=>{try{return JSON.parse(store.get("xa-print")||"{}")||{}}catch(e){return {}}})());
+let PR_MSG={t:"",k:""};
+const PR_SIZES=[[20,30],[30,45],[40,60],[50,75],[60,90],[80,120],[100,100],[100,120]];
+const PR_AI_LONG={gemini:4096,openai:3840};
+function prSave(){store.set("xa-print",JSON.stringify({w:PR.w,h:PR.h,dpi:PR.dpi,bleed:PR.bleed,fit:PR.fit,method:PR.method,fmt:PR.fmt,open:PR.open}))}
+const prFm=x=>String(Number((+x).toFixed(1))).replace(".",",");
+function prMsg(t,k){PR_MSG={t,k:k||""}; const el=document.getElementById("pr-msg"); if(el){el.className="s-msg"+(k?" "+k:""); el.textContent=t}}
+function prPlan(){
+  const W=ED.W,H=ED.H,land=W>=H;
+  const a=Math.min(500,Math.max(5,+PR.w||5)), b=Math.min(500,Math.max(5,+PR.h||5));
+  const lg=Math.max(a,b), st=Math.min(a,b);
+  let pw=land?lg:st, ph=land?st:lg;
+  if(PR.fit==="keep"){const r=W/H; if(land){pw=lg;ph=lg/r}else{ph=lg;pw=lg*r}}
+  const want=Math.min(600,Math.max(50,+PR.dpi||150)); let dpi=want;
+  const dims=d=>({tw:Math.round(pw/2.54*d),th:Math.round(ph/2.54*d),b:Math.round((+PR.bleed||0)/25.4*d)});
+  const over=x=>x.tw+2*x.b>16000||x.th+2*x.b>16000||(x.tw+2*x.b)*(x.th+2*x.b)>80e6;
+  let d=dims(dpi); while(over(d)&&dpi>40){dpi=Math.floor(dpi*.92); d=dims(dpi)}
+  let sx=0,sy=0,sw=W,sh=H; const tr=d.tw/d.th, ir=W/H;
+  if(tr>ir*1.001){sh=W/tr; sy=(H-sh)/2} else if(tr<ir/1.001){sw=H*tr; sx=(W-sw)/2}
+  return {pw,ph,dpi,want,...d,sx,sy,sw,sh,cut:Math.round((1-(sw*sh)/(W*H))*100),effDpi:Math.round(sw/(pw/2.54)),scale:d.tw/sw};
+}
+function prAIok(){return (S.engine==="gemini"||S.engine==="openai")&&!engineProblem(S.engine)}
+function prAICost(){const ratio=nearestRatio(ED.W,ED.H); RES_OV="4K"; try{return estOne(S.engine,ratio)}finally{RES_OV=null}}
+function prInfo(){
+  const p=prPlan(), W=ED.W, H=ED.H, ai=PR.method==="ai", rows=[];
+  rows.push(`Ảnh hiện có: <b>${W}×${H} px</b>`);
+  rows.push(`Khổ in <b>${prFm(p.pw)}×${prFm(p.ph)} cm</b> ở ${p.dpi} dpi, file <b>${p.tw+2*p.b}×${p.th+2*p.b} px</b> (${prFm((p.tw+2*p.b)*(p.th+2*p.b)/1e6)} triệu điểm ảnh)${p.b?`, đã cộng lề tràn ${PR.bleed} mm mỗi cạnh`:""}`);
+  if(p.dpi<p.want) rows.push(`<span style="color:var(--warn)">Khổ quá lớn cho trình duyệt nên hạ độ nét từ ${p.want} xuống ${p.dpi} dpi.</span>`);
+  if(p.cut>0) rows.push(`Cắt bớt ${p.cut}% ảnh ở rìa để vừa khổ.`);
+  let eff=p.effDpi, extra="";
+  if(ai&&PR_AI_LONG[S.engine]){const long=PR_AI_LONG[S.engine], dw=(W>=H?long:long*W/H)*(p.sw/W), e2=Math.round(dw/(p.pw/2.54)); if(e2>eff){eff=e2; extra=" (ước tính sau khi AI phóng)"}}
+  const v=eff>=150?["ok","Đủ nét để in khổ này"]:eff>=100?["ok","Đủ cho PP, canvas treo xem từ xa (trên 1,5 m); đứng gần sẽ hơi mềm"]:eff>=70?["warn","Hơi thấp: chỉ nên in treo xa, nên phóng bằng AI hoặc chọn khổ nhỏ hơn"]:["err","Quá thấp: ảnh sẽ mềm, dễ vỡ hạt khi in. Dùng ảnh gốc lớn hơn hoặc giảm khổ in"];
+  rows.push(`Độ nét thật khoảng <b>${eff} dpi</b>${extra}: <span style="color:var(--${v[0]==="ok"?"ok":v[0]==="warn"?"warn":"mag"});font-weight:600">${v[1]}.</span>`);
+  if(ai) rows.push(prAIok()?`AI phóng một lần ≈ <b>${vnd(prAICost())}</b>. AI chỉ xử lý ảnh nền, chữ và logo của bạn vẫn được vẽ lại sắc nét.`:`<span style="color:var(--mag)">${esc(S.engine==="gemini"||S.engine==="openai"?engineProblem(S.engine):"Chọn Gemini hoặc OpenAI ở khung Xưởng tạo ảnh để dùng phóng bằng AI.")}</span>`);
+  return rows.map(r=>`<li>${r}</li>`).join("");
+}
+function printSec(){
+  const is=(w,h)=>(+PR.w===w&&+PR.h===h)||(+PR.w===h&&+PR.h===w);
+  const opt=(k,arr)=>arr.map(([v,l])=>`<option value="${v}"${String(PR[k])===String(v)?" selected":""}>${esc(l)}</option>`).join("");
+  return `<details class="ed-sec" id="ed-print"${PR.open?" open":""}><summary>Chuẩn bị file in <span>PP · Canvas</span></summary><div class="pr-body">
+    <p class="sug-note">In khổ lớn bằng máy in kỹ thuật số không cần 300 dpi, PP và canvas thường dùng 100–150 dpi. Chữ và logo thêm ở đây được vẽ lại sắc nét ở độ phân giải in.</p>
+    <div class="sug-chips">${PR_SIZES.map(([w,h])=>`<button type="button" class="sug-chip" data-prsize="${w}x${h}" aria-pressed="${is(w,h)}">${w}×${h}</button>`).join("")}</div>
+    <div class="ed-2" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)"><label class="ed-f"><span>Rộng (cm)</span><input type="number" min="5" max="500" step="1" data-pr="w" value="${esc(PR.w)}"></label><label class="ed-f"><span>Cao (cm)</span><input type="number" min="5" max="500" step="1" data-pr="h" value="${esc(PR.h)}"></label></div>
+    <p class="sug-note" style="margin:-4px 0 0">Nhập theo chiều nào cũng được, app tự xoay theo ảnh. 1 m² thì chọn 100×100.</p>
+    <label class="ed-f"><span>Độ nét (dpi)</span><select data-pr="dpi">${opt("dpi",[[100,"100 · bạt, PP treo xa (trên 2 m)"],[150,"150 · canvas, PP thường (khuyên dùng)"],[200,"200 · xem gần, trong 1 m"],[300,"300 · khổ nhỏ, chất lượng cao"]])}</select></label>
+    <label class="ed-f"><span>Khi tỉ lệ ảnh khác khổ in</span><select data-pr="fit">${opt("fit",[["cover","Cắt bớt rìa cho đúng khổ"],["keep","Giữ nguyên cả ảnh (cạnh dài theo khổ)"]])}</select></label>
+    <label class="ed-f"><span>Lề tràn</span><select data-pr="bleed">${opt("bleed",[[0,"Không"],[3,"3 mm · cắt thành phẩm"],[5,"5 mm · cắt thành phẩm"],[10,"10 mm"],[40,"40 mm · quấn mép canvas (lật gương)"]])}</select></label>
+    <label class="ed-f"><span>Phóng to ảnh</span><select data-pr="method">${opt("method",[["local","Trên máy · miễn phí"],["ai","Bằng AI · nét hơn, tốn tiền"]])}</select></label>
+    <label class="ed-f"><span>Định dạng file</span><select data-pr="fmt">${opt("fmt",[["jpg","JPG 95% · nhẹ, khuyên dùng"],["png","PNG · không nén mất, rất nặng"]])}</select></label>
+    <ul class="sug-note" id="pr-info" style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px">${prInfo()}</ul>
+    <div class="sug-chips"><button class="btn go" type="button" data-ed="print" ${ED.busy?"disabled":""}>Tạo file in và tải về</button></div>
+    <p class="s-msg${PR_MSG.k?" "+PR_MSG.k:""}" id="pr-msg" role="status">${esc(PR_MSG.t)}</p>
+  </div></details>`;
+}
+function prRefresh(){
+  const el=document.getElementById("pr-info"); if(el) el.innerHTML=prInfo();
+  const is=(w,h)=>(+PR.w===w&&+PR.h===h)||(+PR.w===h&&+PR.h===w);
+  document.querySelectorAll("[data-prsize]").forEach(b=>{const [w,h]=b.dataset.prsize.split("x").map(Number); b.setAttribute("aria-pressed",is(w,h))});
+}
+function prSet(t){
+  const k=t.dataset.pr; PR[k]=["w","h","dpi","bleed"].includes(k)?+t.value:t.value; prSave(); prRefresh();
+}
+// ghi dpi vào file để nhà in mở ra đúng khổ
+const CRC_T=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(u){let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=CRC_T[(c^u[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
+async function setDpi(blob,dpi){
+  const buf=new Uint8Array(await blob.arrayBuffer());
+  if(buf[0]===0x89&&buf[1]===0x50){
+    const ppm=Math.round(dpi/0.0254), ch=new Uint8Array(21), dv=new DataView(ch.buffer);
+    dv.setUint32(0,9); ch.set([0x70,0x48,0x59,0x73],4); dv.setUint32(8,ppm); dv.setUint32(12,ppm); ch[16]=1; dv.setUint32(17,crc32(ch.subarray(4,17)));
+    const out=new Uint8Array(buf.length+21); out.set(buf.subarray(0,33)); out.set(ch,33); out.set(buf.subarray(33),54);
+    return new Blob([out],{type:"image/png"});
+  }
+  if(buf[0]===0xFF&&buf[1]===0xD8&&buf[2]===0xFF&&buf[3]===0xE0&&buf[6]===0x4A){
+    buf[13]=1; buf[14]=dpi>>8; buf[15]=dpi&255; buf[16]=dpi>>8; buf[17]=dpi&255;
+    return new Blob([buf],{type:"image/jpeg"});
+  }
+  return blob;
+}
+// phóng từng bước ≤ 2 lần cho mượt, bước cuối vẽ thẳng vào ảnh in
+function prDrawScaled(g,src,sx,sy,sw,sh,dx,dy,tw,th){
+  let cur=src,x=sx,y=sy,w=sw,h=sh;
+  while(tw/w>2){const nw=Math.round(w*2), nh=Math.round(h*2), t=mkCanvas(nw,nh), tg=t.getContext("2d"); tg.imageSmoothingEnabled=true; tg.imageSmoothingQuality="high"; tg.drawImage(cur,x,y,w,h,0,0,nw,nh); cur=t;x=0;y=0;w=nw;h=nh}
+  g.imageSmoothingEnabled=true; g.imageSmoothingQuality="high"; g.drawImage(cur,x,y,w,h,dx,dy,tw,th);
+}
+async function prRender(p,src,f){
+  await Promise.all(ED.objs.filter(o=>o.type==="text").map(o=>document.fonts.load(`${o.weight} 40px "${o.font}"`).catch(()=>{})));
+  const {tw,th,b}=p, c=mkCanvas(tw+2*b,th+2*b), g=c.getContext("2d"); if(!g) throw new Error("mem");
+  g.fillStyle="#fff"; g.fillRect(0,0,c.width,c.height);
+  prDrawScaled(g,src,p.sx*f,p.sy*f,p.sw*f,p.sh*f,b,b,tw,th);
+  g.save(); g.beginPath(); g.rect(b,b,tw,th); g.clip(); g.translate(b,b); g.scale(p.scale,p.scale); g.translate(-p.sx,-p.sy);
+  ED.objs.filter(o=>o.type==="text"||o.type==="logo").forEach(o=>drawObj(g,o,edU(),{guides:false})); g.restore();
+  if(b>0){
+    // lề tràn: lật gương phần rìa ảnh ra ngoài
+    const xs=[[0,b,0,b,-1],[b,tw,0,tw,1],[b+tw,b,tw-b,b,-1]], ys=[[0,b,0,b,-1],[b,th,0,th,1],[b+th,b,th-b,b,-1]];
+    for(const [dx,dw,sxx,sw,fx] of xs) for(const [dy,dh,syy,sh,fy] of ys){
+      if(fx===1&&fy===1) continue;
+      g.save(); g.setTransform(fx,0,0,fy,dx+(fx<0?dw:0),dy+(fy<0?dh:0));
+      g.drawImage(c,b+sxx,b+syy,sw,sh,0,0,dw,dh); g.restore();
+    }
+  }
+  return c;
+}
+async function prAI(p){
+  const eng=S.engine, ratio=nearestRatio(ED.W,ED.H), base=await baseBlob();
+  const prompt="Phóng to ảnh đính kèm lên độ phân giải cao nhất để in khổ lớn. Giữ nguyên 100% bố cục, màu sắc, sản phẩm, nhãn, chữ, logo và từng chi tiết; chỉ làm nét, khử răng cưa và nhiễu. Không thêm, bớt hay vẽ lại bất kỳ chi tiết nào.";
+  let res, cost=0; RES_OV="4K";
+  try{
+    res=eng==="gemini"?await runGemini(prompt,[base],ratio,1,ED.ctl.signal):await runOpenAI(prompt,[base],ratio,1,ED.ctl.signal);
+    const it=res.items[0]; if(!it||!it.blob) throw new GenError("AI không trả về ảnh. Thử lại hoặc chọn phóng trên máy.","noimg");
+    cost=actualOne(eng,ratio,it.usage,it.share);
+    var img=await blobToImg(it.blob);
+  }finally{RES_OV=null}
+  addSpend(cost,1);
+  // căn lại đúng tỉ lệ ảnh gốc để chữ, logo không lệch
+  const W=ED.W,H=ED.H, ir=W/H, ar=img.naturalWidth/img.naturalHeight; let sx=0,sy=0,sw=img.naturalWidth,sh=img.naturalHeight;
+  if(ar>ir*1.002){sw=sh*ir; sx=(img.naturalWidth-sw)/2} else if(ar<ir/1.002){sh=sw/ir; sy=(img.naturalHeight-sh)/2}
+  const c=mkCanvas(sw,sh); c.getContext("2d").drawImage(img,sx,sy,sw,sh,0,0,sw,sh);
+  return {src:c,f:sw/W,cost};
+}
+async function edPrint(){
+  if(ED.busy) return;
+  const p=prPlan(), ai=PR.method==="ai";
+  if(ai&&!prAIok()){prMsg(S.engine==="gemini"||S.engine==="openai"?engineProblem(S.engine):"Chọn Gemini hoặc OpenAI ở khung Xưởng tạo ảnh để dùng phóng bằng AI.","err"); return}
+  ED.busy=true; ED.ctl=new AbortController(); prMsg(ai?`${ENGINES[S.engine].short} đang phóng ảnh, thường mất 20–60 giây…`:"Đang xử lý ảnh in…"); renderEdSide();
+  try{
+    let src=ED.baseImg, f=ED.baseImg.naturalWidth/ED.W, cost=0;
+    if(ai){const r=await prAI(p); src=r.src; f=r.f; cost=r.cost}
+    await new Promise(r=>setTimeout(r,30));
+    const c=await prRender(p,src,f), png=PR.fmt==="png";
+    let blob=await canvasBlob(c,png?"image/png":"image/jpeg",.95);
+    c.width=c.height=1;
+    if(!blob) throw new Error("mem");
+    blob=await setDpi(blob,p.dpi);
+    const name=`${slug(ED.label||"anh")}-in-${prFm(p.pw).replace(",",".")}x${prFm(p.ph).replace(",",".")}cm-${p.dpi}dpi.${png?"png":"jpg"}`;
+    const ok=await dlBlob(blob,name), mb=(blob.size/1048576).toFixed(1).replace(".",",");
+    prMsg(ok?`Đã tạo ${name} (${p.tw+2*p.b}×${p.th+2*p.b} px, ${mb} MB, ghi sẵn ${p.dpi} dpi)${cost?` · ≈ ${vnd(cost)}`:""}. Gửi file này cho nhà in, chọn in đúng ${prFm(p.pw)}×${prFm(p.ph)} cm${p.b?` (đã có lề tràn ${PR.bleed} mm)`:""}.`:"Chưa lưu được file. Thử lại.",ok?"ok":"err");
+  }catch(e){
+    prMsg(e&&e.code==="cancelled"?"Đã dừng.":e instanceof GenError?errText(e):"Không đủ bộ nhớ để tạo file lớn thế này. Chọn độ nét thấp hơn (100 dpi), bỏ lề tràn hoặc chọn khổ nhỏ hơn.","err");
+  }finally{ED.busy=false; ED.ctl=null; renderEdSide()}
 }
 
 /* ---- sửa bằng AI theo vùng khoanh ---- */
