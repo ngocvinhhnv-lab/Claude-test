@@ -2080,6 +2080,7 @@ function renderEdSide(){
     ${printSec()}
     ${cropSec}
     <div class="ed-foot"><button class="btn go" type="button" data-ed="save">Lưu thành ảnh mới</button><button class="btn" type="button" data-ed="dl">Tải về</button></div>`;
+  prLink();
 }
 const side=$("ed-side");
 side.addEventListener("click",async e=>{
@@ -2103,6 +2104,10 @@ side.addEventListener("click",async e=>{
   if(a==="crop") await applyCrop();
   if(a==="ai") edAI();
   if(a==="print") edPrint();
+  if(b.id==="pr-ext"){await copyText(prUpPrompt()); const t=EXT_TARGETS[tool]||EXT_TARGETS.gpt; prMsg(`Đã copy prompt. ${t.url?`Trong ${t.name} bấm Ctrl + V để dán`:"Dán vào công cụ bạn dùng"}, đính kèm ảnh gốc rồi tạo.`,"ok"); return}
+  if(a==="prxcopy"){await copyText(prUpPrompt(),b,"Chỉ copy prompt"); prMsg("Đã copy prompt phóng ảnh.","ok")}
+  if(a==="prxdl"){const ok=await dlBlob(await baseBlob(),`${slug(ED.label||"anh")}-goc-${ED.W}x${ED.H}.png`); if(ok) prMsg("Đã tải ảnh gốc. Đính kèm ảnh này vào khung chat.","ok")}
+  if(a==="prxback"){closeEditor(true); setTab("edit"); $("edit-file").click()}
   if(a==="xb1"&&ED.ext) dlBlob(ED.ext.base,"1-anh-goc.png");
   if(a==="xb2"&&ED.ext) dlBlob(ED.ext.annot,"2-anh-danh-dau.jpg");
   if(a==="stop"&&ED.ctl) ED.ctl.abort();
@@ -2191,6 +2196,12 @@ function prPlan(){
   if(tr>ir*1.001){sh=W/tr; sy=(H-sh)/2} else if(tr<ir/1.001){sw=H*tr; sx=(W-sw)/2}
   return {pw,ph,dpi,want,...d,sx,sy,sw,sh,cut:Math.round((1-(sw*sh)/(W*H))*100),effDpi:Math.round(sw/(pw/2.54)),scale:d.tw/sw};
 }
+function prUpPrompt(){
+  const p=prPlan(), need=`${p.tw+2*p.b}×${p.th+2*p.b}`;
+  return `Phóng to ảnh đính kèm lên độ phân giải cao nhất có thể, để in khổ lớn ${prFm(p.pw)}×${prFm(p.ph)} cm ở ${p.dpi} dpi (cần khoảng ${need} điểm ảnh). `
+    +`Giữ nguyên 100% bố cục, màu sắc, sản phẩm, nhãn, chữ và mọi chi tiết; chỉ làm nét, khử răng cưa và khử nhiễu. `
+    +`Không thêm, bớt, đổi hay vẽ lại bất kỳ chi tiết nào. Giữ đúng tỉ lệ khung của ảnh gốc. Xuất ảnh ở kích thước lớn nhất mà bạn làm được.`;
+}
 function prAIok(){return (S.engine==="gemini"||S.engine==="openai")&&!engineProblem(S.engine)}
 function prAICost(){const ratio=nearestRatio(ED.W,ED.H); RES_OV="4K"; try{return estOne(S.engine,ratio)}finally{RES_OV=null}}
 function prInfo(){
@@ -2203,6 +2214,7 @@ function prInfo(){
   if(ai&&PR_AI_LONG[S.engine]){const long=PR_AI_LONG[S.engine], dw=(W>=H?long:long*W/H)*(p.sw/W), e2=Math.round(dw/(p.pw/2.54)); if(e2>eff){eff=e2; extra=" (ước tính sau khi AI phóng)"}}
   const v=eff>=150?["ok","Đủ nét để in khổ này"]:eff>=100?["ok","Đủ cho PP, canvas treo xem từ xa (trên 1,5 m); đứng gần sẽ hơi mềm"]:eff>=70?["warn","Hơi thấp: chỉ nên in treo xa, nên phóng bằng AI hoặc chọn khổ nhỏ hơn"]:["err","Quá thấp: ảnh sẽ mềm, dễ vỡ hạt khi in. Dùng ảnh gốc lớn hơn hoặc giảm khổ in"];
   rows.push(`Độ nét thật khoảng <b>${eff} dpi</b>${extra}: <span style="color:var(--${v[0]==="ok"?"ok":v[0]==="warn"?"warn":"mag"});font-weight:600">${v[1]}.</span>`);
+  if(PR.method==="ext") rows.push('Phóng bằng gói tháng: <b>0 đ</b>. Chữ và logo vẫn được vẽ lại sắc nét ở đây sau khi bạn đưa ảnh về.');
   if(ai) rows.push(prAIok()?`AI phóng một lần ≈ <b>${vnd(prAICost())}</b>. AI chỉ xử lý ảnh nền, chữ và logo của bạn vẫn được vẽ lại sắc nét.`:`<span style="color:var(--mag)">${esc(S.engine==="gemini"||S.engine==="openai"?engineProblem(S.engine):"Chọn Gemini hoặc OpenAI ở khung Xưởng tạo ảnh để dùng phóng bằng AI.")}</span>`);
   return rows.map(r=>`<li>${r}</li>`).join("");
 }
@@ -2217,20 +2229,31 @@ function printSec(){
     <label class="ed-f"><span>Độ nét (dpi)</span><select data-pr="dpi">${opt("dpi",[[100,"100 · bạt, PP treo xa (trên 2 m)"],[150,"150 · canvas, PP thường (khuyên dùng)"],[200,"200 · xem gần, trong 1 m"],[300,"300 · khổ nhỏ, chất lượng cao"]])}</select></label>
     <label class="ed-f"><span>Khi tỉ lệ ảnh khác khổ in</span><select data-pr="fit">${opt("fit",[["cover","Cắt bớt rìa cho đúng khổ"],["keep","Giữ nguyên cả ảnh (cạnh dài theo khổ)"]])}</select></label>
     <label class="ed-f"><span>Lề tràn</span><select data-pr="bleed">${opt("bleed",[[0,"Không"],[3,"3 mm · cắt thành phẩm"],[5,"5 mm · cắt thành phẩm"],[10,"10 mm"],[40,"40 mm · quấn mép canvas (lật gương)"]])}</select></label>
-    <label class="ed-f"><span>Phóng to ảnh</span><select data-pr="method">${opt("method",[["local","Trên máy · miễn phí"],["ai","Bằng AI · nét hơn, tốn tiền"]])}</select></label>
+    <label class="ed-f"><span>Phóng to ảnh</span><select data-pr="method">${opt("method",[["local","Trên máy · miễn phí"],["ai","Bằng AI · nét hơn, tốn tiền"],["ext","Bằng gói tháng · copy prompt, miễn phí"]])}</select></label>
+    ${PR.method==="ext"?`<div class="ed-ext"><b>Phóng bằng gói tháng ChatGPT, Gemini… không tốn tiền theo ảnh.</b>
+      <ol style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px">
+        <li>Bấm <b>Copy prompt &amp; mở ${esc((EXT_TARGETS[tool]||EXT_TARGETS.gpt).name)}</b> rồi dán (Ctrl + V) vào khung chat.</li>
+        <li>Đính kèm ảnh gốc: <button class="btn" type="button" data-ed="prxdl" style="font-size:12px;padding:3px 9px">Tải ảnh gốc về máy</button></li>
+        <li>Tạo xong, tải ảnh đã phóng về máy.</li>
+        <li><button class="btn primary" type="button" data-ed="prxback" style="font-size:12px;padding:3px 9px">Đưa ảnh đã phóng về đây</button> rồi mở lại mục này và bấm "Tạo file in và tải về".</li>
+      </ol>
+      <div class="sug-chips"><a class="btn go" id="pr-ext" role="button" style="font-size:12px;padding:4px 10px">Copy prompt &amp; mở ${esc((EXT_TARGETS[tool]||EXT_TARGETS.gpt).name)}</a><button class="btn" type="button" data-ed="prxcopy" style="font-size:12px;padding:4px 10px">Chỉ copy prompt</button></div>
+      <details class="cp-pr"><summary>Xem prompt</summary><p style="font-size:12.5px;background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:8px 10px;margin:6px 0">${esc(prUpPrompt())}</p></details></div>`:""}
     <label class="ed-f"><span>Định dạng file</span><select data-pr="fmt">${opt("fmt",[["jpg","JPG 95% · nhẹ, khuyên dùng"],["png","PNG · không nén mất, rất nặng"]])}</select></label>
     <ul class="sug-note" id="pr-info" style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px">${prInfo()}</ul>
     <div class="sug-chips"><button class="btn go" type="button" data-ed="print" ${ED.busy?"disabled":""}>Tạo file in và tải về</button></div>
     <p class="s-msg${PR_MSG.k?" "+PR_MSG.k:""}" id="pr-msg" role="status">${esc(PR_MSG.t)}</p>
   </div></details>`;
 }
+function prLink(){const a=document.getElementById("pr-ext"); if(!a) return; const t=EXT_TARGETS[tool]||EXT_TARGETS.gpt; if(t.url){a.href=t.url;a.target="_blank";a.rel="noopener"} else a.removeAttribute("href")}
 function prRefresh(){
   const el=document.getElementById("pr-info"); if(el) el.innerHTML=prInfo();
   const is=(w,h)=>(+PR.w===w&&+PR.h===h)||(+PR.w===h&&+PR.h===w);
   document.querySelectorAll("[data-prsize]").forEach(b=>{const [w,h]=b.dataset.prsize.split("x").map(Number); b.setAttribute("aria-pressed",is(w,h))});
 }
 function prSet(t){
-  const k=t.dataset.pr; PR[k]=["w","h","dpi","bleed"].includes(k)?+t.value:t.value; prSave(); prRefresh();
+  const k=t.dataset.pr; PR[k]=["w","h","dpi","bleed"].includes(k)?+t.value:t.value; prSave();
+  if(k==="method") renderEdSide(); else prRefresh();
 }
 // ghi dpi vào file để nhà in mở ra đúng khổ
 const CRC_T=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
