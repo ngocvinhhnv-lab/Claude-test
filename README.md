@@ -69,7 +69,7 @@ Nâng cấp từ "Bảng mẫu brief ảnh AI": 20 mẫu ấn phẩm (post, stor
 | OpenAI (GPT Image) | Mở file trên máy bằng trình duyệt | API key OpenAI |
 
 - Chọn tỉ lệ (1:1, 4:5, 9:16, 16:9, 2:3, 4:3, 21:9) và số ảnh (1–4) mỗi lượt.
-- Chọn model: OpenAI mặc định GPT Image 2.5 Sunburst (có Flare, GPT Image 2, 1.5, 1 Mini); Gemini mặc định Nano Banana Pro (có Nano Banana 2, 2 Lite). Chọn độ nét 1K/2K/4K và chất lượng (OpenAI).
+- Chọn model: OpenAI mặc định GPT Image 2.5 Sunburst (có Flare, GPT Image 2, 1.5, 1 Mini); Gemini mặc định Nano Banana Pro (có Nano Banana 2, 2 Lite). Chọn độ nét 1K (Full HD) / 2K (QHD) / 4K (UHD) — mặc định 4K, mức cao nhất Gemini và OpenAI cho phép — và chất lượng (OpenAI, mặc định Cao).
 - Tải lên tối đa 4 ảnh sản phẩm thật (nhiều góc, tự thu nhỏ về 2048 px, nhớ cho lần sau) và ảnh tham chiếu; Gemini/OpenAI nhận các ảnh này để giữ đúng nhãn và phong cách.
 - Tải ảnh sản phẩm lên là AI (Claude trong claude.ai, hoặc Gemini/OpenAI bằng key của bạn) tự đọc ảnh, chỉ chọn trong thư viện 3 mẫu hợp nhất, chỉnh prompt của các mẫu đó theo sản phẩm (vẫn giữ chỗ {…} để sửa brief sau), tự điền brief và đưa mẫu hợp nhất lên xưởng. Có Hoàn tác.
 - **Làm giống ảnh mẫu**: tải hoặc dán một ảnh mẫu vào xưởng, hệ thống tự phân tích, viết prompt theo ảnh (giữ chỗ {…} cho brief), đặt đúng tỉ lệ, có Hoàn tác. Chọn mức giống: gần hết, bố cục, hoặc màu và ánh sáng. Lưu ảnh mẫu thành "Mẫu của tôi" trong thư viện; khi dùng lại, ảnh mẫu được gửi kèm tự động.

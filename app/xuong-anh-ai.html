@@ -510,7 +510,7 @@ dl.ana dd{margin:0;color:var(--muted)}
         <div class="eng-cfg hidden" id="eng-cfg">
           <div class="field f-key"><label for="k-key" id="k-key-label">API key</label><input id="k-key" type="password" autocomplete="off" spellcheck="false" placeholder="Dán API key vào đây"></div>
           <div class="field f-model"><label for="k-model">Model</label><select id="k-model"></select><input id="k-model-custom" class="hidden" spellcheck="false" placeholder="Gõ tên model, VD: gpt-image-2" style="margin-top:6px"></div>
-          <div class="field f-small"><label for="k-res">Độ nét</label><select id="k-res"><option value="1K">1K · nhanh</option><option value="2K">2K · nét</option><option value="4K">4K · nét nhất</option></select></div>
+          <div class="field f-small"><label for="k-res">Độ nét</label><select id="k-res"><option value="1K">1K · Full HD · nhanh, rẻ</option><option value="2K">2K · QHD · cân bằng</option><option value="4K">4K · UHD · nét nhất</option></select></div>
           <div class="field f-small" id="k-q-wrap"><label for="k-q">Chất lượng</label><select id="k-q"><option value="high">Cao</option><option value="medium">Vừa</option><option value="low">Nhanh, rẻ</option><option value="auto">Tự động</option></select></div>
           <button class="btn" type="button" id="k-forget">Xoá key</button>
           <p class="note" id="k-note"></p>
@@ -874,7 +874,7 @@ function setEngine(k){S.engine=k;store.set("xa-engine",k);
 $("k-key").addEventListener("input",e=>{const v=e.target.value.trim(); v?store.set("xa-key-"+S.engine,v):store.del("xa-key-"+S.engine); renderEngines(); $("k-key").focus()});
 function modelOf(k){const e=ENGINES[k]; if(!e||!e.models) return ""; return (store.get("xa-model2-"+k)||e.models[0].id).trim()}
 let RES_OV=null;
-function resOf(k){return RES_OV||store.get("xa-res-"+k)||"2K"}
+function resOf(k){return RES_OV||store.get("xa-res-"+k)||"4K"}
 function openaiLegacy(m){return /^(gpt-image-1|dall-e)/.test(m)}
 $("k-model").addEventListener("change",e=>{
   const v=e.target.value;
