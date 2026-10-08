@@ -2175,7 +2175,7 @@ async function edSave(toDl){
 }
 
 /* ---- chuẩn bị file in (PP, canvas bằng máy in kỹ thuật số) ---- */
-const PR=Object.assign({w:60,h:90,dpi:150,bleed:0,fit:"cover",method:"local",fmt:"jpg",open:false},(()=>{try{return JSON.parse(store.get("xa-print")||"{}")||{}}catch(e){return {}}})());
+const PR=Object.assign({w:60,h:90,dpi:300,bleed:0,fit:"cover",method:"local",fmt:"jpg",open:false},(()=>{try{return JSON.parse(store.get("xa-print")||"{}")||{}}catch(e){return {}}})());
 let PR_MSG={t:"",k:""};
 const PR_SIZES=[[20,30],[30,45],[40,60],[50,75],[60,90],[80,120],[100,100],[100,120]];
 const PR_AI_LONG={gemini:4096,openai:3840};
