@@ -207,10 +207,18 @@ dialog.ed::backdrop{background:var(--scrim)}
 .ed-acts{display:flex;gap:6px}
 .ed-confirm{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 16px;background:var(--warn-soft);color:var(--warn);font-size:13px;font-weight:600}
 .ed-main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 360px}
-.ed-stage{min-height:0;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto;background:
+.ed-stagewrap{position:relative;min-width:0;min-height:0;display:flex}
+.ed-stage{flex:1;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto;background:
   linear-gradient(45deg,var(--wire) 25%,transparent 25%,transparent 75%,var(--wire) 75%) 0 0/24px 24px,
   linear-gradient(45deg,var(--wire) 25%,transparent 25%,transparent 75%,var(--wire) 75%) 12px 12px/24px 24px,var(--paper)}
-#ed-cv{display:block;max-width:100%;max-height:calc(100dvh - 120px);width:auto;height:auto;touch-action:none;box-shadow:0 2px 18px rgba(0,0,0,.18);background:#fff}
+#ed-cv{display:block;max-width:100%;max-height:calc(100dvh - 120px);width:auto;height:auto;touch-action:none;box-shadow:0 2px 18px rgba(0,0,0,.18);background:#fff;flex:none}
+.ed-stage.zoomed{justify-content:flex-start;align-items:flex-start}
+.ed-zoom{position:absolute;right:14px;bottom:14px;z-index:3;display:inline-flex;align-items:center;gap:2px;background:var(--sheet);border:1px solid var(--line);border-radius:999px;padding:3px;box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.ed-zb{border:0;background:none;border-radius:999px;width:30px;height:30px;font-size:15px;line-height:1;cursor:pointer;color:var(--ink);display:inline-flex;align-items:center;justify-content:center;padding:0}
+.ed-zb.wide{width:auto;min-width:58px;padding:0 8px;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}
+.ed-zb:hover{background:var(--paper)}
+.ed-zb[aria-pressed="true"]{background:var(--ink);color:var(--sheet)}
+.ed-zsep{width:1px;height:18px;background:var(--line)}
 .ed-side{background:var(--sheet);border-left:1px solid var(--line);overflow:auto;padding:14px 16px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px}
 .ed-sec{display:flex;flex-direction:column;gap:8px;padding-bottom:12px;border-bottom:1px dashed var(--line)}
 .ed-sec h4{margin:0;font-family:var(--ff-d);font-size:16px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
@@ -592,7 +600,7 @@ dl.ana dd{margin:0;color:var(--muted)}
   </div>
   <div class="ed-confirm hidden" id="ed-confirm">Có thay đổi chưa lưu. Đóng mà không lưu? <button class="btn warn" type="button" id="ed-confirm-yes">Đóng, bỏ thay đổi</button><button class="btn" type="button" id="ed-confirm-no">Ở lại</button></div>
   <div class="ed-main">
-    <div class="ed-stage"><canvas id="ed-cv" aria-label="Ảnh đang chỉnh"></canvas></div>
+    <div class="ed-stagewrap"><div class="ed-stage" id="ed-stage"><canvas id="ed-cv" aria-label="Ảnh đang chỉnh"></canvas></div></div>
     <aside class="ed-side" id="ed-side"></aside>
   </div>
   <input type="file" id="ed-logo" accept="image/png,image/webp,image/jpeg,image/svg+xml" hidden>
@@ -1848,7 +1856,7 @@ const TOOLS_BY_MODE={
   layout:[["select","↖","Chọn, kéo"],["box","▭","Vẽ khung"]]
 };
 const ED={open:false,mode:"result",rec:null,base:null,baseImg:null,prevImg:null,W:0,H:0,objs:[],sel:-1,tool:"select",undo:[],redo:[],drag:null,crop:null,cropRatio:0,
-  boxLabel:"Sản phẩm",busy:false,ctl:null,showPrev:false,dirty:false,baseChanged:false,onSave:null,title:"",label:"",status:"",statusKind:""};
+  zoom:0,pan:false,panning:false,panHold:false,boxLabel:"Sản phẩm",busy:false,ctl:null,showPrev:false,dirty:false,baseChanged:false,onSave:null,title:"",label:"",status:"",statusKind:""};
 const cv=$("ed-cv"), cx=cv.getContext("2d");
 const edU=()=>Math.max(ED.W,ED.H)/1000;
 function blobToImg(b){return new Promise((res,rej)=>{const u=URL.createObjectURL(b),i=new Image();i.onload=()=>{URL.revokeObjectURL(u);res(i)};i.onerror=()=>{URL.revokeObjectURL(u);rej(new Error("img"))};i.src=u})}
@@ -1936,9 +1944,24 @@ function newText(p){
   const pre=TEXT_PRESETS[0], txt=(vals.thong_diep||"").trim()||"Nhập chữ";
   return {type:"text",text:txt,x:p.x,y:p.y,size:Math.round(ED.H*.07),font:pre.font,weight:pre.weight,color:pre.color,stroke:pre.stroke,strokeW:pre.strokeW,shadow:pre.shadow,bg:pre.bg};
 }
+const PTR=new Map();
+function pinchMid(){const a=[...PTR.values()]; return {x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2,d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)}}
+function startPan(e){
+  const st=stageEl(); ED.panning=true; applyZoom();
+  ED.drag={kind:"pan",sx:e.clientX,sy:e.clientY,l:st.scrollLeft,t:st.scrollTop};
+}
 cv.addEventListener("pointerdown",e=>{
   if(ED.busy||ED.showPrev) return; e.preventDefault();
-  const p=toImg(e), U=edU(); cv.setPointerCapture(e.pointerId);
+  PTR.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(PTR.size===2){ // hai ngón: chụm để phóng
+    try{cv.releasePointerCapture(e.pointerId)}catch(_){}
+    ED.drag=null; const m=pinchMid(), r=cv.getBoundingClientRect(), sc=curScale();
+    ED.pinch={d:m.d,s:sc,cx:(m.x-r.left)/sc,cy:(m.y-r.top)/sc}; return;
+  }
+  if(ED.pinch) return;
+  cv.setPointerCapture(e.pointerId);
+  if(ED.pan||e.button===1){startPan(e); return}
+  const p=toImg(e), U=edU();
   const t=ED.tool;
   if(t==="select"){
     const s=ED.objs[ED.sel];
@@ -1952,7 +1975,14 @@ cv.addEventListener("pointerdown",e=>{
   ED.drag={kind:"create",shape:t,start:p,cur:p};
 });
 cv.addEventListener("pointermove",e=>{
-  const d=ED.drag; if(!d) return; const p=toImg(e), U=edU();
+  if(PTR.has(e.pointerId)) PTR.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ED.pinch&&PTR.size>=2){
+    const m=pinchMid(); if(!(m.d>0&&ED.pinch.d>0)) return;
+    setZoom(Math.min(8,Math.max(.1,ED.pinch.s*m.d/ED.pinch.d)),ED.pinch.cx,ED.pinch.cy); return;
+  }
+  const d=ED.drag; if(!d) return;
+  if(d.kind==="pan"){const st=stageEl(); st.scrollLeft=d.l-(e.clientX-d.sx); st.scrollTop=d.t-(e.clientY-d.sy); return}
+  const p=toImg(e), U=edU();
   if(d.kind==="create") d.cur=p;
   else if(d.kind==="free"){const l=d.pts[d.pts.length-1]; if(Math.hypot(p.x-l.x,p.y-l.y)>3*U) d.pts.push(p)}
   else if(d.kind==="move"){const dx=p.x-d.start.x,dy=p.y-d.start.y,o=d.o; if(o.pts) o.pts=d.orig.pts.map(q=>({x:q.x+dx,y:q.y+dy})); else {o.x=d.orig.x+dx;o.y=d.orig.y+dy}}
@@ -1962,8 +1992,11 @@ cv.addEventListener("pointermove",e=>{
     else {o.w=nw;o.h=nh}}
   edDraw();
 });
-function endDrag(){
+function endDrag(e){
+  if(e&&e.pointerId!=null) PTR.delete(e.pointerId);
+  if(ED.pinch){ if(PTR.size<2) ED.pinch=null; return }
   const d=ED.drag; ED.drag=null; if(!d) return; const U=edU();
+  if(d.kind==="pan"){ED.panning=false; applyZoom(); return}
   if(d.kind==="create"){
     const r=normRect(d.start,d.cur,d.shape);
     if(r.w<12*U||r.h<12*U){edDraw();return}
@@ -1980,6 +2013,82 @@ function endDrag(){
 }
 cv.addEventListener("pointerup",endDrag); cv.addEventListener("pointercancel",endDrag);
 
+/* ---- thu phóng khung ảnh ---- */
+const ZOOMS=[.1,.25,.5,.75,1,1.5,2,3,4,6,8];
+const stageEl=()=>cv.parentElement;
+function fitScale(){
+  const st=stageEl(); if(!st) return 1;
+  const cs=getComputedStyle(st), px=parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight), py=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom);
+  const w=st.clientWidth-px, h=st.clientHeight-py;
+  if(!(w>0&&h>0)) return 1;
+  return Math.min(1,w/ED.W,h/ED.H)||1;
+}
+function curScale(){return ED.zoom||fitScale()}
+function applyZoom(){
+  const s=curScale();
+  cv.style.width=Math.max(1,Math.round(ED.W*s))+"px"; cv.style.height="auto"; cv.style.maxWidth="none"; cv.style.maxHeight="none";
+  stageEl().classList.toggle("zoomed",!!ED.zoom&&s>fitScale()+1e-4);
+  cv.style.cursor=ED.pan?(ED.panning?"grabbing":"grab"):ED.tool==="select"?"default":ED.tool==="text"?"text":"crosshair";
+  const lbl=$("ed-zlbl"); if(lbl) lbl.textContent=Math.round(s*100)+"%";
+  const f=$("ed-zfit"); if(f) f.setAttribute("aria-pressed",!ED.zoom);
+  const h=$("ed-zhand"); if(h) h.setAttribute("aria-pressed",!!ED.pan);
+}
+// giữ nguyên điểm đang xem (cx,cy theo pixel ảnh) khi đổi mức phóng
+function setZoom(z,cx,cy){
+  const st=stageEl(), r0=cv.getBoundingClientRect(), s0=st.getBoundingClientRect(), old=curScale();
+  if(cx==null){ // chưa chỉ điểm nào thì giữ tâm khung nhìn
+    cx=(Math.min(Math.max(s0.left+s0.width/2,r0.left),r0.right)-r0.left)/old;
+    cy=(Math.min(Math.max(s0.top+s0.height/2,r0.top),r0.bottom)-r0.top)/old;
+  }
+  const vx=r0.left+cx*old-s0.left, vy=r0.top+cy*old-s0.top;
+  ED.zoom=z; applyZoom();
+  const sc=curScale(), r1=cv.getBoundingClientRect(), s1=st.getBoundingClientRect();
+  st.scrollLeft+=(r1.left+cx*sc-s1.left)-vx; st.scrollTop+=(r1.top+cy*sc-s1.top)-vy;
+}
+function zoomStep(dir){
+  const s=curScale();
+  const list=ZOOMS.filter(z=>dir>0?z>s+1e-4:z<s-1e-4);
+  if(!list.length) return;
+  setZoom(dir>0?list[0]:list[list.length-1]);
+}
+function zoomFit(){ED.zoom=0; applyZoom()}
+function zoomBar(){
+  return `<div class="ed-zoom" role="group" aria-label="Thu phóng">
+    <button type="button" class="ed-zb" id="ed-zhand" aria-pressed="false" title="Kéo để di chuyển ảnh (hoặc giữ phím cách)">✋</button>
+    <span class="ed-zsep"></span>
+    <button type="button" class="ed-zb" data-z="-" title="Thu nhỏ (Ctrl −)">−</button>
+    <button type="button" class="ed-zb wide" id="ed-zfit" title="Vừa khung (Ctrl 0)"><span id="ed-zlbl">100%</span></button>
+    <button type="button" class="ed-zb" data-z="+" title="Phóng to (Ctrl +)">+</button>
+  </div>`;
+}
+stageEl().parentElement.insertAdjacentHTML("beforeend",zoomBar());
+stageEl().parentElement.addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  if(b.id==="ed-zhand"){ED.pan=!ED.pan; applyZoom(); return}
+  if(b.id==="ed-zfit"){zoomFit(); return}
+  if(b.dataset.z) zoomStep(b.dataset.z==="+"?1:-1);
+});
+// Ctrl + lăn chuột: phóng tại con trỏ
+stageEl().addEventListener("wheel",e=>{
+  if(!(e.ctrlKey||e.metaKey)) return;
+  e.preventDefault();
+  const p=toImg(e); setZoom(Math.min(8,Math.max(.1,curScale()*(e.deltaY<0?1.15:1/1.15))),p.x,p.y);
+},{passive:false});
+// giữ phím cách để tạm bật kéo ảnh
+addEventListener("keydown",e=>{
+  if(!ED.open) return;
+  const typing=/^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName||""));
+  if(e.code==="Space"&&!typing&&!ED.panHold){ED.panHold=true; ED.pan=true; applyZoom(); e.preventDefault(); return}
+  if(e.ctrlKey||e.metaKey){
+    if(e.key==="0"){e.preventDefault(); zoomFit()}
+    else if(e.key==="="||e.key==="+"){e.preventDefault(); zoomStep(1)}
+    else if(e.key==="-"||e.key==="_"){e.preventDefault(); zoomStep(-1)}
+  }
+});
+addEventListener("keyup",e=>{if(e.code==="Space"&&ED.panHold){ED.panHold=false; ED.pan=false; applyZoom()}});
+addEventListener("resize",()=>{if(ED.open&&!ED.zoom) applyZoom()});
+
+
 /* ---- mở / đóng ---- */
 async function openEditor(o){
   ED.mode=o.mode; ED.rec=o.rec||null; ED.onSave=o.onSave||null; ED.title=o.title||"Chỉnh sửa ảnh"; ED.label=o.label||"";
@@ -1988,10 +2097,10 @@ async function openEditor(o){
     ED.objs=(o.boxes||[]).map(b=>({type:"box",label:b.label,x:b.x*ED.W,y:b.y*ED.H,w:b.w*ED.W,h:b.h*ED.H}));}
   else{ED.base=o.blob; ED.baseImg=await blobToImg(o.blob); ED.W=ED.baseImg.naturalWidth; ED.H=ED.baseImg.naturalHeight;
     if(o.layers) ED.objs=await Promise.all(o.layers.map(async l=>l.type==="logo"&&l.blob?{...l,img:await blobToImg(l.blob)}:{...l}));}
-  cv.width=ED.W; cv.height=ED.H;
+  cv.width=ED.W; cv.height=ED.H; ED.zoom=0; ED.pan=false; ED.panning=false;
   $("ed-title").textContent=ED.title;
   setEdTool(o.mode==="layout"?"box":o.mode==="photo"?"crop":"mark");
-  const d=$("ed"); try{d.showModal()}catch(_){d.setAttribute("open","")} ED.open=true;
+  const d=$("ed"); try{d.showModal()}catch(_){d.setAttribute("open","")} ED.open=true; applyZoom();
   await Promise.all(FONTS.map(([f])=>document.fonts.load(`${(WEIGHTS[f]||[700]).slice(-1)[0]} 40px "${f}"`).catch(()=>{})));
   renderEdSide(); edDraw();
 }
@@ -2018,7 +2127,7 @@ document.addEventListener("keydown",e=>{
 function setEdTool(t){
   ED.tool=t; if(t!=="crop"&&!ED.crop) ED.cropRatio=ED.cropRatio||0;
   $("ed-tools").innerHTML=TOOLS_BY_MODE[ED.mode].map(([k,ic,l])=>`<button type="button" class="ed-tool" data-tool="${k}" aria-pressed="${k===t}" title="${l}"><i>${ic}</i><span>${l}</span></button>`).join("");
-  cv.style.cursor=t==="select"?"default":t==="text"?"text":"crosshair";
+  if(typeof applyZoom==="function") applyZoom(); else cv.style.cursor=t==="select"?"default":t==="text"?"text":"crosshair";
   $("ed-prev").classList.toggle("hidden",!ED.prevImg);
 }
 $("ed-tools").addEventListener("click",e=>{const b=e.target.closest("[data-tool]"); if(b){setEdTool(b.dataset.tool); renderEdSide()}});
@@ -2160,7 +2269,7 @@ async function applyCrop(){
   const r=ED.crop; if(!r) return; pushUndo();
   const c=mkCanvas(r.w,r.h); c.getContext("2d").drawImage(ED.baseImg,r.x,r.y,r.w,r.h,0,0,c.width,c.height);
   const blob=await canvasBlob(c); ED.prevImg=null; ED.baseImg=await blobToImg(blob); ED.base=blob; ED.baseChanged=false;
-  ED.W=c.width; ED.H=c.height; cv.width=ED.W; cv.height=ED.H;
+  ED.W=c.width; ED.H=c.height; cv.width=ED.W; cv.height=ED.H; applyZoom();
   ED.objs=ED.objs.map(o=>o.pts?{...o,pts:o.pts.map(p=>({x:p.x-r.x,y:p.y-r.y}))}:{...o,x:o.x-r.x,y:o.y-r.y}).filter(o=>{const b=objBox(o);return b.x+b.w>0&&b.y+b.h>0&&b.x<ED.W&&b.y<ED.H});
   ED.crop=null; ED.baseChanged=true; ED.dirty=true; setEdTool("select"); edStatus(`Đã cắt, ảnh còn ${ED.W}×${ED.H} px.`,"ok"); renderEdSide(); edDraw();
 }
@@ -2387,7 +2496,7 @@ async function edAI(){
     ED.prevImg=ED.baseImg; ED.baseImg=await blobToImg(it.blob); ED.base=it.blob; ED.baseChanged=false; ED.rec=rec;
     if(ED.baseImg.naturalWidth!==ED.W||ED.baseImg.naturalHeight!==ED.H){const sx=ED.baseImg.naturalWidth/ED.W, sy=ED.baseImg.naturalHeight/ED.H;
       ED.objs=ED.objs.map(o=>o.type==="text"?{...o,x:o.x*sx,y:o.y*sy,size:o.size*sx}:o.type==="logo"?{...o,x:o.x*sx,y:o.y*sy,w:o.w*sx,h:o.h*sx}:o);
-      ED.W=ED.baseImg.naturalWidth; ED.H=ED.baseImg.naturalHeight; cv.width=ED.W; cv.height=ED.H}
+      ED.W=ED.baseImg.naturalWidth; ED.H=ED.baseImg.naturalHeight; cv.width=ED.W; cv.height=ED.H; applyZoom()}
     ED.objs=ED.objs.filter(o=>o.type!=="mark"); ED.global=""; ED.sel=-1; ED.undo=[]; ED.redo=[];
     setEdTool("select"); edStatus(`Đã sửa xong${rec.cost?" (≈ "+vnd(rec.cost)+")":""} và lưu vào Ảnh đã tạo. Bấm giữ nút "Xem ảnh trước" để so sánh.`,"ok");
   }catch(e){
