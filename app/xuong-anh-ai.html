@@ -535,6 +535,7 @@ dl.ana dd{margin:0;color:var(--muted)}
             <li><b>Đưa ảnh về để hoàn thiện</b> (chữ tiếng Việt chuẩn dấu, logo, cắt khổ): <button class="btn primary" type="button" id="x-back">Đưa ảnh về để sửa</button></li>
           </ol>
         </div>
+        <details class="price-cfg" id="brain-cfg"><summary>Claude đọc ảnh &amp; viết prompt (tuỳ chọn)</summary><div id="brain-body"></div></details>
         <details class="price-cfg" id="price-cfg"><summary>Bảng giá &amp; tỉ giá dùng để ước tính tiền</summary><div id="price-body"></div></details>
         <div class="studio-body">
           <div class="s-src" id="s-src"><b>Prompt tự viết</b></div>
@@ -1481,7 +1482,8 @@ async function analyzeRef(){
   REF.status="loading"; REF.msg=""; REF.via=via; renderAuto();
   try{
     let d;
-    if(via==="claude") d=parseJSONLoose(await sampleFn.json(refAsk(),{images:[REF.blob],signal}));
+    if(via==="claudekey") d=await visionClaudeKey(refAsk(),[REF.blob],signal);
+    else if(via==="claude") d=parseJSONLoose(await sampleFn.json(refAsk(),{images:[REF.blob],signal}));
     else if(via==="gemini") d=await visionGemini(refAsk(),[REF.blob],signal);
     else d=await visionOpenAI(refAsk(),[REF.blob],signal);
     if(!d||!d.prompt) throw new GenError("Kết quả phân tích chưa đầy đủ. Bấm Phân tích lại.","empty");
@@ -1656,11 +1658,12 @@ const SUG_CHIP="Hợp với sản phẩm";
 TYPES.forEach(t=>{t.p0=t.p});
 let sugCtl=null;
 function sugVia(){
+  if(keyOf("claude")) return "claudekey";
   if(sampleFn) return "claude";
   for(const k of [S.engine,"gemini","openai"]) if((k==="gemini"||k==="openai")&&avail[k].st==="ok"&&keyOf(k)) return k;
   return null;
 }
-const VIA_NAME={claude:"Claude",gemini:"Gemini",openai:"OpenAI"};
+const VIA_NAME={claude:"Claude",claudekey:"Claude",gemini:"Gemini",openai:"OpenAI"};
 function saveSug(){store.set("xa-sug",JSON.stringify({data:SUG.data,via:SUG.via,adapt:SUG.adapt,prev:SUG.prev,applied:SUG.applied,picks:SUG.picks}))}
 function sugAsk(){
   const lib=TYPES.map(t=>`- id: ${t.id} | ${t.name} | tỉ lệ ${t.ratio} | dùng cho: ${t.use}\n  prompt mẫu: ${t.p0}`).join("\n");
@@ -1777,7 +1780,8 @@ async function suggestFromProducts(){
   try{
     const blobs=S.products.map(p=>p.blob);
     let data;
-    if(via==="claude"){
+    if(via==="claudekey") data=await visionClaudeKey(sugAsk(),blobs.slice(0,4),signal);
+    else if(via==="claude"){
       const max=(sampleLim&&sampleLim.images&&sampleLim.images.maxCount)||4;
       data=parseJSONLoose(await sampleFn.json(sugAsk(),{images:blobs.slice(0,max),signal}));
     }else if(via==="gemini") data=await visionGemini(sugAsk(),blobs,signal);
@@ -2186,6 +2190,8 @@ function renderEdSide(){
       ${sel&&sel.type==="text"?textProps(sel,ED.sel):""}
       ${sel&&sel.type==="logo"?`<p class="sug-note">Kéo logo để di chuyển, kéo ô vuông góc dưới để đổi cỡ.</p><div class="sug-chips"><button class="btn warn" type="button" data-ed="delobj">Xoá logo</button></div>`:""}
     </section>
+    ${layerSec()}
+    ${fixSec()}
     ${printSec()}
     ${cropSec}
     <div class="ed-foot"><button class="btn go" type="button" data-ed="save">Lưu thành ảnh mới</button><button class="btn" type="button" data-ed="dl">Tải về</button></div>`;
@@ -2194,6 +2200,8 @@ function renderEdSide(){
 const side=$("ed-side");
 side.addEventListener("click",async e=>{
   const b=e.target.closest("button"); if(!b) return;
+  if(b.dataset.lp){LP.pick[b.dataset.lp]=!LP.pick[b.dataset.lp]; renderEdSide(); return}
+  if(b.dataset.fx){FX.mode=b.dataset.fx; store.set("xa-fix-mode",FX.mode); renderEdSide(); return}
   if(b.dataset.prsize){const [w,h]=b.dataset.prsize.split("x").map(Number); PR.w=w; PR.h=h; prSave(); side.querySelectorAll("[data-pr=w],[data-pr=h]").forEach(i=>i.value=PR[i.dataset.pr]); prRefresh(); return}
   if(b.dataset.sel!=null){ED.sel=+b.dataset.sel; setEdTool("select"); renderEdSide(); edDraw(); return}
   if(b.dataset.rm!=null){pushUndo(); ED.objs.splice(+b.dataset.rm,1); ED.sel=-1; renderEdSide(); edDraw(); return}
@@ -2213,6 +2221,12 @@ side.addEventListener("click",async e=>{
   if(a==="crop") await applyCrop();
   if(a==="ai") edAI();
   if(a==="print") edPrint();
+  if(a==="lpfree") lpFree();
+  if(a==="lpai") lpAI();
+  if(a==="fxlocal") fxLocal();
+  if(a==="fxbrain") fxBrain();
+  if(a==="fxai") fxAI();
+
   if(b.id==="pr-ext"){await copyText(prUpPrompt()); const t=EXT_TARGETS[tool]||EXT_TARGETS.gpt; prMsg(`Đã copy prompt. ${t.url?`Trong ${t.name} bấm Ctrl + V để dán`:"Dán vào công cụ bạn dùng"}, đính kèm ảnh gốc rồi tạo.`,"ok"); return}
   if(a==="prxcopy"){await copyText(prUpPrompt(),b,"Chỉ copy prompt"); prMsg("Đã copy prompt phóng ảnh.","ok")}
   if(a==="prxdl"){const ok=await dlBlob(await baseBlob(),`${slug(ED.label||"anh")}-goc-${ED.W}x${ED.H}.png`); if(ok) prMsg("Đã tải ảnh gốc. Đính kèm ảnh này vào khung chat.","ok")}
@@ -2228,6 +2242,9 @@ side.addEventListener("click",async e=>{
 });
 side.addEventListener("input",e=>{
   const t=e.target;
+  if(t.id==="lp-tol"){LP.tol=+t.value; const l=t.closest("label"); if(l) l.querySelector("span").textContent="Độ nhạy tách nền: "+LP.tol; return}
+  if(t.id==="fx-amount"){FX.amount=+t.value; const l=t.closest("label"); if(l) l.querySelector("span").textContent="Tăng nét ngay trên máy: "+FX.amount+"% · miễn phí"; return}
+  if(t.id==="fx-extra"){FX.extra=t.value; return}
   if(t.dataset.pr){prSet(t); return}
   if(t.dataset.note!=null){const o=ED.objs[+t.dataset.note]; if(o){o.note=t.value; ED.dirty=true} return}
   if(t.id==="ed-global"){ED.global=t.value; return}
@@ -2246,7 +2263,7 @@ side.addEventListener("input",e=>{
   edDraw();
   if(p==="text"){const li=side.querySelector(`[data-sel="${ED.sel}"]`); if(li) li.textContent="T · "+String(o.text).slice(0,26)}
 });
-side.addEventListener("toggle",e=>{if(e.target.id==="ed-print"){PR.open=e.target.open; prSave()}},true);
+side.addEventListener("toggle",e=>{if(e.target.id==="ed-print"){PR.open=e.target.open; prSave()} if(e.target.id==="ed-layer") LP.open=e.target.open; if(e.target.id==="ed-fix") FX.open=e.target.open},true);
 side.addEventListener("change",e=>{if(e.target.dataset.p==="shadow"||e.target.dataset.p==="bgOn") side.dispatchEvent(new Event("input"))});
 $("ed-logo").addEventListener("change",async e=>{
   const f=e.target.files[0]; e.target.value=""; if(!f||!/^image\//.test(f.type)) return;
@@ -2444,6 +2461,278 @@ async function edPrint(){
   }finally{ED.busy=false; ED.ctl=null; renderEdSide()}
 }
 
+/* ---------- Claude đọc ảnh (bộ não: không vẽ ảnh, chỉ đọc và viết prompt) ---------- */
+const CLAUDE_MODELS=[["claude-opus-5-5","Opus 5.5 · giỏi nhất"],["claude-sonnet-5-5","Sonnet 5.5 · cân bằng"],["claude-haiku-5-5","Haiku 5.5 · rẻ nhất"]];
+const CLAUDE_MIME=["image/jpeg","image/png","image/gif","image/webp"];
+function claudeModel(){const m=store.get("xa-model-claude"); return CLAUDE_MODELS.some(x=>x[0]===m)?m:CLAUDE_MODELS[0][0]}
+let LAST_BRAIN=0; // tiền của lần đọc gần nhất
+async function claudeAsk(ask,blobs,signal,json){
+  const key=keyOf("claude"); if(!key) throw new GenError("Chưa có Claude API key.","nokey");
+  const content=[];
+  for(const b of blobs||[]){
+    let x=b; try{x=await forClaude(b)}catch(_){}
+    content.push({type:"image",source:{type:"base64",media_type:CLAUDE_MIME.includes(x.type)?x.type:"image/jpeg",data:await blobToB64(x)}});
+  }
+  content.push({type:"text",text:ask});
+  let r;
+  try{
+    r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",signal,
+      headers:{"x-api-key":key,"anthropic-version":"2026-10-21","content-type":"application/json","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:claudeModel(),max_tokens:4000,messages:[{role:"user",content}]})});
+  }catch(e){ if(signal&&signal.aborted) throw {code:"cancelled"}; throw new GenError("Không kết nối được tới Anthropic. Kiểm tra mạng, hoặc trình duyệt đang chặn kết nối.","net") }
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok){
+    const m=(j.error&&j.error.message)||("HTTP "+r.status);
+    if(r.status===401) throw new GenError("Claude API key không hợp lệ. Kiểm tra lại key.","key");
+    if(r.status===403) throw new GenError("Key này chưa được phép dùng Claude API: "+m,"key");
+    if(r.status===404) throw new GenError(`Tài khoản chưa dùng được model "${claudeModel()}". Chọn model khác.`,"model");
+    if(r.status===429) throw new GenError("Claude báo hết hạn mức hoặc gửi quá nhanh. Đợi một lúc rồi thử lại.","quota");
+    throw new GenError("Claude báo lỗi: "+m,"api");
+  }
+  const row=(PRICE.claude||{})[claudeModel()]||{in:4,out:20}, u=j.usage||{};
+  LAST_BRAIN=((u.input_tokens||0)*row.in+(u.output_tokens||0)*row.out)/1e6;
+  addSpend(LAST_BRAIN,0);
+  if(j.stop_reason==="refusal") throw new GenError("Claude từ chối đọc ảnh này vì bộ lọc an toàn. Thử ảnh khác.","refused");
+  const txt=(j.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("").trim();
+  if(!txt) throw new GenError("Claude không trả lời. Thử lại.","noimg");
+  return json?parseJSONLoose(txt):txt;
+}
+// Claude chỉ đọc nội dung ảnh nên không cần ảnh lớn: hạ về 1568 px cho nhanh và rẻ
+async function forClaude(b){
+  const img=await blobToImg(b), m=Math.max(img.naturalWidth,img.naturalHeight), k=Math.min(1,1568/m);
+  if(k===1&&CLAUDE_MIME.includes(b.type)&&b.size<4e6) return b;
+  const c=mkCanvas(img.naturalWidth*k,img.naturalHeight*k), g=c.getContext("2d");
+  g.imageSmoothingQuality="high"; g.drawImage(img,0,0,c.width,c.height);
+  return await canvasBlob(c,"image/jpeg",.85);
+}
+function visionClaudeKey(ask,blobs,signal){return claudeAsk(ask,blobs,signal,true)}
+function renderBrain(){
+  const b=$("brain-body"); if(!b) return;
+  const has=!!keyOf("claude");
+  b.innerHTML=`<p class="sug-note" style="margin:0 0 8px">Claude <b>không vẽ được ảnh</b>. Có key thì Claude đọc ảnh, chẩn đoán và viết prompt cho Gemini/OpenAI thi hành — prompt sát ảnh hơn nên kết quả đẹp hơn. Không có key thì trang dùng prompt viết sẵn, vẫn chạy bình thường.</p>
+    <div class="eng-cfg" style="padding:0;border:0;background:none">
+      <div class="field f-key" style="margin:0"><label for="k-claude">Claude API key</label><input id="k-claude" type="password" autocomplete="off" spellcheck="false" placeholder="Dán key console.anthropic.com vào đây" value="${esc(keyOf("claude"))}"></div>
+      <div class="field f-model" style="margin:0"><label for="k-claude-model">Model</label><select id="k-claude-model">${CLAUDE_MODELS.map(([id,l])=>`<option value="${id}"${id===claudeModel()?" selected":""}>${esc(l)}</option>`).join("")}</select></div>
+      ${has?`<button class="btn" type="button" id="k-claude-forget">Xoá key</button>`:""}
+      <p class="note" style="flex:1 1 100%">${has?`Đang bật. Mỗi lần đọc một ảnh và viết prompt khoảng <b>200–600 đ</b> tuỳ model.`:`Lấy key tại <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. Key chỉ lưu trong trình duyệt này.`}</p>
+    </div>`;
+}
+document.addEventListener("input",e=>{
+  if(e.target.id==="k-claude"){store.set("xa-key-claude",e.target.value.trim()); renderSug&&renderSug(); return}
+});
+document.addEventListener("change",e=>{
+  if(e.target.id==="k-claude-model"){store.set("xa-model-claude",e.target.value); renderBrain()}
+  if(e.target.id==="k-claude") renderBrain();
+});
+document.addEventListener("click",e=>{
+  if(e.target.id==="k-claude-forget"){store.del("xa-key-claude"); renderBrain(); renderSug&&renderSug()}
+});
+
+/* ---------- Tách lớp: nền / chủ thể / chữ ---------- */
+// tách nền trơn ngay trên máy: loang từ viền, điểm nào gần màu viền thì trong suốt
+async function keyOut(blob,tol,refRGB){
+  const img=await blobToImg(blob), W=img.naturalWidth, H=img.naturalHeight;
+  const c=mkCanvas(W,H), g=c.getContext("2d",{willReadFrequently:true}); g.drawImage(img,0,0);
+  const d=g.getImageData(0,0,W,H), p=d.data, N=W*H;
+  let R,G,B;
+  if(refRGB) [R,G,B]=refRGB;
+  else{ // màu nền = trung vị các điểm trên viền
+    const rs=[],gs=[],bs=[];
+    const push=i=>{rs.push(p[i]);gs.push(p[i+1]);bs.push(p[i+2])};
+    for(let x=0;x<W;x++){push((x)*4); push(((H-1)*W+x)*4)}
+    for(let y=0;y<H;y++){push((y*W)*4); push((y*W+W-1)*4)}
+    const med=a=>{a.sort((u,v)=>u-v); return a[a.length>>1]};
+    R=med(rs);G=med(gs);B=med(bs);
+  }
+  const T=Math.max(4,tol), T2=T*T*3, out=new Uint8Array(N), st=new Int32Array(N); let sp=0;
+  const near=i=>{const dr=p[i*4]-R,dg=p[i*4+1]-G,db=p[i*4+2]-B; return dr*dr+dg*dg+db*db<=T2};
+  const seed=i=>{if(!out[i]&&near(i)){out[i]=1;st[sp++]=i}};
+  for(let x=0;x<W;x++){seed(x); seed((H-1)*W+x)}
+  for(let y=0;y<H;y++){seed(y*W); seed(y*W+W-1)}
+  while(sp>0){
+    const i=st[--sp], x=i%W, y=(i/W)|0;
+    if(x>0) seed(i-1); if(x<W-1) seed(i+1); if(y>0) seed(i-W); if(y<H-1) seed(i+W);
+  }
+  // viền mềm: điểm đặc sát mép trong suốt thì giảm alpha theo độ gần màu nền
+  for(let i=0;i<N;i++){
+    if(out[i]){p[i*4+3]=0; continue}
+    const x=i%W,y=(i/W)|0;
+    const edge=(x>0&&out[i-1])||(x<W-1&&out[i+1])||(y>0&&out[i-W])||(y<H-1&&out[i+W]);
+    if(!edge) continue;
+    const dr=p[i*4]-R,dg=p[i*4+1]-G,db=p[i*4+2]-B, dist=Math.sqrt(dr*dr+dg*dg+db*db);
+    const k=Math.min(1,Math.max(0,(dist-T)/(T*0.8)));
+    p[i*4+3]=Math.round(255*(0.25+0.75*k));
+  }
+  g.putImageData(d,0,0);
+  let kept=0; for(let i=0;i<N;i++) if(!out[i]) kept++;
+  return {blob:await canvasBlob(c),ratio:kept/N};
+}
+const LAYERS=[
+  {id:"bg",name:"Lớp nền",want:"nền sạch, đã xoá chủ thể và chữ",
+   p:"Xoá hoàn toàn chủ thể chính (sản phẩm, người, vật) và toàn bộ chữ, logo khỏi ảnh. Vẽ lại phần bị che bằng nền liền mạch, nối đúng hoa văn, vân và chi tiết nền xung quanh. Giữ nguyên 100% phong cách, màu sắc, ánh sáng và bố cục nền. Không thêm bất kỳ vật thể hay chữ nào."},
+  {id:"subject",name:"Lớp chủ thể",want:"chủ thể trên nền trong suốt",cut:true,
+   p:"Chỉ giữ lại chủ thể chính (sản phẩm, người, vật ở giữa). Giữ nguyên tuyệt đối hình dáng, tỉ lệ, màu sắc, nhãn, chữ in trên chủ thể và mọi chi tiết của nó. Xoá toàn bộ nền và mọi chữ rời, thay bằng nền trắng tinh #FFFFFF phẳng tuyệt đối, không đổ bóng, không gradient."},
+  {id:"text",name:"Lớp chữ và logo",want:"chữ trên nền trong suốt",cut:true,
+   p:"Chỉ giữ lại phần chữ và logo có trong ảnh. Giữ nguyên tuyệt đối nội dung chữ, đúng chính tả và đủ dấu tiếng Việt, đúng kiểu chữ, màu chữ, viền, cỡ chữ và vị trí trên khung. Xoá chủ thể và nền, thay bằng nền trắng tinh #FFFFFF phẳng tuyệt đối."}
+];
+const LP={pick:{subject:true},tol:40,busy:false};
+function lpCost(){const n=Object.values(LP.pick).filter(Boolean).length; return n*estOne(S.engine,nearestRatio(ED.W,ED.H))}
+function layerSec(){
+  const eng=S.engine, prob=engineProblem(eng), ai=eng==="gemini"||eng==="openai";
+  return `<details class="ed-sec" id="ed-layer"${LP.open?" open":""}><summary>Tách lớp <span>nền · chủ thể · chữ</span></summary><div class="pr-body">
+    <p class="sug-note">Mỗi lớp xuất ra một file riêng, lưu vào mục Ảnh đã tạo.</p>
+    <div class="lp-free">
+      <b>Tách nền ngay trên máy · miễn phí</b>
+      <p class="sug-note">Chỉ đúng khi nền trơn một màu hoặc nền trắng. Nền phức tạp thì dùng AI bên dưới.</p>
+      <label class="ed-f"><span>Độ nhạy tách nền: ${LP.tol}</span><input type="range" min="10" max="120" step="2" id="lp-tol" value="${LP.tol}"></label>
+      <div class="sug-chips"><button class="btn" type="button" data-ed="lpfree" ${LP.busy?"disabled":""}>Tách nền, xuất PNG trong suốt</button></div>
+    </div>
+    <div class="lp-ai">
+      <b>Tách lớp bằng AI · ${esc(ENGINES[eng].short)}</b>
+      <p class="sug-note">AI vẽ lại từng lớp, dùng được với mọi loại nền. Lưu ý AI vẽ lại điểm ảnh nên chi tiết rất nhỏ có thể đổi.</p>
+      <div class="sug-chips">${LAYERS.map(l=>`<button type="button" class="sug-chip" data-lp="${l.id}" aria-pressed="${!!LP.pick[l.id]}">${esc(l.name)}</button>`).join("")}</div>
+      ${prob?`<p class="s-msg err">${esc(prob)}</p>`:ai?`<div class="sug-chips"><button class="btn go" type="button" data-ed="lpai" ${LP.busy?"disabled":""}>Tách ${Object.values(LP.pick).filter(Boolean).length||0} lớp bằng AI</button><span class="s-cost">≈ ${vnd(lpCost())}</span></div>`
+        :`<p class="s-msg err">Chọn Gemini hoặc OpenAI ở khung Xưởng tạo ảnh để tách lớp bằng AI.</p>`}
+    </div>
+    <p class="s-msg${LP.msgKind?" "+LP.msgKind:""}" id="lp-msg" role="status">${esc(LP.msg||"")}</p>
+  </div></details>`;
+}
+function lpMsg(t,k){LP.msg=t; LP.msgKind=k||""; const el=$("lp-msg"); if(el){el.className="s-msg"+(k?" "+k:""); el.textContent=t}}
+async function lpSaveLayer(blob,name,cost){
+  const now=Date.now(), rec={id:now.toString(36)+"-lp-"+Math.random().toString(36).slice(2,6),created:now,blob,
+    prompt:"",userPrompt:"",ratio:nearestRatio(ED.W,ED.H),engine:cost?S.engine:"manual",model:cost?modelOf(S.engine):"",
+    label:(name+" · "+baseLabel(ED.label)).slice(0,70),cost:cost||null,parent:(ED.rec||{}).id||null};
+  await addRecords([rec]); fresh.add(rec.id); return rec;
+}
+async function lpFree(){
+  if(LP.busy) return; LP.busy=true; renderEdSide(); lpMsg("Đang tách nền…");
+  try{
+    const r=await keyOut(await baseBlob(),LP.tol);
+    if(r.ratio>0.98) lpMsg("Không tìm thấy vùng nền trơn nào để tách. Tăng độ nhạy, hoặc dùng cách tách bằng AI.","err");
+    else{
+      fresh.clear(); await lpSaveLayer(r.blob,"Lớp chủ thể",0); renderResults();
+      lpMsg(`Xong, giữ lại ${Math.round(r.ratio*100)}% ảnh. File PNG nền trong suốt đã vào mục Ảnh đã tạo. Còn sót nền thì tăng độ nhạy, bị ăn vào chủ thể thì giảm.`,"ok");
+    }
+  }catch(e){lpMsg("Không tách được ảnh này. "+errText(e),"err")}
+  finally{LP.busy=false; renderEdSide()}
+}
+async function lpAI(){
+  if(LP.busy) return;
+  const picks=LAYERS.filter(l=>LP.pick[l.id]); if(!picks.length){lpMsg("Chọn ít nhất một lớp.","err"); return}
+  const prob=engineProblem(S.engine); if(prob){lpMsg(prob,"err"); return}
+  LP.busy=true; ED.ctl=new AbortController(); renderEdSide();
+  const base=await baseBlob(), ratio=nearestRatio(ED.W,ED.H); let spent=0, done=0, fail="";
+  fresh.clear();
+  try{
+    for(const l of picks){
+      lpMsg(`Đang tách ${l.name.toLowerCase()} (${done+1}/${picks.length})…`);
+      RES_OV="4K";
+      let res; try{ res=S.engine==="gemini"?await runGemini(l.p,[base],ratio,1,ED.ctl.signal):await runOpenAI(l.p,[base],ratio,1,ED.ctl.signal) } finally{ RES_OV=null }
+      const it=res.items[0]; if(!it||!it.blob){fail+=` ${l.name} không ra ảnh.`; continue}
+      const cost=actualOne(S.engine,ratio,it.usage,it.share); spent+=cost;
+      let out=it.blob;
+      if(l.cut){try{const k=await keyOut(out,46,[255,255,255]); if(k.ratio<0.97) out=k.blob}catch(_){}}
+      await lpSaveLayer(out,l.name,cost); done++;
+    }
+    addSpend(spent,done); renderResults();
+    lpMsg(done?`Xong ${done} lớp · ≈ ${vnd(spent)}. Các lớp đã vào mục Ảnh đã tạo, bấm Tải về để lấy file.${fail}`:("Không tách được lớp nào."+fail),done?"ok":"err");
+  }catch(e){ lpMsg(e&&e.code==="cancelled"?"Đã dừng.":errText(e),e&&e.code==="cancelled"?"":"err") }
+  finally{LP.busy=false; ED.ctl=null; renderEdSide()}
+}
+
+/* ---------- Phục dựng & tăng nét ---------- */
+const FIX_MODES=[
+  {id:"design",name:"File thiết kế cũ",hint:"Lịch, poster, bìa sách, logo — chữ bị nhoè, răng cưa",
+   p:"Làm nét lại file thiết kế này để đem in. Khử nhiễu nén JPEG, khử răng cưa, làm sắc lại đường nét và mảng màu phẳng. Chữ phải sắc nét, rõ chân nét, ĐÚNG NGUYÊN VĂN và đủ dấu tiếng Việt như ảnh gốc — tuyệt đối không viết lại, không sửa chính tả, không đổi kiểu chữ, cỡ chữ hay vị trí chữ. Giữ nguyên 100% bố cục, màu sắc, logo và mọi chi tiết. Không thêm, bớt hay vẽ lại chi tiết nào."},
+  {id:"photo",name:"Ảnh chụp kỷ niệm cũ",hint:"Ố vàng, xước, rách, phai màu, mờ",
+   p:"Phục chế ảnh chụp cũ này. Xoá vết xước, vết bẩn, nếp gấp và vá lại chỗ rách bằng nội dung hợp lý nối liền xung quanh. Khử ố vàng và cân lại màu cho tự nhiên, làm rõ chi tiết và độ nét. Giữ nguyên tuyệt đối khuôn mặt, dáng người, trang phục, bối cảnh và bố cục — không làm trẻ hoá, không đổi nét mặt, không thêm hay bớt người, không thêm vật thể. Giữ không khí và tông màu thời kỳ của ảnh."}
+];
+const FX={mode:store.get("xa-fix-mode")||"design",extra:"",amount:60,busy:false};
+function fixPrompt(){const m=FIX_MODES.find(x=>x.id===FX.mode)||FIX_MODES[0]; return m.p+(FX.extra.trim()?" "+FX.extra.trim():"")+" Xuất ảnh ở độ phân giải cao nhất có thể."}
+function fixSec(){
+  const eng=S.engine, prob=engineProblem(eng), ai=eng==="gemini"||eng==="openai", hasClaude=!!keyOf("claude");
+  return `<details class="ed-sec" id="ed-fix"${FX.open?" open":""}><summary>Phục dựng &amp; tăng nét <span>ảnh mờ, ảnh cũ</span></summary><div class="pr-body">
+    <div class="sug-chips">${FIX_MODES.map(m=>`<button type="button" class="sug-chip" data-fx="${m.id}" aria-pressed="${m.id===FX.mode}" title="${esc(m.hint)}">${esc(m.name)}</button>`).join("")}</div>
+    <p class="sug-note">${esc((FIX_MODES.find(m=>m.id===FX.mode)||FIX_MODES[0]).hint)}</p>
+    <label class="ed-f"><span>Tăng nét ngay trên máy: ${FX.amount}% · miễn phí</span><input type="range" min="0" max="150" step="5" id="fx-amount" value="${FX.amount}"></label>
+    <div class="sug-chips"><button class="btn" type="button" data-ed="fxlocal" ${FX.busy?"disabled":""}>Làm nét trên máy</button></div>
+    <p class="sug-note" style="padding-top:8px;border-top:1px dashed var(--line)">Ảnh hỏng nặng thì cần AI vẽ lại:</p>
+    <label class="ed-f"><span>Dặn thêm cho AI (tuỳ chọn)</span><textarea id="fx-extra" rows="2" placeholder="VD: giữ nguyên chữ vàng trên nền đỏ, đừng làm sáng quá">${esc(FX.extra)}</textarea></label>
+    ${hasClaude?`<div class="sug-chips"><button class="btn" type="button" data-ed="fxbrain" ${FX.busy?"disabled":""}>Nhờ Claude xem ảnh &amp; viết prompt</button></div>`:""}
+    <details class="cp-pr"><summary>Xem prompt gửi AI</summary><p style="font-size:12.5px;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:8px 10px;margin:6px 0">${esc(fixPrompt())}</p></details>
+    ${prob?`<p class="s-msg err">${esc(prob)}</p>`:ai?`<div class="sug-chips"><button class="btn go" type="button" data-ed="fxai" ${FX.busy?"disabled":""}>Phục dựng bằng ${esc(ENGINES[eng].short)}</button><span class="s-cost">≈ ${vnd(estOne(eng,nearestRatio(ED.W,ED.H)))}</span></div>`
+      :`<p class="s-msg err">Chọn Gemini hoặc OpenAI ở khung Xưởng tạo ảnh để phục dựng bằng AI.</p>`}
+    <p class="s-msg${FX.msgKind?" "+FX.msgKind:""}" id="fx-msg" role="status">${esc(FX.msg||"")}</p>
+  </div></details>`;
+}
+function fxMsg(t,k){FX.msg=t; FX.msgKind=k||""; const el=$("fx-msg"); if(el){el.className="s-msg"+(k?" "+k:""); el.textContent=t}}
+// tăng nét trên máy: unsharp mask (ảnh gốc trừ ảnh làm mờ)
+async function fxLocal(){
+  if(FX.busy) return;
+  if(!FX.amount){fxMsg("Kéo thanh tăng nét lên trên 0 trước đã.","err"); return}
+  FX.busy=true; renderEdSide(); fxMsg("Đang làm nét…");
+  try{
+    await new Promise(r=>setTimeout(r,20));
+    const W=ED.W,H=ED.H, c=mkCanvas(W,H), g=c.getContext("2d",{willReadFrequently:true});
+    g.drawImage(ED.baseImg,0,0,W,H);
+    const src=g.getImageData(0,0,W,H);
+    const b=mkCanvas(W,H), bg=b.getContext("2d",{willReadFrequently:true});
+    bg.filter="blur(1.2px)"; bg.drawImage(c,0,0); bg.filter="none";
+    const blur=bg.getImageData(0,0,W,H), a=FX.amount/100, sp=src.data, bp=blur.data;
+    for(let i=0;i<sp.length;i+=4){
+      for(let k=0;k<3;k++){const v=sp[i+k]+a*(sp[i+k]-bp[i+k]); sp[i+k]=v<0?0:v>255?255:v}
+    }
+    g.putImageData(src,0,0);
+    const blob=await canvasBlob(c); b.width=b.height=1;
+    ED.prevImg=ED.baseImg; ED.baseImg=await blobToImg(blob); ED.base=blob; ED.baseChanged=true; ED.dirty=true;
+    applyZoom(); edDraw();
+    fxMsg(`Đã làm nét ${FX.amount}%. Bấm giữ nút "Xem ảnh trước" để so sánh, ưng thì Lưu thành ảnh mới. Kéo lại thanh rồi bấm tiếp để tăng thêm.`,"ok");
+  }catch(e){fxMsg("Ảnh quá lớn để làm nét trên máy. Dùng cách phục dựng bằng AI.","err")}
+  finally{FX.busy=false; renderEdSide()}
+}
+async function fxBrain(){
+  if(FX.busy) return;
+  FX.busy=true; ED.ctl=new AbortController(); renderEdSide(); fxMsg("Claude đang xem ảnh…");
+  try{
+    const m=FIX_MODES.find(x=>x.id===FX.mode)||FIX_MODES[0];
+    const ask=`Bạn là thợ phục chế ảnh. Ảnh đính kèm là ${m.id==="photo"?"một ảnh chụp cũ":"một file thiết kế cũ"} cần phục dựng để đem in.
+Hãy xem kỹ ảnh rồi trả lời bằng JSON đúng dạng:
+{"chan_doan":"1–2 câu tiếng Việt nói ảnh hỏng ở đâu: mờ, nhiễu nén, rung tay, ố vàng, xước, rách, phai màu, bệt chữ…",
+"dan_them":"1–3 câu tiếng Việt dặn thêm cho model tạo ảnh, nêu RÕ những chi tiết của riêng ảnh này cần giữ nguyên tuyệt đối (chữ gì, màu gì, khuôn mặt ai, hoạ tiết nào) và những hỏng hóc cụ thể cần xử lý. Không nhắc lại các yêu cầu chung chung."}`;
+    const d=await claudeAsk(ask,[await baseBlob()],ED.ctl.signal,true);
+    FX.extra=String(d.dan_them||"").trim();
+    store.set("xa-fix-extra",FX.extra); renderEdSide();
+    fxMsg(`Claude: ${String(d.chan_doan||"").trim()} — đã điền phần dặn thêm (≈ ${vnd(LAST_BRAIN)}). Xem lại rồi bấm Phục dựng.`,"ok");
+  }catch(e){ fxMsg(e&&e.code==="cancelled"?"Đã dừng.":errText(e),e&&e.code==="cancelled"?"":"err") }
+  finally{FX.busy=false; ED.ctl=null; renderEdSide()}
+}
+async function fxAI(){
+  if(FX.busy) return;
+  const prob=engineProblem(S.engine); if(prob){fxMsg(prob,"err"); return}
+  FX.busy=true; ED.ctl=new AbortController(); renderEdSide();
+  fxMsg(`${ENGINES[S.engine].short} đang phục dựng, thường mất 20–60 giây…`);
+  try{
+    const ratio=nearestRatio(ED.W,ED.H), prompt=fixPrompt();
+    RES_OV="4K";
+    let res; try{ res=S.engine==="gemini"?await runGemini(prompt,[await baseBlob()],ratio,1,ED.ctl.signal):await runOpenAI(prompt,[await baseBlob()],ratio,1,ED.ctl.signal) } finally{ RES_OV=null }
+    const it=res.items[0]; if(!it||!it.blob) throw new GenError("AI không trả về ảnh. Bấm lại.","noimg");
+    const cost=actualOne(S.engine,ratio,it.usage,it.share); addSpend(cost,1);
+    const now=Date.now(), rec={id:now.toString(36)+"-fx-"+Math.random().toString(36).slice(2,6),created:now,blob:it.blob,
+      prompt,userPrompt:prompt,ratio,engine:S.engine,model:modelOf(S.engine),cost,
+      label:("Phục dựng · "+baseLabel(ED.label)).slice(0,70),parent:(ED.rec||{}).id||null};
+    fresh.clear(); fresh.add(rec.id); await addRecords([rec]); renderResults();
+    ED.prevImg=ED.baseImg; ED.baseImg=await blobToImg(it.blob); ED.base=it.blob; ED.baseChanged=false; ED.rec=rec;
+    if(ED.baseImg.naturalWidth!==ED.W||ED.baseImg.naturalHeight!==ED.H){
+      const sx=ED.baseImg.naturalWidth/ED.W, sy=ED.baseImg.naturalHeight/ED.H;
+      ED.objs=ED.objs.map(o=>o.type==="text"?{...o,x:o.x*sx,y:o.y*sy,size:o.size*sx}:o.type==="logo"?{...o,x:o.x*sx,y:o.y*sy,w:o.w*sx,h:o.h*sx}:o);
+      ED.W=ED.baseImg.naturalWidth; ED.H=ED.baseImg.naturalHeight; cv.width=ED.W; cv.height=ED.H; applyZoom();
+    }
+    ED.undo=[]; ED.redo=[]; edDraw();
+    fxMsg(`Đã phục dựng xong (≈ ${vnd(cost)}), ảnh mới ${ED.W}×${ED.H} px và đã lưu vào Ảnh đã tạo. Bấm giữ "Xem ảnh trước" để so sánh. Chưa ưng thì bấm lại.`,"ok");
+  }catch(e){ fxMsg(e&&e.code==="cancelled"?"Đã dừng.":errText(e),e&&e.code==="cancelled"?"":"err") }
+  finally{FX.busy=false; ED.ctl=null; renderEdSide()}
+}
+
 /* ---- sửa bằng AI theo vùng khoanh ---- */
 function baseLabel(l){return String(l||"ảnh").replace(/^((Đã chỉnh|Sửa bằng AI|Sửa vùng) · )+/,"")||"ảnh"}
 function engineProblem(eng){
@@ -2561,6 +2850,10 @@ const PRICE0={fx:26000,
     "gemini-3.1-flash-image":{"1K":0.067,"2K":0.101,"4K":0.151,in:0.5},
     "gemini-3.1-flash-lite-image":{"1K":0.039,"2K":0.039,"4K":0.039,in:0.25,guess:1},
     "gemini-2.5-flash-image":{"1K":0.039,"2K":0.039,"4K":0.039,in:0.3}},
+  claude:{
+    "claude-opus-5-5":{in:4,out:20},
+    "claude-sonnet-5-5":{in:2,out:10},
+    "claude-haiku-5-5":{in:0.1,out:0.5}},
   openai:{
     "gpt-image-2.5-sunburst":{low:0.004,medium:0.013,high:0.053,tok:{text:5,img:8,out:30}},
     "gpt-image-2.5-flare":{low:0.004,medium:0.013,high:0.053,tok:{text:5,img:8,out:30}},
@@ -2570,7 +2863,7 @@ const PRICE0={fx:26000,
     "gpt-image-1":{low:0.011,medium:0.042,high:0.167}}};
 let PRICE=JSON.parse(JSON.stringify(PRICE0));
 try{const u=JSON.parse(store.get("xa-prices")||"null"); if(u){ if(u.fx) PRICE.fx=+u.fx;
-  ["gemini","openai"].forEach(g=>Object.entries(u[g]||{}).forEach(([m,v])=>{PRICE[g][m]={...(PRICE[g][m]||{}),...v}}))}}catch(e){}
+  ["gemini","openai","claude"].forEach(g=>Object.entries(u[g]||{}).forEach(([m,v])=>{PRICE[g][m]={...(PRICE[g][m]||{}),...v}}))}}catch(e){}
 function savePrice(){store.set("xa-prices",JSON.stringify(PRICE))}
 function vnd(usd){ if(usd==null) return "?"; const v=usd*PRICE.fx; if(v>0&&v<100) return "< 100 đ"; return (Math.round(v/100)*100).toLocaleString("vi-VN")+" đ" }
 function gemRow(model){return PRICE.gemini[model]||(/pro/.test(model)?PRICE.gemini["gemini-3-pro-image-preview"]:PRICE.gemini["gemini-3.1-flash-image"])}
@@ -2595,7 +2888,7 @@ function spendAll(){try{return JSON.parse(store.get("xa-spend")||"{}")||{}}catch
 function addSpend(usd,n){if(!(usd>0)) return; const s=spendAll(), k=monthKey(); s[k]=s[k]||{usd:0,n:0}; s[k].usd+=usd; s[k].n+=n; store.set("xa-spend",JSON.stringify(s)); renderSpend()}
 function renderSpend(){
   const el=$("spend"); if(!el) return; const s=spendAll()[monthKey()]; const d=new Date();
-  el.textContent=s&&s.n?`Tháng ${d.getMonth()+1}/${d.getFullYear()}: ${s.n} lượt AI ≈ ${vnd(s.usd)}`:`Tháng ${d.getMonth()+1}: chưa tốn đồng nào`;
+  el.textContent=s&&s.usd>0?`Tháng ${d.getMonth()+1}/${d.getFullYear()}: ${s.n?s.n+" lượt AI":"đọc ảnh"} ≈ ${vnd(s.usd)}`:`Tháng ${d.getMonth()+1}: chưa tốn đồng nào`;
 }
 function costLabelFor(eng,n){
   if(eng==="ext") return "0 đ · tính vào gói tháng";
@@ -2611,7 +2904,7 @@ function renderCost(){
 $("s-count").addEventListener("change",renderCost);
 
 /* ---- Bảng giá sửa được ---- */
-function renderPriceCfg(){
+function renderPriceCfg(){ renderBrain();
   const box=$("price-body"); if(!box) return;
   const num=(g,m,k,v)=>`<input type="number" step="0.001" min="0" data-g="${g}" data-m="${m}" data-k="${k}" value="${v}" aria-label="${m} ${k}">`;
   box.innerHTML=`<label class="pc-fx">Tỉ giá: 1 USD = <input type="number" step="100" min="1" id="pc-fx" value="${PRICE.fx}"> đ</label>

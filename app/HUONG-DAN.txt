@@ -1,0 +1,109 @@
+XƯỞNG ẢNH AI - HƯỚNG DẪN NHANH
+
+CÀI ĐẶT
+1. Giải nén file zip này (chuột phải > Extract All / Giải nén).
+2. Mở file "Xuong-anh-AI.html" bằng Chrome, Edge hoặc Cốc Cốc (nháy đúp là mở).
+3. Mọi thứ chạy ngay trong trình duyệt. API key, brief, ảnh đã tạo chỉ lưu trên máy bạn.
+
+API KEY (dán một lần, trang nhớ cho lần sau)
+- Gemini (Nano Banana) - VẼ ảnh: lấy key tại https://aistudio.google.com/apikey
+- OpenAI (GPT Image) - VẼ ảnh: lấy key tại https://platform.openai.com/api-keys
+- Claude (Anthropic) - KHÔNG vẽ ảnh, chỉ ĐỌC ảnh và viết prompt:
+  lấy key tại https://console.anthropic.com/settings/keys
+  Mở khung "Claude đọc ảnh & viết prompt" trong Xưởng tạo ảnh để dán.
+  Có key thì Claude đọc ảnh, chẩn đoán rồi viết prompt cho Gemini/OpenAI thi hành,
+  nên ảnh ra sát ý hơn. Khoảng 200-600 đ mỗi lần đọc. Không có cũng chạy bình thường.
+
+CHẤT LƯỢNG VÀ TIỀN
+- Ô "Độ nét" để sẵn 4K (UHD), "Chất lượng" để Cao. Đây là mức cao nhất Gemini và
+  OpenAI cho phép, KHÔNG có mức 8K. Muốn rẻ hơn thì hạ xuống 2K (QHD) hoặc 1K (Full HD),
+  tiền giảm khoảng một nửa.
+- Giá ước tính hiện ngay cạnh nút Tạo ảnh. Mỗi ảnh ghi giá của lần đó. Mục "Ảnh đã tạo"
+  có tổng tiền trong tháng. Bấm "Bảng giá & tỉ giá" để sửa cho khớp bảng giá thật.
+
+BA TAB
+--------------------------------------------------------------------
+TAB "TẠO ẢNH MỚI"
+1. Điền thông tin brief bên trái (hoặc bấm "Điền ví dụ").
+2. Bấm "Tải ảnh sản phẩm lên" (tối đa 4 ảnh nhiều góc). Hệ thống tự đọc ảnh, chọn
+   3 mẫu hợp nhất trong thư viện, chỉnh prompt theo sản phẩm và điền brief. Có Hoàn tác.
+3. Muốn làm giống một ảnh có sẵn: bấm "Tải ảnh mẫu lên" (khung hồng) hoặc dán Ctrl + V.
+   Chọn mức giống: Giống gần hết / Giống bố cục / Giống màu và ánh sáng.
+4. (Tuỳ chọn) Bấm "Vẽ bố cục" để kéo khung chỉ chỗ đặt sản phẩm, tiêu đề, logo.
+5. Chọn tỉ lệ, số ảnh, rồi bấm "Tạo ảnh".
+6. TIẾT KIỆM: chọn "Dùng gói tháng" ở phần công cụ, bấm "Copy prompt & mở ChatGPT",
+   dán vào khung chat, đính kèm ảnh theo đúng số thứ tự, tạo ảnh, tải về rồi bấm
+   "Đưa ảnh về để sửa". Không tốn tiền theo ảnh.
+
+TAB "SỬA ẢNH CÓ SẴN"
+Tải lên, kéo thả hoặc dán (Ctrl + V) ảnh bất kỳ để mở thẳng trong trình chỉnh sửa.
+
+--------------------------------------------------------------------
+TRÌNH CHỈNH SỬA - CÁC CÔNG CỤ
+
+THU PHÓNG (thanh góc dưới bên phải khung ảnh)
+- Bấm + / - để phóng theo nấc, bấm vào con số phần trăm là về vừa khung.
+- Giữ Ctrl rồi lăn chuột: phóng ngay tại chỗ con trỏ. Tiện nhất để soi chi tiết nhỏ.
+- Bấm nút bàn tay (hoặc giữ phím cách) rồi kéo để di chuyển ảnh.
+- Phím tắt: Ctrl 0 vừa khung, Ctrl cộng phóng to, Ctrl trừ thu nhỏ.
+- Trên điện thoại: chụm hai ngón.
+- Mọi công cụ vẫn chấm đúng chỗ khi đang phóng to.
+
+SỬA BẰNG AI
+Khoanh tròn / khoanh khung / vẽ tay quanh chỗ cần sửa, ghi yêu cầu, bấm "Sửa bằng AI".
+AI chỉ sửa trong vùng đã khoanh, giữ nguyên phần còn lại.
+
+CHỮ VÀ LOGO
+"Thêm chữ" để đặt chữ tiếng Việt chuẩn dấu (font, màu, viền, bóng, nền chữ).
+"Chèn logo" để kéo thả ảnh logo. Lớp chữ sửa lại được sau khi lưu.
+
+TÁCH LỚP (nền - chủ thể - chữ)
+- Tách nền ngay trên máy, MIỄN PHÍ: chỉ đúng khi nền trơn một màu hoặc nền trắng.
+  Kéo thanh "Độ nhạy tách nền": còn sót nền thì tăng, bị ăn vào chủ thể thì giảm.
+  Ra file PNG nền trong suốt.
+- Tách lớp bằng AI: dùng được với mọi loại nền. Chọn lớp cần lấy (Lớp nền / Lớp chủ thể /
+  Lớp chữ và logo) rồi bấm tách. Mỗi lớp khoảng 6.200 đ. Lớp chủ thể và lớp chữ được
+  tự tách nền trắng thành PNG trong suốt.
+  Lưu ý: AI VẼ LẠI điểm ảnh chứ không cắt ra từ ảnh gốc, nên chi tiết rất nhỏ có thể đổi.
+
+PHỤC DỰNG & TĂNG NÉT (ảnh mờ, ảnh cũ)
+Chọn một trong hai chế độ:
+- "File thiết kế cũ": lịch, poster, bìa sách, logo. Khử nhiễu nén, khử răng cưa,
+  làm sắc đường nét, giữ nguyên chữ đúng nguyên văn.
+- "Ảnh chụp kỷ niệm cũ": xoá xước, vá chỗ rách, khử ố vàng, cân lại màu,
+  giữ nguyên tuyệt đối khuôn mặt và bố cục.
+Rồi chọn cách làm:
+- "Làm nét trên máy": MIỄN PHÍ. Kéo thanh rồi bấm, có thể bấm nhiều lần để tăng thêm.
+  Bấm giữ "Xem ảnh trước" để so sánh. Hợp với ảnh chỉ hơi mềm.
+- "Nhờ Claude xem ảnh & viết prompt" (cần key Claude): Claude chẩn đoán ảnh hỏng ở đâu
+  rồi tự điền phần dặn thêm. Đọc lại rồi mới bấm phục dựng.
+- "Phục dựng bằng Gemini/OpenAI": AI vẽ lại cả ảnh. Hợp với ảnh hỏng nặng.
+
+CHUẨN BỊ FILE IN (PP, canvas bằng máy in kỹ thuật số)
+- Chọn khổ: 20x30, 30x45, 40x60, 50x75, 60x90, 80x120, 100x100, 100x120 cm hoặc tự nhập.
+  Nhập theo chiều nào cũng được, app tự xoay theo ảnh.
+- Độ nét mặc định 300 dpi. Canvas và PP treo xem từ xa chỉ cần 150, bạt lớn treo trên 2 m
+  chỉ cần 100 - hạ xuống thì file nhẹ hơn nhiều mà nhìn không khác.
+- Lề tràn nếu nhà in cần. Canvas quấn mép chọn 40 mm (app lật gương phần mép).
+- Phóng to ảnh, chọn một trong ba cách:
+  * Trên máy: miễn phí, ảnh to hơn nhưng không thêm chi tiết thật.
+  * Bằng AI: nét hơn, tốn tiền theo ảnh, cần API key.
+  * Bằng gói tháng: miễn phí. Bấm "Copy prompt & mở ChatGPT" (prompt đã ghi sẵn khổ in
+    và số điểm ảnh cần đạt), bấm "Tải ảnh gốc về máy" để đính kèm, tạo xong tải ảnh đã
+    phóng về, rồi bấm "Đưa ảnh đã phóng về đây" và làm lại bước tạo file in.
+- Dòng thông tin cho biết ảnh có đủ nét cho khổ đó không. Bấm "Tạo file in và tải về",
+  gửi file cho nhà in và dặn in đúng khổ đã chọn.
+
+CẮT ẢNH
+Chọn công cụ Cắt rồi kéo trên ảnh. Có sẵn tỉ lệ 1:1, 4:5, 9:16, 16:9 hoặc tự do.
+
+--------------------------------------------------------------------
+LƯU Ý
+- Máy cần có mạng Internet khi gọi AI. Các việc chạy trên máy (tách nền trơn, làm nét,
+  thêm chữ, cắt, tạo file in) không cần mạng.
+- App chỉ xuất màu RGB. Nhà in sẽ tự đổi sang màu mực in nên màu thật có thể hơi khác
+  màn hình, nhất là màu rất tươi.
+- Ảnh đã tạo lưu trong trình duyệt đang dùng (tối đa 60 ảnh). Nhớ bấm "Tải về" để giữ lâu dài.
+- Canva AI chỉ dùng được khi mở trang trên claude.ai, không dùng được ở file trên máy.
+- Gemini tạo ảnh có thể cần bật thanh toán (billing) cho key, tuỳ hạn mức miễn phí của Google.
+- Khổ in rất lớn ở 300 dpi cần nhiều bộ nhớ; nên làm trên máy tính thay vì điện thoại.

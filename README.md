@@ -67,6 +67,7 @@ Nâng cấp từ "Bảng mẫu brief ảnh AI": 20 mẫu ấn phẩm (post, stor
 | Canva AI | Trang mở trong Claude (claude.ai) | Đã kết nối Canva trong Settings → Connectors |
 | Gemini (Nano Banana) | Mở file trên máy bằng trình duyệt | API key Google AI Studio |
 | OpenAI (GPT Image) | Mở file trên máy bằng trình duyệt | API key OpenAI |
+| Claude (chỉ đọc ảnh, không vẽ) | Cả hai | API key Anthropic |
 
 - Chọn tỉ lệ (1:1, 4:5, 9:16, 16:9, 2:3, 4:3, 21:9) và số ảnh (1–4) mỗi lượt.
 - Chọn model: OpenAI mặc định GPT Image 2.5 Sunburst (có Flare, GPT Image 2, 1.5, 1 Mini); Gemini mặc định Nano Banana Pro (có Nano Banana 2, 2 Lite). Chọn độ nét 1K (Full HD) / 2K (QHD) / 4K (UHD) — mặc định 4K, mức cao nhất Gemini và OpenAI cho phép — và chất lượng (OpenAI, mặc định Cao).
@@ -77,6 +78,9 @@ Nâng cấp từ "Bảng mẫu brief ảnh AI": 20 mẫu ấn phẩm (post, stor
 - **Tiền**: giá ước tính cạnh nút Tạo ảnh và Sửa bằng AI, giá từng ảnh sau khi xong (tính theo token thật khi API trả về), tổng theo tháng; bảng giá và tỉ giá sửa được (giá mặc định tra tháng 9/2026, có thể đã đổi).
 - **Dùng gói tháng**: chế độ copy prompt đã viết cho ChatGPT/Gemini/Midjourney, mở trang đó, tải ảnh đính kèm đánh số đúng thứ tự trong prompt, rồi đưa ảnh kết quả về tab "Sửa ảnh có sẵn". Trình chỉnh sửa cũng có chế độ này (copy yêu cầu sửa + tải ảnh gốc và ảnh đánh dấu).
 - **Tab "Sửa ảnh có sẵn"**: tải lên, kéo thả hoặc dán ảnh bất kỳ (giữ độ nét tới 4096 px) để mở thẳng trong trình chỉnh sửa; danh sách chọn lại mọi ảnh đã tải lên và đã tạo. Chữ, logo, cắt ảnh không cần API key.
+- **Tách lớp**: trong trình chỉnh sửa, tách ảnh thành lớp nền, lớp chủ thể, lớp chữ — mỗi lớp một file. Tách nền trơn/nền trắng ngay trên máy (miễn phí, có thanh độ nhạy, xuất PNG trong suốt); nền phức tạp thì chọn lớp cần lấy rồi để Gemini/OpenAI vẽ lại từng lớp, lớp chủ thể và lớp chữ được tự tách nền trắng thành PNG trong suốt.
+- **Phục dựng & tăng nét**: hai chế độ prompt riêng — *file thiết kế cũ* (lịch, poster, bìa sách: khử nhiễu nén, khử răng cưa, giữ nguyên chữ) và *ảnh chụp kỷ niệm cũ* (xoá xước, vá rách, khử ố vàng, giữ nguyên khuôn mặt). Có thanh tăng nét unsharp mask chạy ngay trên máy (miễn phí), và nút nhờ Claude xem ảnh để chẩn đoán rồi viết phần dặn thêm cho AI.
+- **Claude đọc ảnh (tuỳ chọn)**: dán Anthropic API key vào khung "Claude đọc ảnh & viết prompt" trong Xưởng tạo ảnh. Claude **không vẽ ảnh** — nó đọc ảnh rồi viết prompt cho Gemini/OpenAI thi hành, và làm bộ đọc ảnh cho phần gợi ý mẫu + phân tích ảnh mẫu kể cả khi mở file trên máy. Chọn model Opus 5.5 / Sonnet 5.5 / Haiku 5.5; ảnh được thu về 1568 px trước khi gửi; tiền tính theo token thật.
 - **Chuẩn bị file in (PP, canvas máy in kỹ thuật số)**: trong trình chỉnh sửa, mục "Chuẩn bị file in" cho chọn khổ (20×30 đến 100×120 cm hoặc tự nhập), độ nét 100–300 dpi (mặc định 300), lề tràn 3–40 mm (40 mm lật gương để quấn mép canvas), phóng ảnh trên máy (miễn phí), bằng AI Gemini/OpenAI (tốn tiền, cần key), hoặc bằng gói tháng (copy sẵn prompt phóng ảnh kèm số điểm ảnh cần đạt, tải ảnh gốc để đính kèm, rồi đưa ảnh đã phóng về tab "Sửa ảnh có sẵn"). App báo độ nét thật so với khổ in, vẽ lại chữ và logo ở độ phân giải in, rồi xuất JPG/PNG đã ghi sẵn dpi. Khổ quá lớn so với bộ nhớ trình duyệt thì tự hạ dpi.
 - **Chuẩn bị**: phác bố cục bằng khung có nhãn (sản phẩm, tiêu đề, logo, nút mua…) gửi kèm dạng sơ đồ và mô tả vị trí; cắt ảnh sản phẩm và ảnh mẫu trước khi tạo.
 - Ảnh đã tạo lưu trong trình duyệt (tối đa 60 ảnh), tải về, dùng lại prompt.
