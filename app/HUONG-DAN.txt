@@ -39,6 +39,28 @@ TAB "SỬA ẢNH CÓ SẴN"
 Tải lên, kéo thả hoặc dán (Ctrl + V) ảnh bất kỳ để mở thẳng trong trình chỉnh sửa.
 
 --------------------------------------------------------------------
+TAB "KHUNG & BANNER"
+Dựng khung một lần, ghép hàng loạt ảnh sản phẩm vào. Không tốn tiền, trừ khi nhờ AI vẽ nền.
+1. Chọn chế độ: "Khung sản phẩm sàn" (Shopee, TikTok) hoặc "Banner website".
+2. Chọn khổ có sẵn, hoặc gõ rộng x cao tuỳ ý vào hai ô bên dưới.
+   - Khung sàn: Shopee 1:1 1200x1200, TikTok 1:1 1200x1200, TikTok 3:4 1080x1440, vuông 1000.
+   - Banner web: Slider lịch Tết 316x491, Slider sách 316x246, Banner danh mục 850x250
+     (và bản gấp đôi 1700x500), Banner bài viết 1200x630.
+3. Dựng khung ở cột bên phải:
+   - Nền: màu trơn, chuyển sắc hai màu, ảnh tải lên, hoặc bấm "Nhờ AI vẽ nền" (vẽ 1 lần
+     khoảng 6.200 đ rồi dùng lại cho mọi sản phẩm, không tốn thêm).
+   - Viền: màu, độ dày, bo góc.
+   - Nhãn góc: gõ chữ như FREESHIP, GIẢM 30%, CHÍNH HÃNG; chọn màu và góc đặt.
+   - Chữ: gõ {ten} thì app tự thay bằng tên file của từng ảnh sản phẩm.
+   - Logo: tải lên, chọn góc và cỡ.
+4. Kéo khung xanh trên bản xem trước để đổi chỗ đặt ảnh sản phẩm,
+   kéo ô vuông góc dưới để đổi cỡ.
+5. Bấm "Tải ảnh sản phẩm lên" (hoặc kéo thả) - thả bao nhiêu ảnh cũng được.
+   Tích "Tự tách nền trắng" nếu ảnh chụp nền trắng; ảnh đã đẹp sẵn thì bỏ tích.
+6. Bấm "Ghép N ảnh và tải về". Mỗi ảnh ra một file, tên đặt sẵn theo khổ và tên sản phẩm.
+   Ảnh cũng lưu ở mục "Ảnh đã ghép" bên dưới, bấm "Chỉnh sửa" để sửa thêm.
+7. Bấm "Lưu khung này" để dùng lại lần sau. Khung lưu trong máy, kèm cả nền và logo.
+
 TRÌNH CHỈNH SỬA - CÁC CÔNG CỤ
 
 THU PHÓNG (thanh góc dưới bên phải khung ảnh)
