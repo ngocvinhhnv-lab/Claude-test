@@ -85,8 +85,17 @@ dưới khung Xưởng tạo ảnh. Ở đó bấm "Tải về" để lấy file
 Riêng ảnh ghép khung nằm ở mục "Ảnh đã ghép" ngay trong tab "Khung & Banner".
 Trong trình chỉnh sửa, sau khi tách lớp có sẵn nút tải về ngay tại chỗ, khỏi phải đi tìm.
 
-TÁCH LỚP (nền - chủ thể - chữ)
-- Tách nền ngay trên máy, MIỄN PHÍ: chỉ đúng khi nền trơn một màu hoặc nền trắng.
+TÁCH LỚP
+- Tách đúng vùng bạn khoanh, MIỄN PHÍ - cách chuẩn nhất:
+  Chọn công cụ "Khoanh tròn", "Khoanh khung" hoặc "Vẽ tay" ở thanh trên, kéo trên ảnh
+  để khoanh phần muốn lấy. Khoanh được nhiều vùng cùng lúc. Rồi bấm
+  "Tách vùng đã khoanh thành lớp riêng". Ba ô tích:
+    * "Cắt sát vùng": file ra chỉ bằng đúng vùng khoanh. Bỏ tích thì giữ nguyên khổ ảnh gốc,
+      tiện khi muốn xếp các lớp chồng lại đúng chỗ cũ.
+    * "Mỗi vùng một file": khoanh 3 vùng thì ra 3 file. Bỏ tích thì gộp cả 3 vào một file.
+    * "Lấy cả phần còn lại": thêm một file là ảnh gốc đã khoét bỏ vùng khoanh.
+  Vùng khoanh vẫn còn trên ảnh sau khi tách, kéo chỉnh lại rồi bấm tách tiếp được.
+- Tách nền trơn ngay trên máy, MIỄN PHÍ: chỉ đúng khi nền trơn một màu hoặc nền trắng.
   Kéo thanh "Độ nhạy tách nền": còn sót nền thì tăng, bị ăn vào chủ thể thì giảm.
   Ra file PNG nền trong suốt.
 - Tách lớp bằng AI: dùng được với mọi loại nền. Chọn lớp cần lấy (Lớp nền / Lớp chủ thể /

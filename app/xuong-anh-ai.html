@@ -2041,6 +2041,7 @@ function endDrag(e){
     if(d.shape==="crop"){ED.crop=r; renderEdSide(); edDraw(); return}
     pushUndo();
     ED.objs.push(d.shape==="box"?{type:"box",label:ED.boxLabel,...r}:{type:"mark",shape:d.shape==="mark"?"ellipse":"rect",note:"",...r});
+    LP.open=LP.open||ED.mode==="result";
     ED.sel=ED.objs.length-1; renderEdSide(); edDraw();
     if(d.shape!=="box"){const inp=$("ed-side").querySelector(`[data-note="${ED.sel}"]`); if(inp) inp.focus()}
     return;
@@ -2257,6 +2258,7 @@ side.addEventListener("click",async e=>{
   if(a==="ai") edAI();
   if(a==="print") edPrint();
   if(a==="gohist"){closeEditor(true); setTab("new"); const el=document.getElementById("results"); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); return}
+  if(a==="lpregion") lpRegion();
   if(a==="lpfree") lpFree();
   if(a==="lpai") lpAI();
   if(a==="fxlocal") fxLocal();
@@ -2278,6 +2280,7 @@ side.addEventListener("click",async e=>{
 });
 side.addEventListener("input",e=>{
   const t=e.target;
+  if(t.dataset.lpo){LP[t.dataset.lpo]=t.checked; renderEdSide(); return}
   if(t.id==="lp-tol"){LP.tol=+t.value; const l=t.closest("label"); if(l) l.querySelector("span").textContent="Độ nhạy tách nền: "+LP.tol; return}
   if(t.id==="fx-amount"){FX.amount=+t.value; const l=t.closest("label"); if(l) l.querySelector("span").textContent="Tăng nét ngay trên máy: "+FX.amount+"% · miễn phí"; return}
   if(t.id==="fx-extra"){FX.extra=t.value; return}
@@ -2611,12 +2614,24 @@ const LAYERS=[
   {id:"text",name:"Lớp chữ và logo",want:"chữ trên nền trong suốt",cut:true,
    p:"Chỉ giữ lại phần chữ và logo có trong ảnh. Giữ nguyên tuyệt đối nội dung chữ, đúng chính tả và đủ dấu tiếng Việt, đúng kiểu chữ, màu chữ, viền, cỡ chữ và vị trí trên khung. Xoá chủ thể và nền, thay bằng nền trắng tinh #FFFFFF phẳng tuyệt đối."}
 ];
-const LP={pick:{subject:true},tol:40,busy:false};
+const LP={pick:{subject:true},tol:40,busy:false,tight:true,rest:false,each:true,out:[]};
 function lpCost(){const n=Object.values(LP.pick).filter(Boolean).length; return n*estOne(S.engine,nearestRatio(ED.W,ED.H))}
 function layerSec(){
   const eng=S.engine, prob=engineProblem(eng), ai=eng==="gemini"||eng==="openai";
+  const nMark=ED.objs.filter(o=>o.type==="mark").length;
   return `<details class="ed-sec" id="ed-layer"${LP.open?" open":""}><summary>Tách lớp <span>nền · chủ thể · chữ</span></summary><div class="pr-body">
-    <p class="sug-note">Mỗi lớp xuất ra một file riêng. Tách xong, nút tải về hiện ngay bên dưới.</p>
+    <p class="sug-note">Mỗi lớp xuất ra một file PNG nền trong suốt. Tách xong, nút tải về hiện ngay bên dưới.</p>
+    <div class="lp-free">
+      <b>Tách đúng vùng bạn khoanh · miễn phí</b>
+      <p class="sug-note">Chọn công cụ <b>◯ Khoanh tròn</b>, <b>▭ Khoanh khung</b> hoặc <b>✎ Vẽ tay</b> ở thanh trên, kéo trên ảnh để khoanh phần muốn lấy. Khoanh được nhiều vùng.</p>
+      <p class="s-msg${nMark?" ok":""}">${nMark?`Đang có <b>${nMark}</b> vùng đã khoanh.`:"Chưa khoanh vùng nào."}</p>
+      <div class="ed-checks" style="flex-wrap:wrap;gap:8px 14px">
+        <label><input type="checkbox" data-lpo="tight"${LP.tight?" checked":""}> Cắt sát vùng</label>
+        <label><input type="checkbox" data-lpo="each"${LP.each?" checked":""}> Mỗi vùng một file</label>
+        <label><input type="checkbox" data-lpo="rest"${LP.rest?" checked":""}> Lấy cả phần còn lại</label>
+      </div>
+      <div class="sug-chips"><button class="btn go" type="button" data-ed="lpregion" ${LP.busy||!nMark?"disabled":""}>Tách ${nMark>1&&LP.each?nMark+" vùng":"vùng đã khoanh"} thành lớp riêng</button></div>
+    </div>
     <div class="lp-free">
       <b>Tách nền ngay trên máy · miễn phí</b>
       <p class="sug-note">Chỉ đúng khi nền trơn một màu hoặc nền trắng. Nền phức tạp thì dùng AI bên dưới.</p>
@@ -2642,6 +2657,59 @@ async function lpSaveLayer(blob,name,cost){ // trả về bản ghi để dựng
     prompt:"",userPrompt:"",ratio:nearestRatio(ED.W,ED.H),engine:cost?S.engine:"manual",model:cost?modelOf(S.engine):"",
     label:(name+" · "+baseLabel(ED.label)).slice(0,70),cost:cost||null,parent:(ED.rec||{}).id||null};
   await addRecords([rec]); fresh.add(rec.id); LP.out=(LP.out||[]).concat(rec).slice(-4); return rec;
+}
+// tách đúng vùng đã khoanh: clip theo hình, viền mềm, cắt sát nếu muốn
+async function cutRegion(marks,{tight=true,invert=false,feather=2}={}){
+  const W=ED.W,H=ED.H, c=mkCanvas(W,H), g=c.getContext("2d");
+  if(invert){
+    g.drawImage(ED.baseImg,0,0,W,H);
+    g.globalCompositeOperation="destination-out";
+    marks.forEach(o=>{shapePath(g,o); g.fill()});
+    g.globalCompositeOperation="source-over";
+  }else{
+    const m=mkCanvas(W,H), mg=m.getContext("2d");
+    mg.fillStyle="#fff"; if(feather>0) mg.filter=`blur(${feather}px)`;
+    marks.forEach(o=>{shapePath(mg,o); mg.fill()});
+    mg.filter="none";
+    g.drawImage(ED.baseImg,0,0,W,H);
+    g.globalCompositeOperation="destination-in"; g.drawImage(m,0,0);
+    g.globalCompositeOperation="source-over"; m.width=m.height=1;
+  }
+  if(!tight||invert) return canvasBlob(c);
+  // cắt sát vùng, chừa 2 px
+  let x0=W,y0=H,x1=0,y1=0;
+  marks.forEach(o=>{const b=objBox(o); x0=Math.min(x0,b.x); y0=Math.min(y0,b.y); x1=Math.max(x1,b.x+b.w); y1=Math.max(y1,b.y+b.h)});
+  x0=Math.max(0,Math.floor(x0)-2); y0=Math.max(0,Math.floor(y0)-2);
+  x1=Math.min(W,Math.ceil(x1)+2); y1=Math.min(H,Math.ceil(y1)+2);
+  const w=Math.max(1,x1-x0), h=Math.max(1,y1-y0);
+  const t=mkCanvas(w,h); t.getContext("2d").drawImage(c,x0,y0,w,h,0,0,w,h);
+  c.width=c.height=1;
+  return canvasBlob(t);
+}
+async function lpRegion(){
+  if(LP.busy) return;
+  const marks=ED.objs.filter(o=>o.type==="mark");
+  if(!marks.length){lpMsg("Chưa khoanh vùng nào. Chọn công cụ ◯ Khoanh tròn, ▭ Khoanh khung hoặc ✎ Vẽ tay ở thanh trên rồi kéo trên ảnh.","err"); return}
+  LP.busy=true; LP.out=[]; renderEdSide(); lpMsg("Đang tách vùng đã khoanh…");
+  try{
+    fresh.clear();
+    if(LP.each&&marks.length>1){
+      for(const o of marks){
+        const blob=await cutRegion([o],{tight:LP.tight});
+        await lpSaveLayer(blob,"Vùng "+markNo(o),0);
+      }
+    }else{
+      const blob=await cutRegion(marks,{tight:LP.tight});
+      await lpSaveLayer(blob,marks.length>1?"Vùng đã khoanh":"Vùng "+markNo(marks[0]),0);
+    }
+    if(LP.rest){
+      const blob=await cutRegion(marks,{invert:true});
+      await lpSaveLayer(blob,"Phần còn lại",0);
+    }
+    renderResults();
+    lpMsg(`Xong ${LP.out.length} file PNG nền trong suốt. Vùng khoanh vẫn còn trên ảnh, sửa lại rồi bấm tách tiếp được.`,"ok");
+  }catch(e){lpMsg("Không tách được vùng này. "+errText(e),"err")}
+  finally{LP.busy=false; renderEdSide()}
 }
 async function lpFree(){
   if(LP.busy) return; LP.busy=true; LP.out=[]; renderEdSide(); lpMsg("Đang tách nền…");
