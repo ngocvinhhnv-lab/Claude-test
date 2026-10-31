@@ -49,8 +49,15 @@ Dựng khung một lần, ghép hàng loạt ảnh sản phẩm vào. Không t�
 3. DẢI "CHỌN KHUNG" ngay trên bản xem trước: bấm một hình thu nhỏ là áp khung vào ngay.
    Dải này gồm 6 khung mẫu dựng sẵn (Tết đỏ vàng, Studio trắng, Sale đỏ cam, Thông số kỹ thuật,
    Sang trọng tối, Trơn không viền), các khung bạn đã lưu, rồi hai ô cuối là
-   "Tải ảnh khung lên" và "Nhập khung từ file". Khung đang dùng được viền xanh.
-   Hình thu nhỏ tự vẽ lại theo khổ bạn chọn.
+   "Tải ảnh khung lên", "Nhập khung từ file" và "Chọn từ ảnh đã tạo".
+   Khung đang dùng được viền xanh. Hình thu nhỏ tự vẽ lại theo khổ bạn chọn.
+   Ô "CHỌN TỪ ẢNH ĐÃ TẠO" mở ra kho ảnh bạn đã làm. Bấm một ảnh rồi chọn:
+     * "Ảnh nền của khung": ảnh đó nằm DƯỚI ảnh sản phẩm. Miễn phí.
+     * "Ảnh khung, phủ đè": ảnh đó phủ LÊN TRÊN ảnh sản phẩm. Miễn phí,
+       chỉ hợp với file PNG khoét trống ở giữa, không thì che mất sản phẩm.
+     * "Nhờ AI vẽ nền tương tự": AI nhìn ảnh đó rồi vẽ một nền mới cùng phong cách,
+       cùng tông màu và hoạ tiết, nhưng không chép lại sản phẩm, chữ hay bố cục.
+       Tốn khoảng 6.200 đ một lần, vẽ xong dùng lại cho mọi sản phẩm.
 4. Dựng khung ở cột bên phải:
    - Nền: màu trơn, chuyển sắc hai màu, ảnh tải lên, hoặc bấm "Nhờ AI vẽ nền" (vẽ 1 lần
      khoảng 6.200 đ rồi dùng lại cho mọi sản phẩm, không tốn thêm).
