@@ -2823,12 +2823,12 @@ const FR0={mode:"sp",w:1200,h:1200,
   box:{x:.10,y:.10,w:.80,h:.66},
   badge:{on:true,text:"GIẢM 30%",bg:"#C8102E",fg:"#FFFFFF",corner:"tl"},
   title:{on:true,text:"{ten}",color:"#18202E",size:.055,pos:"bottom"},
-  font:"Be Vietnam Pro",drag:"box",
+  font:"Be Vietnam Pro",drag:"box",overFit:"fill",
   spec:{on:false,side:"right",w:.42,card:"#FFFFFF",label:"#18202E",value:"#5A6475",accent:"#C8102E",rows:[]},
   logoCorner:"tr",logoSize:.16,cut:true};
 let FR=JSON.parse(JSON.stringify(FR0));
 let FR_NAME="", FR_ID=null;
-let FR_BG=null, FR_LOGO=null, FR_BGIMG=null, FR_LOGOIMG=null, FR_FILES=[], FR_THUMB=null, FR_SAVED=[], FR_BUSY=false, FR_MSG={t:"",k:""};
+let FR_BG=null, FR_LOGO=null, FR_OVER=null, FR_BGIMG=null, FR_LOGOIMG=null, FR_OVERIMG=null, FR_FILES=[], FR_THUMB=null, FR_SAVED=[], FR_BUSY=false, FR_MSG={t:"",k:""};
 const frCv=()=>$("fr-cv");
 function frMsg(t,k){FR_MSG={t,k:k||""}; const e=$("fr-msg"); if(e){e.className="s-msg"+(k?" "+k:""); e.textContent=t}}
 function frSave(){store.set("xa-frame",JSON.stringify(FR))}
@@ -2883,6 +2883,11 @@ async function drawFrame(g,W,H,prodImg,name){
     gr.addColorStop(0,FR.c1); gr.addColorStop(1,FR.c2); g.fillStyle=gr; g.fillRect(0,0,W,H);
   }else{g.fillStyle=FR.c1; g.fillRect(0,0,W,H)}
   if(prodImg) fitIn(g,prodImg,frBox(W,H));
+  if(FR_OVERIMG){ // khung PNG tự tải lên, phủ đè lên ảnh sản phẩm
+    if(FR.overFit==="fit"){const iw=FR_OVERIMG.naturalWidth,ih=FR_OVERIMG.naturalHeight,k=Math.min(W/iw,H/ih);
+      g.drawImage(FR_OVERIMG,(W-iw*k)/2,(H-ih*k)/2,iw*k,ih*k)}
+    else g.drawImage(FR_OVERIMG,0,0,W,H);
+  }
   if(FR.spec&&FR.spec.on) frDrawSpec(g,W,H);
   if(FR.title.on) frText(g,String(FR.title.text||"").replace(/\{ten\}/g,name||""),W,H);
   if(FR.badge.on) frBadge(g,W,H);
@@ -3057,6 +3062,11 @@ function frForm(){
         <p class="sug-note">AI vẽ nền một lần, dùng lại cho mọi sản phẩm. ≈ ${vnd(estOne(S.engine,nearestRatio(FR.w,FR.h)))}</p>`
       :`<div class="ed-${FR.bgType==="grad"?"3":"2"}">${col("Màu nền",FR.c1,"c1")}${FR.bgType==="grad"?col("Màu 2",FR.c2,"c2")+`<label class="ed-f"><span>Hướng</span><select data-fr="dir"><option value="v"${FR.dir==="v"?" selected":""}>Dọc</option><option value="h"${FR.dir==="h"?" selected":""}>Ngang</option><option value="d"${FR.dir==="d"?" selected":""}>Chéo</option></select></label>`:""}</div>`}
     </section>
+    <section class="ed-sec"><h4>Ảnh khung tải lên <span>${FR_OVER?"đang dùng":"chưa có"}</span></h4>
+      <p class="sug-note">Có sẵn file khung đẹp (PNG khoét trống ở giữa)? Tải lên để phủ đè lên ảnh sản phẩm. Dùng đúng khổ đã chọn ở mục 1 thì khớp nhất.</p>
+      <div class="sug-chips"><button class="btn" type="button" data-fra="overup">${FR_OVER?"Đổi ảnh khung":"Tải ảnh khung lên"}</button>${FR_OVER?`<button class="btn warn" type="button" data-fra="overdel">Bỏ ảnh khung</button>`:""}</div>
+      ${FR_OVER?`<label class="ed-f"><span>Cách đặt</span><select data-fr="overFit"><option value="fill"${FR.overFit!=="fit"?" selected":""}>Kéo đầy khung</option><option value="fit"${FR.overFit==="fit"?" selected":""}>Vừa khung, giữ tỉ lệ</option></select></label>`:""}
+    </section>
     <section class="ed-sec"><h4>3. Viền <span>${bd.on?"đang bật":"đang tắt"}</span></h4>
       <div class="ed-checks"><label><input type="checkbox" data-fr="border.on"${bd.on?" checked":""}> Có viền</label></div>
       ${bd.on?`<div class="ed-3">${col("Màu viền",bd.c,"border.c")}<label class="ed-f"><span>Dày: ${bd.w}</span><input type="range" min="0" max="60" data-fr="border.w" value="${bd.w}"></label><label class="ed-f"><span>Bo góc: ${bd.r}</span><input type="range" min="0" max="160" data-fr="border.r" value="${bd.r}"></label></div>`:""}
@@ -3080,6 +3090,8 @@ function frForm(){
     ${specForm()}
     <section class="ed-sec"><h4>Khung của tôi</h4>
       <div class="sug-chips">${FR_ID?`<button class="btn go" type="button" data-fra="update">Lưu đè “${esc(FR_NAME)}”</button>`:""}<button class="btn" type="button" data-fra="save">Lưu thành khung mới</button><button class="btn" type="button" data-fra="reset">Về mặc định</button></div>
+      <p class="sug-note" style="padding-top:6px;border-top:1px dashed var(--line)">Mang khung sang máy khác:</p>
+      <div class="sug-chips"><button class="btn" type="button" data-fra="exp">Xuất khung ra file</button><button class="btn" type="button" data-fra="imp">Nhập khung từ file</button></div>
       ${FR_SAVED.length?`<ul class="ed-list">${FR_SAVED.map(f=>`<li><button type="button" data-frload="${f.id}">${esc(f.name)}</button><button type="button" class="x" data-frdel="${f.id}" aria-label="Xoá">×</button></li>`).join("")}</ul>`:`<p class="sug-note">Chưa lưu khung nào.</p>`}
     </section>`;
 }
@@ -3110,6 +3122,7 @@ function renderFrList(){
 async function frLoadImgs(){
   FR_BGIMG=FR_BG?await blobToImg(FR_BG).catch(()=>null):null;
   FR_LOGOIMG=FR_LOGO?await blobToImg(FR_LOGO).catch(()=>null):null;
+  FR_OVERIMG=FR_OVER?await blobToImg(FR_OVER).catch(()=>null):null;
 }
 async function frSetFiles(files){
   const add=[...files].filter(f=>/^image\//.test(f.type));
@@ -3165,12 +3178,22 @@ async function frRun(){
   finally{FR_BUSY=false; renderFrame()}
 }
 const frFile=document.createElement("input"); frFile.type="file"; frFile.accept="image/jpeg,image/png,image/webp"; frFile.multiple=true;
+const FR_ACC="image/jpeg,image/png,image/webp";
 let frWant="prod";
 frFile.addEventListener("change",async e=>{
   const fs=[...e.target.files]; e.target.value=""; if(!fs.length) return;
   if(frWant==="prod") return frSetFiles(fs);
   if(frWant==="bg"){FR_BG=await prepEditBlob(fs[0]); FR.bgType="img"; await DB.put({id:"fr-bg",blob:FR_BG},"misc")}
   if(frWant==="logo"){FR_LOGO=await prepEditBlob(fs[0]); await DB.put({id:"fr-logo",blob:FR_LOGO},"misc")}
+  if(frWant==="over"){FR_OVER=fs[0]; await DB.put({id:"fr-over",blob:FR_OVER},"misc");
+    const off=FR.border.on; if(off){FR.border.on=false; frSave()}   // khung tải lên đã có viền riêng
+    frMsg("Đã nạp ảnh khung."+(off?" Đã tắt viền của app cho khỏi đè lên.":"")+" Kéo ô ảnh sản phẩm cho lọt vào chỗ trống của khung.","ok")}
+  if(frWant==="json"){
+    try{const d=JSON.parse(await fs[0].text()); if(!d||!d.fr||!d.fr.w) throw 0;
+      FR=Object.assign(JSON.parse(JSON.stringify(FR0)),d.fr); FR_ID=null; FR_NAME=d.name||"";
+      frSave(); frMsg(`Đã nhập khung “${d.name||"không tên"}”. Tải lại ảnh nền, ảnh khung và logo nếu khung đó có dùng.`,"ok");
+    }catch(_){frMsg("File này không phải file khung của app. Chọn đúng file .json đã xuất ra trước đó.","err")}
+  }
   await frLoadImgs(); frSave(); renderFrame();
 });
 function frSet(path,v){const p=path.split("."); let o=FR; for(let i=0;i<p.length-1;i++) o=o[p[i]]; o[p[p.length-1]]=v; frSave()}
@@ -3190,8 +3213,8 @@ $("pane-frame").addEventListener("click",async e=>{
   if(b.dataset.specrm!=null){FR.spec.rows.splice(+b.dataset.specrm,1); frSave(); renderFrame(); return}
   if(b.dataset.frbg){FR.bgType=b.dataset.frbg; frSave(); renderFrame(); return}
   if(b.dataset.frrm!=null){const f=FR_FILES.splice(+b.dataset.frrm,1)[0]; if(f&&f._u) URL.revokeObjectURL(f._u); await frThumb(); renderFrame(); return}
-  if(b.dataset.frload){const f=FR_SAVED.find(x=>x.id===b.dataset.frload); if(f){FR=Object.assign(JSON.parse(JSON.stringify(FR0)),f.fr); FR_ID=f.id; FR_NAME=f.name; FR_BG=f.bg||null; FR_LOGO=f.logo||null;
-    await DB.put({id:"fr-bg",blob:FR_BG},"misc"); await DB.put({id:"fr-logo",blob:FR_LOGO},"misc"); await frLoadImgs(); frSave(); renderFrame(); frMsg("Đã mở khung “"+f.name+"”.","ok")} return}
+  if(b.dataset.frload){const f=FR_SAVED.find(x=>x.id===b.dataset.frload); if(f){FR=Object.assign(JSON.parse(JSON.stringify(FR0)),f.fr); FR_ID=f.id; FR_NAME=f.name; FR_BG=f.bg||null; FR_LOGO=f.logo||null; FR_OVER=f.over||null;
+    await DB.put({id:"fr-bg",blob:FR_BG},"misc"); await DB.put({id:"fr-logo",blob:FR_LOGO},"misc"); await DB.put({id:"fr-over",blob:FR_OVER},"misc"); await frLoadImgs(); frSave(); renderFrame(); frMsg("Đã mở khung “"+f.name+"”.","ok")} return}
   if(b.dataset.frdel){await DB.del(b.dataset.frdel,"tpl"); FR_SAVED=FR_SAVED.filter(x=>x.id!==b.dataset.frdel); renderFrame(); return}
   if(b.dataset.fra2){const rec=HIST.find(r=>r.id===b.dataset.id); if(!rec) return;
     if(b.dataset.fra2==="dl") download(rec);
@@ -3199,24 +3222,32 @@ $("pane-frame").addEventListener("click",async e=>{
     if(b.dataset.fra2==="del"){HIST=HIST.filter(x=>x.id!==rec.id); dropUrl(rec.id); await DB.del(rec.id); renderResults(); renderFrList()}
     return}
   const a=b.dataset.fra; if(!a) return;
-  if(a==="produp"){frWant="prod"; frFile.multiple=true; frFile.click()}
-  if(a==="bgup"){frWant="bg"; frFile.multiple=false; frFile.click()}
-  if(a==="logoup"){frWant="logo"; frFile.multiple=false; frFile.click()}
+  if(a==="produp"){frWant="prod"; frFile.multiple=true; frFile.accept=FR_ACC; frFile.click()}
+  if(a==="bgup"){frWant="bg"; frFile.multiple=false; frFile.accept=FR_ACC; frFile.click()}
+  if(a==="logoup"){frWant="logo"; frFile.multiple=false; frFile.accept=FR_ACC; frFile.click()}
   if(a==="bgdel"){FR_BG=null; FR.bgType="grad"; await DB.del("fr-bg","misc"); await frLoadImgs(); frSave(); renderFrame()}
+  if(a==="overup"){frWant="over"; frFile.multiple=false; frFile.accept="image/png,image/webp"; frFile.click()}
+  if(a==="overdel"){FR_OVER=null; await DB.del("fr-over","misc"); await frLoadImgs(); renderFrame(); frMsg("Đã bỏ ảnh khung.","ok")}
+  if(a==="exp"){
+    const d={app:"xuong-anh-ai",kind:"frame",name:FR_NAME||"Khung",fr:FR};
+    await dlBlob(new Blob([JSON.stringify(d,null,1)],{type:"application/json"}),`${slug(FR_NAME||"khung")}.json`);
+    frMsg("Đã xuất file khung. Ảnh nền, ảnh khung và logo không nằm trong file này, sang máy mới tải lại.","ok");
+  }
+  if(a==="imp"){frWant="json"; frFile.multiple=false; frFile.accept="application/json,.json"; frFile.click()}
   if(a==="logodel"){FR_LOGO=null; await DB.del("fr-logo","misc"); await frLoadImgs(); renderFrame()}
   if(a==="bgai") frAIBg();
   if(a==="fonts") frReadFonts();
   if(a==="specadd"){FR.spec.rows=(FR.spec.rows||[]).concat({t:"",v:""}).slice(0,8); FR.spec.on=true; frSave(); renderFrame()}
   if(a==="specclr"){FR.spec.rows=[]; frSave(); renderFrame()}
   if(a==="update"&&FR_ID){
-    const rec={id:FR_ID,name:FR_NAME,fr:JSON.parse(JSON.stringify(FR)),bg:FR_BG,logo:FR_LOGO,kind:"frame"};
+    const rec={id:FR_ID,name:FR_NAME,fr:JSON.parse(JSON.stringify(FR)),bg:FR_BG,logo:FR_LOGO,over:FR_OVER,kind:"frame"};
     await DB.put(rec,"tpl"); const i=FR_SAVED.findIndex(x=>x.id===FR_ID); if(i>=0) FR_SAVED[i]=rec;
     renderFrame(); frMsg("Đã lưu đè khung “"+FR_NAME+"”.","ok");
   }
   if(a==="reset"){FR=JSON.parse(JSON.stringify(FR0)); frSave(); renderFrame(); frMsg("Đã về khung mặc định.","ok")}
   if(a==="save"){
     const name=prompt("Đặt tên cho khung này:",FR.mode==="sp"?"Khung sàn của tôi":"Banner của tôi"); if(!name) return;
-    const rec={id:"fr-"+Date.now().toString(36),name,fr:JSON.parse(JSON.stringify(FR)),bg:FR_BG,logo:FR_LOGO,kind:"frame"};
+    const rec={id:"fr-"+Date.now().toString(36),name,fr:JSON.parse(JSON.stringify(FR)),bg:FR_BG,logo:FR_LOGO,over:FR_OVER,kind:"frame"};
     await DB.put(rec,"tpl"); FR_SAVED.unshift(rec); FR_ID=rec.id; FR_NAME=name; renderFrame(); frMsg("Đã lưu khung “"+name+"”.","ok");
   }
 });
@@ -3246,8 +3277,8 @@ $("pane-frame").addEventListener("dragover",e=>{e.preventDefault()});
 $("pane-frame").addEventListener("drop",e=>{e.preventDefault(); if(e.dataTransfer&&e.dataTransfer.files.length) frSetFiles(e.dataTransfer.files)});
 (async()=>{
   const misc=await DB.all("misc")||[];
-  const bg=misc.find(x=>x.id==="fr-bg"), lg=misc.find(x=>x.id==="fr-logo");
-  FR_BG=bg&&bg.blob||null; FR_LOGO=lg&&lg.blob||null;
+  const bg=misc.find(x=>x.id==="fr-bg"), lg=misc.find(x=>x.id==="fr-logo"), ov=misc.find(x=>x.id==="fr-over");
+  FR_BG=bg&&bg.blob||null; FR_LOGO=lg&&lg.blob||null; FR_OVER=ov&&ov.blob||null;
   FR_SAVED=((await DB.all("tpl"))||[]).filter(x=>x.kind==="frame");
   await frLoadImgs(); if(TAB==="frame") renderFrame();
 })();

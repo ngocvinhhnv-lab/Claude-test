@@ -54,6 +54,10 @@ Dựng khung một lần, ghép hàng loạt ảnh sản phẩm vào. Không t�
    - Viền: màu, độ dày, bo góc.
    - Nhãn góc: gõ chữ như FREESHIP, GIẢM 30%, CHÍNH HÃNG; chọn màu và góc đặt.
    - Chữ: gõ {ten} thì app tự thay bằng tên file của từng ảnh sản phẩm.
+   - Ảnh khung tải lên: đã có sẵn file khung đẹp (PNG khoét trống ở giữa) thì bấm
+     "Tải ảnh khung lên", app phủ đè lên ảnh sản phẩm. Dùng đúng khổ đã chọn ở mục 1
+     thì khớp nhất. App tự tắt viền của mình cho khỏi đè lên khung của bạn.
+     Nạp xong kéo ô ảnh sản phẩm cho lọt vào chỗ trống của khung.
    - Kiểu chữ: chọn trong danh sách, hoặc bấm "Đọc font cài trên máy" để dùng font Windows
      của bạn (chỉ chạy trên Chrome/Edge máy tính, phải bấm cho phép một lần).
    - Logo: tải lên, chọn góc và cỡ.
@@ -70,7 +74,10 @@ Dựng khung một lần, ghép hàng loạt ảnh sản phẩm vào. Không t�
    Tích "Tự tách nền trắng" nếu ảnh chụp nền trắng; ảnh đã đẹp sẵn thì bỏ tích.
 7. Bấm "Ghép N ảnh và tải về". Mỗi ảnh ra một file, tên đặt sẵn theo khổ và tên sản phẩm.
    Ảnh cũng lưu ở mục "Ảnh đã ghép" bên dưới, bấm "Chỉnh sửa" để sửa thêm.
-8. Bấm "Lưu thành khung mới" để dùng lại lần sau (lưu cả nền và logo). Mở lại khung đã lưu
+8. Mang khung sang máy khác: bấm "Xuất khung ra file" được một file .json, chép sang máy kia
+   rồi bấm "Nhập khung từ file". File .json chỉ chứa cài đặt, không chứa ảnh nền, ảnh khung
+   và logo - sang máy mới phải tải mấy ảnh đó lên lại.
+9. Bấm "Lưu thành khung mới" để dùng lại lần sau (lưu cả nền và logo). Mở lại khung đã lưu
    rồi sửa thì có thêm nút "Lưu đè" để ghi đè lên chính khung đó.
 
 TRÌNH CHỈNH SỬA - CÁC CÔNG CỤ
