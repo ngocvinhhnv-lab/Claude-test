@@ -24,11 +24,11 @@ CHẤT LƯỢNG VÀ TIỀN
 BA TAB
 --------------------------------------------------------------------
 TAB "TẠO ẢNH MỚI"
-1. Điền thông tin brief bên trái (hoặc bấm "Điền ví dụ").
-2. Bấm "Tải ảnh sản phẩm lên" (tối đa 4 ảnh nhiều góc). Hệ thống tự đọc ảnh, chọn
-   3 mẫu hợp nhất trong thư viện, chỉnh prompt theo sản phẩm và điền brief. Có Hoàn tác.
+1. Gõ mô tả ảnh cần tạo vào ô prompt.
+2. Bấm "Tải ảnh sản phẩm lên" (tối đa 4 ảnh nhiều góc) để gửi kèm, giữ đúng nhãn và hình dáng.
 3. Muốn làm giống một ảnh có sẵn: bấm "Tải ảnh mẫu lên" (khung hồng) hoặc dán Ctrl + V.
    Chọn mức giống: Giống gần hết / Giống bố cục / Giống màu và ánh sáng.
+   Ảnh mẫu dùng tốt thì bấm "Lưu vào Mẫu của tôi" - mục đó nằm cuối tab này.
 4. (Tuỳ chọn) Bấm "Vẽ bố cục" để kéo khung chỉ chỗ đặt sản phẩm, tiêu đề, logo.
 5. Chọn tỉ lệ, số ảnh, rồi bấm "Tạo ảnh".
 6. TIẾT KIỆM: chọn "Dùng gói tháng" ở phần công cụ, bấm "Copy prompt & mở ChatGPT",
@@ -46,20 +46,32 @@ Dựng khung một lần, ghép hàng loạt ảnh sản phẩm vào. Không t�
    - Khung sàn: Shopee 1:1 1200x1200, TikTok 1:1 1200x1200, TikTok 3:4 1080x1440, vuông 1000.
    - Banner web: Slider lịch Tết 316x491, Slider sách 316x246, Banner danh mục 850x250
      (và bản gấp đôi 1700x500), Banner bài viết 1200x630.
-3. Dựng khung ở cột bên phải:
+3. Hoặc bấm một KHUNG MẪU DỰNG SẴN ở đầu cột phải (Tết đỏ vàng, Studio trắng, Sale đỏ cam,
+   Thông số kỹ thuật, Sang trọng tối, Trơn không viền) rồi chỉnh tiếp.
+4. Dựng khung ở cột bên phải:
    - Nền: màu trơn, chuyển sắc hai màu, ảnh tải lên, hoặc bấm "Nhờ AI vẽ nền" (vẽ 1 lần
      khoảng 6.200 đ rồi dùng lại cho mọi sản phẩm, không tốn thêm).
    - Viền: màu, độ dày, bo góc.
    - Nhãn góc: gõ chữ như FREESHIP, GIẢM 30%, CHÍNH HÃNG; chọn màu và góc đặt.
    - Chữ: gõ {ten} thì app tự thay bằng tên file của từng ảnh sản phẩm.
+   - Kiểu chữ: chọn trong danh sách, hoặc bấm "Đọc font cài trên máy" để dùng font Windows
+     của bạn (chỉ chạy trên Chrome/Edge máy tính, phải bấm cho phép một lần).
    - Logo: tải lên, chọn góc và cỡ.
-4. Kéo khung xanh trên bản xem trước để đổi chỗ đặt ảnh sản phẩm,
+   - Đặc tính kỹ thuật: tích "Hiện bảng đặc tính" để có bảng thẻ đánh số như ảnh lịch mẫu.
+     Mỗi dòng gõ tên ở ô trái (VD "Kích thước sản phẩm") và nội dung ở ô phải
+     (VD "30 x 60 cm, bloc lịch, bìa cứng"). Bấm "+ Thêm dòng", tối đa 8 dòng.
+     Chọn đặt bảng bên phải, bên trái hay phía dưới; chỉnh bề rộng, màu thẻ, màu chữ, màu ô số.
+     Chữ tự co lại cho vừa thẻ, nội dung dài tự xuống dòng.
+   Ô "ĐANG KÉO TRÊN BẢN XEM TRƯỚC" chọn kéo ô ảnh sản phẩm (khung xanh)
+   hay ô đặc tính (khung hồng).
+5. Kéo khung trên bản xem trước để đổi chỗ đặt ảnh sản phẩm,
    kéo ô vuông góc dưới để đổi cỡ.
-5. Bấm "Tải ảnh sản phẩm lên" (hoặc kéo thả) - thả bao nhiêu ảnh cũng được.
+6. Bấm "Tải ảnh sản phẩm lên" (hoặc kéo thả) - thả bao nhiêu ảnh cũng được.
    Tích "Tự tách nền trắng" nếu ảnh chụp nền trắng; ảnh đã đẹp sẵn thì bỏ tích.
-6. Bấm "Ghép N ảnh và tải về". Mỗi ảnh ra một file, tên đặt sẵn theo khổ và tên sản phẩm.
+7. Bấm "Ghép N ảnh và tải về". Mỗi ảnh ra một file, tên đặt sẵn theo khổ và tên sản phẩm.
    Ảnh cũng lưu ở mục "Ảnh đã ghép" bên dưới, bấm "Chỉnh sửa" để sửa thêm.
-7. Bấm "Lưu khung này" để dùng lại lần sau. Khung lưu trong máy, kèm cả nền và logo.
+8. Bấm "Lưu thành khung mới" để dùng lại lần sau (lưu cả nền và logo). Mở lại khung đã lưu
+   rồi sửa thì có thêm nút "Lưu đè" để ghi đè lên chính khung đó.
 
 TRÌNH CHỈNH SỬA - CÁC CÔNG CỤ
 

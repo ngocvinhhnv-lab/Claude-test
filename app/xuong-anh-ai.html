@@ -37,7 +37,7 @@ h1{font-family:var(--ff-d);font-weight:800;font-size:clamp(2rem,4.6vw,3.6rem);li
 .formula ol{margin:0;padding-left:18px;color:var(--muted)}
 .formula li::marker{color:var(--mag);font-weight:600}
 
-.layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:28px;align-items:start}
+.layout{display:grid;grid-template-columns:minmax(0,1fr);gap:28px;align-items:start}
 aside.panel{position:sticky;top:calc(16px + env(safe-area-inset-top,0px));background:var(--sheet);border:1px solid var(--line);border-radius:6px;padding:18px}
 aside h2{font-family:var(--ff-d);font-size:18px;margin:0 0 4px}
 aside p.hint{color:var(--muted);font-size:13px;margin:0 0 14px}
@@ -181,6 +181,10 @@ table.pc input,.pc-fx input{width:72px;background:var(--sheet);border:1px solid 
   linear-gradient(45deg,var(--wire) 25%,transparent 25%,transparent 75%,var(--wire) 75%) 10px 10px/20px 20px,var(--paper)}
 #fr-cv{display:block;max-width:100%;height:auto;touch-action:none;box-shadow:0 2px 14px rgba(0,0,0,.16);cursor:move}
 .fr-right .ed-sec h4{font-size:15px}
+.fr-rows{display:flex;flex-direction:column;gap:6px}
+.fr-row{display:grid;grid-template-columns:18px minmax(0,1fr) minmax(0,1.2fr) 22px;gap:5px;align-items:center}
+.fr-row b{font-size:11.5px;color:var(--muted);text-align:center}
+.fr-row input{min-width:0;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:5px 7px;font-size:12.5px}
 .fr-right .ed-f input[type=color]{height:28px}
 @media (max-width:900px){.fr-grid{grid-template-columns:minmax(0,1fr)}}
 .tabs{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
@@ -463,24 +467,6 @@ dl.ana dd{margin:0;color:var(--muted)}
   </header>
 
   <div class="layout">
-    <aside class="panel" aria-label="Thông tin brief">
-      <h2>Thông tin brief</h2>
-      <p class="hint">Để trống ô nào, prompt sẽ giữ chỗ trống màu hồng để bạn tự thay.</p>
-      <div class="field"><label for="f-thuong_hieu">Thương hiệu</label><input id="f-thuong_hieu" data-key="thuong_hieu" placeholder="VD: AURA"></div>
-      <div class="field"><label for="f-san_pham">Sản phẩm (mô tả ngoại hình)</label><textarea id="f-san_pham" data-key="san_pham" placeholder="VD: chai nước 500ml thân trong suốt, nắp xanh ngọc, nhãn tối giản"></textarea></div>
-      <div class="prods" data-prods aria-label="Ảnh sản phẩm thật"></div>
-      <div class="sug hidden" id="sug" aria-live="polite"></div>
-      <div class="field"><label for="f-mau_chu_dao">Màu chủ đạo</label><input id="f-mau_chu_dao" data-key="mau_chu_dao" placeholder="VD: xanh ngọc #1FB5A8 và cam san hô"></div>
-      <div class="field"><label for="f-phong_cach">Phong cách</label><input id="f-phong_cach" data-key="phong_cach" placeholder="VD: hiện đại, tươi sáng"></div>
-      <div class="field"><label for="f-thong_diep">Thông điệp / tiêu đề</label><input id="f-thong_diep" data-key="thong_diep" placeholder="VD: Nạp năng lượng mỗi ngày"></div>
-      <div class="field"><label for="f-them">Yêu cầu thêm (gắn vào cuối mọi prompt)</label><textarea id="f-them" data-key="them" placeholder="VD: Giữ nguyên nhãn và hình dáng sản phẩm theo ảnh đính kèm."></textarea></div>
-      <div class="row">
-        <button class="btn" id="fill-demo" type="button">Điền ví dụ</button>
-        <button class="btn" id="clear" type="button">Xoá hết</button>
-      </div>
-      <div class="field" style="margin-top:16px"><label for="f-tool">Khi copy prompt, viết cho</label><select id="f-tool"><option value="gemini">Nano Banana / Gemini</option><option value="gpt">ChatGPT (GPT Image)</option><option value="mj">Midjourney</option><option value="other">Model khác (Seedream, Flux, Ideogram…)</option></select></div>
-      <div class="tips" id="tips"></div>
-    </aside>
 
     <main>
       <nav class="tabs" role="tablist" aria-label="Chức năng">
@@ -608,14 +594,7 @@ dl.ana dd{margin:0;color:var(--muted)}
         <div class="results" id="results"></div>
       </section>
 
-      <h2 class="lib-title">Thư viện mẫu</h2>
-      <p class="lib-sub">Bấm <b>Tạo ảnh</b> trên thẻ để đưa prompt và tỉ lệ lên xưởng rồi tạo luôn.</p>
-      <div class="toolbar" role="toolbar" aria-label="Lọc loại hình">
-        <div id="chips" style="display:contents"></div>
-        <input id="q" type="search" placeholder="Tìm loại hình…" aria-label="Tìm loại hình">
-      </div>
       <div id="groups"></div>
-      <div id="none" class="empty-state hidden">Không có loại hình nào khớp. Thử từ khoá khác hoặc chọn "Tất cả".</div>
       </div>
       <footer>Thông tin brief, API key, ảnh sản phẩm và ảnh đã tạo chỉ lưu trong trình duyệt này. Prompt và ảnh đính kèm chỉ được gửi đi khi bạn bấm Tạo ảnh (tới Canva, Google hoặc OpenAI tuỳ công cụ đang chọn) hoặc Phân tích và viết prompt (tới Claude).</footer>
     </main>
@@ -686,7 +665,8 @@ function tail(r){
 }
 function renderTips(){
   const extra = refBlob ? [tool==="mj" ? "Tải ảnh tham chiếu lên Midjourney rồi thay [link ảnh tham chiếu] bằng link ảnh." : "Đính kèm ảnh tham chiếu cùng prompt khi dán vào công cụ."] : [];
-  $("tips").innerHTML=`<b>Mẹo khi dùng ${TOOLS[tool].name}</b><ul>${[...extra,...TOOLS[tool].tips].map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`}
+  const tipsEl=$("tips"); if(!tipsEl) return;
+  tipsEl.innerHTML=`<b>Mẹo khi dùng ${TOOLS[tool].name}</b><ul>${[...extra,...TOOLS[tool].tips].map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`}
 const GROUPS = ["Social & Ads","Sản phẩm & E-commerce","Sự kiện & In ấn","Con người & Lifestyle"];
 const MYTPL = [];
 
@@ -800,19 +780,13 @@ function card(t){
 
 const groupsEl=$("groups");
 const cards=[];
-GROUPS.forEach(g=>{
-  const items=TYPES.filter(t=>t.g===g);
-  const s=document.createElement("section"); s.className="group"; s.dataset.g=g;
-  s.innerHTML=`<h3>${esc(g)} <span>${items.length} loại hình</span></h3>`;
-  const grid=document.createElement("div"); grid.className="grid";
-  items.forEach(t=>{const c=card(t);cards.push(c);grid.appendChild(c)});
-  s.appendChild(grid); groupsEl.appendChild(s);
-});
+// Thư viện 20 mẫu dựng sẵn đã bỏ; chỉ còn "Mẫu của tôi" do người dùng tự lưu.
 
 // filters
 let active="Tất cả";
-const chipsEl=$("chips");
+const chipsEl=$("chips");   // có thể không còn
 function renderChips(){
+  if(!chipsEl) return applyFilter();
   const hasSug=document.querySelector(".card.suggested")!==null;
   if(!hasSug&&active==="Hợp với sản phẩm") active="Tất cả";
   chipsEl.innerHTML="";
@@ -825,7 +799,7 @@ function renderChips(){
   applyFilter();
 }
 function setLibFilter(g){active=g;chipsEl.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x.textContent===g));applyFilter()}
-const q=$("q");
+const q=$("q")||{value:"",addEventListener(){}};
 q.addEventListener("input",applyFilter);
 renderChips();
 function applyFilter(){
@@ -838,7 +812,7 @@ function applyFilter(){
     });
     s.classList.toggle("hidden",n===0); shown+=n;
   });
-  $("none").classList.toggle("hidden",shown>0);
+  const none=$("none"); if(none) none.classList.toggle("hidden",shown>0);
 }
 
 /* =====================================================================
@@ -912,7 +886,7 @@ function renderEngines(){
 }
 function keyOf(k){return store.get("xa-key-"+k)||""}
 function setEngine(k){S.engine=k;store.set("xa-engine",k);
-  if(k==="ext"&&!store.get("brief-tool")){tool="gpt"; store.set("brief-tool","gpt"); $("f-tool").value="gpt"; renderTips(); cards.forEach(c=>c._refresh())}
+  if(k==="ext"&&!store.get("brief-tool")){tool="gpt"; store.set("brief-tool","gpt"); setToolSel("gpt"); renderTips(); cards.forEach(c=>c._refresh())}
   renderEngines(); if(typeof TAB!=="undefined"&&TAB==="edit") renderEditEng()}
 $("k-key").addEventListener("input",e=>{const v=e.target.value.trim(); v?store.set("xa-key-"+S.engine,v):store.del("xa-key-"+S.engine); renderEngines(); $("k-key").focus()});
 function modelOf(k){const e=ENGINES[k]; if(!e||!e.models) return ""; return (store.get("xa-model2-"+k)||e.models[0].id).trim()}
@@ -1679,11 +1653,8 @@ inputs.forEach(i=>{
   i.addEventListener("input",()=>{vals[i.dataset.key]=i.value;afterBrief()});
 });
 function setAll(o){inputs.forEach(i=>{i.value=o[i.dataset.key]||"";vals[i.dataset.key]=i.value});afterBrief()}
-const sel=$("f-tool");
-tool=store.get("brief-tool")||"gemini"; if(!TOOLS[tool]) tool="gemini"; sel.value=tool; renderTips(); cards.forEach(c=>c._refresh());
-sel.addEventListener("change",()=>{tool=sel.value;store.set("brief-tool",tool);renderTips();cards.forEach(c=>c._refresh())});
-$("fill-demo").onclick=()=>setAll(DEMO);
-$("clear").onclick=()=>setAll({});
+function setToolSel(v){["f-tool","x-target"].forEach(id=>{const e=$(id); if(e) e.value=v})}
+tool=store.get("brief-tool")||"gemini"; if(!TOOLS[tool]) tool="gemini"; setToolSel(tool); renderTips(); cards.forEach(c=>c._refresh());
 
 /* ---------- tự chọn mẫu và điền brief từ ảnh sản phẩm ---------- */
 const SUG_FIELDS=[["thuong_hieu","Thương hiệu"],["san_pham","Sản phẩm"],["mau_chu_dao","Màu chủ đạo"],["phong_cach","Phong cách"],["thong_diep","Thông điệp"]];
@@ -1803,7 +1774,7 @@ function undoSuggestion(){
   sMsg("Đã hoàn tác: brief và prompt mẫu trở lại như trước khi đọc ảnh.");
 }
 async function suggestFromProducts(){
-  if(!S.products.length) return;
+  if(!S.products.length||!$("sug")) return;   // ô gợi ý đã bỏ cùng cột brief
   const via=sugVia();
   if(!via){SUG.status="need";renderProducts();return}
   if(sugCtl) sugCtl.abort();
@@ -1860,7 +1831,7 @@ function renderSug(){
     `<p class="sug-note">Đọc bởi ${esc(VIA_NAME[SUG.via]||"AI")}. Soát lại tên thương hiệu và chữ trên ảnh trước khi dùng.</p>`;
   box._msgs=msgs;
 }
-$("sug").addEventListener("click",e=>{
+if($("sug")) $("sug").addEventListener("click",e=>{
   const b=e.target.closest("button"); if(!b) return; const box=$("sug");
   if(b.dataset.sug==="run"){suggestFromProducts();return}
   if(b.dataset.sug==="undo"){undoSuggestion();return}
@@ -2852,8 +2823,11 @@ const FR0={mode:"sp",w:1200,h:1200,
   box:{x:.10,y:.10,w:.80,h:.66},
   badge:{on:true,text:"GIẢM 30%",bg:"#C8102E",fg:"#FFFFFF",corner:"tl"},
   title:{on:true,text:"{ten}",color:"#18202E",size:.055,pos:"bottom"},
+  font:"Be Vietnam Pro",drag:"box",
+  spec:{on:false,side:"right",w:.42,card:"#FFFFFF",label:"#18202E",value:"#5A6475",accent:"#C8102E",rows:[]},
   logoCorner:"tr",logoSize:.16,cut:true};
 let FR=JSON.parse(JSON.stringify(FR0));
+let FR_NAME="", FR_ID=null;
 let FR_BG=null, FR_LOGO=null, FR_BGIMG=null, FR_LOGOIMG=null, FR_FILES=[], FR_THUMB=null, FR_SAVED=[], FR_BUSY=false, FR_MSG={t:"",k:""};
 const frCv=()=>$("fr-cv");
 function frMsg(t,k){FR_MSG={t,k:k||""}; const e=$("fr-msg"); if(e){e.className="s-msg"+(k?" "+k:""); e.textContent=t}}
@@ -2871,18 +2845,20 @@ function fitIn(g,img,b){
 }
 function frText(g,txt,W,H){
   const t=FR.title, fs=Math.max(10,t.size*Math.min(W,H)*1.6);
-  g.save(); g.font=`800 ${fs}px "Be Vietnam Pro", sans-serif`; g.textAlign="center"; g.textBaseline="middle";
+  g.save(); g.font=`800 ${fs}px ${frFontCss()}`; g.textAlign="center"; g.textBaseline="middle";
   g.fillStyle=t.color;
-  const pad=H*.045, y=t.pos==="top"?pad+fs/2:H-pad-fs/2;
-  const max=W*.9; let s=txt;
+  const fa=frFreeArea(W,H);
+  const pad=H*.045, y=t.pos==="top"?pad+fs/2:fa.h-pad-fs/2+(fa.y||0);
+  const cx=fa.x+fa.w/2, max=fa.w*.9; let s=txt, f=fs;
+  while(g.measureText(s).width>max&&f>fs*.45){f*=.94; g.font=`800 ${f}px ${frFontCss()}`}
   while(g.measureText(s).width>max&&s.length>4) s=s.slice(0,-2);
   if(s!==txt) s=s.slice(0,-1)+"…";
-  g.fillText(s,W/2,y); g.restore();
+  g.fillText(s,cx,y); g.restore();
 }
 function frBadge(g,W,H){
   const b=FR.badge, txt=String(b.text||"").trim(); if(!txt) return;
   const fs=Math.max(10,Math.min(W,H)*.052);
-  g.save(); g.font=`800 ${fs}px "Be Vietnam Pro", sans-serif`; g.textBaseline="middle"; g.textAlign="center";
+  g.save(); g.font=`800 ${fs}px ${frFontCss()}`; g.textBaseline="middle"; g.textAlign="center";
   const pw=g.measureText(txt).width+fs*1.1, ph=fs*1.8, m=Math.min(W,H)*.045;
   const x=/l$/.test(b.corner)||b.corner==="tl"||b.corner==="bl"?m:W-m-pw, y=b.corner[0]==="t"?m:H-m-ph;
   g.fillStyle=b.bg; roundPath(g,x,y,pw,ph,ph*.28); g.fill();
@@ -2907,6 +2883,7 @@ async function drawFrame(g,W,H,prodImg,name){
     gr.addColorStop(0,FR.c1); gr.addColorStop(1,FR.c2); g.fillStyle=gr; g.fillRect(0,0,W,H);
   }else{g.fillStyle=FR.c1; g.fillRect(0,0,W,H)}
   if(prodImg) fitIn(g,prodImg,frBox(W,H));
+  if(FR.spec&&FR.spec.on) frDrawSpec(g,W,H);
   if(FR.title.on) frText(g,String(FR.title.text||"").replace(/\{ten\}/g,name||""),W,H);
   if(FR.badge.on) frBadge(g,W,H);
   frLogo(g,W,H);
@@ -2922,12 +2899,13 @@ async function frPreview(){
   const W=FR.w,H=FR.h, max=460, k=Math.min(1,max/Math.max(W,H));
   c.width=W; c.height=H; c.style.width=Math.round(W*k)+"px"; c.style.height="auto";
   const g=c.getContext("2d");
-  await document.fonts.load('800 40px "Be Vietnam Pro"').catch(()=>{});
+  await frFonts();
   await drawFrame(g,W,H,FR_THUMB,FR_FILES[0]?baseLabel(FR_FILES[0].name.replace(/\.[a-z0-9]+$/i,"")):"Tên sản phẩm");
   // khung ô ảnh sản phẩm để kéo
   const b=frBox(W,H), U=Math.min(W,H)/400;
-  g.save(); g.setLineDash([10*U,6*U]); g.lineWidth=2*U; g.strokeStyle="#0A8FA0"; g.strokeRect(b.x,b.y,b.w,b.h);
-  g.setLineDash([]); g.fillStyle="#0A8FA0"; const hs=14*U; g.fillRect(b.x+b.w-hs/2,b.y+b.h-hs/2,hs,hs); g.restore();
+  const on=FR.drag==="spec"&&FR.spec.on?frSpecBox(W,H):b, cl=FR.drag==="spec"&&FR.spec.on?"#C8175F":"#0A8FA0";
+  g.save(); g.setLineDash([10*U,6*U]); g.lineWidth=2*U; g.strokeStyle=cl; g.strokeRect(on.x,on.y,on.w,on.h);
+  g.setLineDash([]); g.fillStyle=cl; const hs=14*U; g.fillRect(on.x+on.w-hs/2,on.y+on.h-hs/2,hs,hs); g.restore();
 }
 // kéo ô ảnh sản phẩm ngay trên bản xem trước
 let frDrag=null;
@@ -2937,10 +2915,14 @@ function frBindCv(){
   c.addEventListener("pointerdown",e=>{
     e.preventDefault(); c.setPointerCapture(e.pointerId);
     const p=frPt(e), b=frBox(FR.w,FR.h), U=Math.min(FR.w,FR.h)/400;
-    frDrag=(Math.abs(p.x-(b.x+b.w))<18*U&&Math.abs(p.y-(b.y+b.h))<18*U)?{k:"size",p,b}:{k:"move",p,b};
+    frDrag=(Math.abs(p.x-(b.x+b.w))<18*U&&Math.abs(p.y-(b.y+b.h))<18*U)?{k:"size",p,b,sw:FR.spec.w}:{k:"move",p,b,sw:FR.spec.w};
   });
   c.addEventListener("pointermove",e=>{
     if(!frDrag) return; const p=frPt(e), d=frDrag, dx=(p.x-d.p.x)/FR.w, dy=(p.y-d.p.y)/FR.h;
+    if(FR.drag==="spec"&&FR.spec.on){
+      const s=FR.spec, k=s.side==="bottom"?-dy:s.side==="right"?-dx:dx;
+      FR.spec.w=Math.min(.6,Math.max(.2,d.sw+k)); frPreview(); return;
+    }
     if(d.k==="move"){FR.box.x=Math.min(1-FR.box.w,Math.max(0,d.b.x/FR.w+dx)); FR.box.y=Math.min(1-FR.box.h,Math.max(0,d.b.y/FR.h+dy))}
     else{FR.box.w=Math.min(1-FR.box.x,Math.max(.1,d.b.w/FR.w+dx)); FR.box.h=Math.min(1-FR.box.y,Math.max(.1,d.b.h/FR.h+dy))}
     frPreview();
@@ -2951,10 +2933,121 @@ function frBindCv(){
 function frSizeChips(){
   return FR_SIZES[FR.mode].map(([n,w,h])=>`<button type="button" class="sug-chip" data-frs="${w}x${h}" aria-pressed="${FR.w===w&&FR.h===h}">${esc(n)} · ${w}×${h}</button>`).join("");
 }
+/* ---- khung mẫu dựng sẵn ---- */
+const FR_PRESETS=[
+  {id:"tet",name:"Tết đỏ vàng",fr:{bgType:"grad",c1:"#FFF4D6",c2:"#F3C76B",dir:"v",border:{on:true,c:"#C8102E",w:16,r:24},
+    badge:{on:true,text:"CHÍNH HÃNG",bg:"#C8102E",fg:"#FFF4D6",corner:"tl"},
+    title:{on:true,text:"{ten}",color:"#8A1020",size:.055,pos:"bottom"},font:"Montserrat",
+    box:{x:.05,y:.13,w:.48,h:.62},
+    spec:{on:true,side:"right",w:.42,card:"#FFFFFF",label:"#18202E",value:"#5A6475",accent:"#C8102E",
+      rows:[{t:"Kích thước sản phẩm",v:"30 x 60 cm · bloc lịch, bìa cứng"},{t:"Chất liệu in",v:"Giấy Couche cao cấp, cán bóng"},{t:"Ruột lịch",v:"Couche Matt 54gsm, in 4 màu"},{t:"Thành phẩm",v:"Bọc màng co, kèm ốc vít xoắn"}]}}},
+  {id:"white",name:"Studio trắng",fr:{bgType:"solid",c1:"#FFFFFF",border:{on:true,c:"#E4E8EE",w:8,r:16},
+    badge:{on:false,text:"",bg:"#18202E",fg:"#FFFFFF",corner:"tl"},
+    title:{on:true,text:"{ten}",color:"#18202E",size:.05,pos:"bottom"},font:"Be Vietnam Pro",spec:{on:false,rows:[]}}},
+  {id:"sale",name:"Sale đỏ cam",fr:{bgType:"grad",c1:"#FFE9C7",c2:"#FF7A45",dir:"d",border:{on:true,c:"#D62828",w:18,r:30},
+    badge:{on:true,text:"GIẢM 30%",bg:"#D62828",fg:"#FFFFFF",corner:"tl"},
+    title:{on:true,text:"{ten}",color:"#7A1200",size:.06,pos:"bottom"},font:"Montserrat",spec:{on:false,rows:[]}}},
+  {id:"spec",name:"Thông số kỹ thuật",fr:{bgType:"grad",c1:"#F7F9FC",c2:"#E3ECF7",dir:"v",border:{on:false,c:"#C8102E",w:10,r:16},
+    badge:{on:false,text:"",bg:"#1E7A4C",fg:"#FFFFFF",corner:"tl"},
+    title:{on:true,text:"{ten}",color:"#18202E",size:.045,pos:"top"},font:"Be Vietnam Pro",
+    box:{x:.05,y:.2,w:.46,h:.62},
+    spec:{on:true,side:"right",w:.44,card:"#FFFFFF",label:"#18202E",value:"#5A6475",accent:"#0A8FA0",
+      rows:[{t:"Kích thước",v:"—"},{t:"Chất liệu",v:"—"},{t:"Quy cách",v:"—"},{t:"Bảo hành",v:"—"}]}}},
+  {id:"lux",name:"Sang trọng tối",fr:{bgType:"grad",c1:"#1B212C",c2:"#3A2D12",dir:"d",border:{on:true,c:"#D4A017",w:10,r:20},
+    badge:{on:true,text:"CAO CẤP",bg:"#D4A017",fg:"#1B212C",corner:"tr"},
+    title:{on:true,text:"{ten}",color:"#F0E0B0",size:.05,pos:"bottom"},font:"Playfair Display",spec:{on:false,rows:[]}}},
+  {id:"bare",name:"Trơn, không viền",fr:{bgType:"solid",c1:"#F6F7F9",border:{on:false,c:"#C8102E",w:0,r:0},
+    badge:{on:false,text:"",bg:"#C8102E",fg:"#FFFFFF",corner:"tl"},
+    title:{on:false,text:"{ten}",color:"#18202E",size:.05,pos:"bottom"},font:"Be Vietnam Pro",spec:{on:false,rows:[]}}}
+];
+/* ---- font ---- */
+const FR_FONTS=["Be Vietnam Pro","Montserrat","Bricolage Grotesque","Playfair Display","Dancing Script","Lobster","Arial","Tahoma","Verdana","Georgia","Times New Roman","Impact"];
+let FR_LOCAL=[];
+async function frReadFonts(){
+  if(!window.queryLocalFonts){frMsg("Trình duyệt này không đọc được font trên máy. Dùng Chrome hoặc Edge trên máy tính, hoặc chọn trong danh sách có sẵn.","err"); return}
+  try{
+    const list=await queryLocalFonts();
+    const names=[...new Set(list.map(f=>f.family))].sort((a,b)=>a.localeCompare(b,"vi"));
+    if(!names.length){frMsg("Không đọc được font nào trên máy này. Chọn trong danh sách có sẵn.","err"); return}
+    FR_LOCAL=names; frMsg(`Đã đọc ${names.length} font trên máy. Chọn trong ô Kiểu chữ.`,"ok"); renderFrame();
+  }catch(e){frMsg("Bạn chưa cho phép đọc font, hoặc trình duyệt từ chối. Chọn trong danh sách có sẵn cũng được.","err")}
+}
+async function frFonts(){for(const w of [500,800]) await document.fonts.load(`${w} 40px "${FR.font||"Be Vietnam Pro"}"`).catch(()=>{})}
+function frFontCss(){const f=FR.font||"Be Vietnam Pro"; return `"${f}", "Be Vietnam Pro", sans-serif`}
+/* ---- đặc tính kỹ thuật ---- */
+// phần khung còn lại sau khi trừ bảng đặc tính, để chữ không đè lên
+function frFreeArea(W,H){
+  const sp=FR.spec;
+  if(!sp||!sp.on||!(sp.rows||[]).length) return {x:0,y:0,w:W,h:H};
+  const b=frSpecBox(W,H), m=Math.min(W,H)*.03;
+  if(sp.side==="bottom") return {x:0,y:0,w:W,h:b.y-m};
+  if(sp.side==="right") return {x:0,y:0,w:b.x-m,h:H};
+  return {x:b.x+b.w+m,y:0,w:W-(b.x+b.w+m),h:H};
+}
+function frSpecBox(W,H){
+  const sp=FR.spec, m=Math.min(W,H)*.05;
+  if(sp.side==="bottom") return {x:m,y:H-m-H*sp.w,w:W-m*2,h:H*sp.w};
+  const w=W*sp.w-m*1.5;
+  return {x:sp.side==="right"?W-m-w:m,y:m,w,h:H-m*2};
+}
+function frDrawSpec(g,W,H){
+  const sp=FR.spec, rows=(sp.rows||[]).filter(r=>String(r.t||r.v||"").trim()); if(!rows.length) return;
+  const b=frSpecBox(W,H), gap=b.h*.035, ch=(b.h-gap*(rows.length-1))/rows.length;
+  const pad=ch*.18, ic=Math.min(ch*.62,b.w*.2), fs1=Math.min(ch*.3,b.w*.085), fs2=fs1*.78;
+  rows.forEach((r,i)=>{
+    const y=b.y+i*(ch+gap);
+    g.save(); g.fillStyle=sp.card; g.shadowColor="rgba(0,0,0,.10)"; g.shadowBlur=ch*.18; g.shadowOffsetY=ch*.05;
+    roundPath(g,b.x,y,b.w,ch,ch*.22); g.fill(); g.restore();
+    g.save(); g.fillStyle=sp.accent; roundPath(g,b.x+pad,y+(ch-ic)/2,ic,ic,ic*.26); g.fill();
+    g.fillStyle=sp.card; g.font=`800 ${ic*.5}px ${frFontCss()}`; g.textAlign="center"; g.textBaseline="middle";
+    g.fillText(String(i+1),b.x+pad+ic/2,y+ch/2+ic*.02); g.restore();
+    const tx=b.x+pad*1.6+ic, tw=b.w-(pad*2.6+ic);
+    // co chữ cho vừa thẻ trước, cắt là bước cuối
+    let lf=fs1;
+    const clip=(txt)=>{let t=String(txt); lf=fs1; g.font=`800 ${lf}px ${frFontCss()}`;
+      while(g.measureText(t).width>tw&&lf>fs1*.5){lf*=.94; g.font=`800 ${lf}px ${frFontCss()}`}
+      while(g.measureText(t).width>tw&&t.length>3) t=t.slice(0,-2);
+      return t===String(txt)?t:t.slice(0,-1)+"…"};
+    g.save(); g.textAlign="left"; g.textBaseline="alphabetic";
+    g.fillStyle=sp.label; const l=clip(r.t||"");
+    // giá trị xuống tối đa 2 dòng cho khỏi cụt
+    g.font=`500 ${fs2}px ${frFontCss()}`;
+    const words=String(r.v||"").split(/\s+/).filter(Boolean), lines=[]; let cur="";
+    const maxL=Math.max(2,Math.min(3,Math.floor((ch-lf*1.2)/(fs2*1.2))));
+    for(const w of words){const t2=cur?cur+" "+w:w; if(g.measureText(t2).width>tw&&cur){lines.push(cur);cur=w; if(lines.length===maxL) break} else cur=t2}
+    if(lines.length<maxL&&cur) lines.push(cur);
+    const last=lines.length-1;
+    if(lines.length===maxL&&(cur&&lines[last]!==cur||g.measureText(lines[last]).width>tw)){
+      let t2=lines[last]; while(g.measureText(t2+"…").width>tw&&t2.length>3) t2=t2.slice(0,-2); lines[last]=t2+"…"}
+    const lh=fs2*1.2, block=lf+(lines.length?lines.length*lh:0), top=y+(ch-block)/2+lf*.86;
+    g.font=`800 ${lf}px ${frFontCss()}`; g.fillStyle=sp.label; g.fillText(l,tx,top);
+    g.font=`500 ${fs2}px ${frFontCss()}`; g.fillStyle=sp.value;
+    lines.forEach((t2,k)=>g.fillText(t2,tx,top+fs2*.5+(k+1)*lh-lh*.25));
+    g.restore();
+  });
+}
+function specForm(){
+  const sp=FR.spec, col=(lbl,v,pth)=>`<label class="ed-f"><span>${lbl}</span><input type="color" data-fr="${pth}" value="${v}"></label>`;
+  return `<section class="ed-sec"><h4>7. Đặc tính kỹ thuật</h4>
+    <div class="ed-checks"><label><input type="checkbox" data-fr="spec.on"${sp.on?" checked":""}> Hiện bảng đặc tính</label></div>
+    ${sp.on?`<div class="ed-2"><label class="ed-f"><span>Đặt ở</span><select data-fr="spec.side"><option value="right"${sp.side==="right"?" selected":""}>Bên phải</option><option value="left"${sp.side==="left"?" selected":""}>Bên trái</option><option value="bottom"${sp.side==="bottom"?" selected":""}>Phía dưới</option></select></label>
+      <label class="ed-f"><span>Bề rộng: ${Math.round(sp.w*100)}%</span><input type="range" min="0.2" max="0.6" step="0.01" data-fr="spec.w" value="${sp.w}"></label></div>
+    <div class="ed-3">${col("Nền thẻ",sp.card,"spec.card")}${col("Chữ đậm",sp.label,"spec.label")}${col("Chữ nhạt",sp.value,"spec.value")}</div>
+    ${col("Màu ô số",sp.accent,"spec.accent")}
+    <div class="fr-rows">${(sp.rows||[]).map((r,i)=>`<div class="fr-row"><b>${i+1}</b><input data-spec="t:${i}" value="${esc(r.t||"")}" placeholder="VD: Kích thước sản phẩm"><input data-spec="v:${i}" value="${esc(r.v||"")}" placeholder="VD: 30 x 60 cm, bìa cứng"><button type="button" class="x" data-specrm="${i}" aria-label="Xoá dòng">×</button></div>`).join("")}</div>
+    <div class="sug-chips"><button class="btn" type="button" data-fra="specadd">+ Thêm dòng</button>${(sp.rows||[]).length?`<button class="btn" type="button" data-fra="specclr">Xoá hết</button>`:""}</div>`:""}
+  </section>`;
+}
 function frForm(){
   const t=FR.title,b=FR.badge,bd=FR.border;
   const col=(lbl,v,p)=>`<label class="ed-f"><span>${lbl}</span><input type="color" data-fr="${p}" value="${v}"></label>`;
-  return `<section class="ed-sec"><h4>1. Khổ ảnh</h4>
+  return `<section class="ed-sec"><h4>Khung mẫu dựng sẵn</h4>
+      <p class="sug-note">Bấm một mẫu là áp vào ngay, rồi chỉnh tiếp bên dưới.</p>
+      <div class="sug-chips">${FR_PRESETS.map(x=>`<button type="button" class="sug-chip" data-frp="${x.id}">${esc(x.name)}</button>`).join("")}</div>
+      <div class="ed-checks" style="padding-top:6px"><span class="s-label" style="margin:0">Đang kéo trên bản xem trước</span></div>
+      <div class="sug-chips">${[["box","Ô ảnh sản phẩm"],["spec","Ô đặc tính"]].map(([k,n])=>`<button type="button" class="sug-chip" data-frd="${k}" aria-pressed="${FR.drag===k}" ${k==="spec"&&!FR.spec.on?"disabled":""}>${n}</button>`).join("")}</div>
+    </section>
+    <section class="ed-sec"><h4>1. Khổ ảnh</h4>
       <div class="sug-chips">${frSizeChips()}</div>
       <div class="ed-2"><label class="ed-f"><span>Rộng (px)</span><input type="number" min="100" max="4000" data-fr="w" value="${FR.w}"></label><label class="ed-f"><span>Cao (px)</span><input type="number" min="100" max="4000" data-fr="h" value="${FR.h}"></label></div>
     </section>
@@ -2974,6 +3067,8 @@ function frForm(){
       <div class="ed-3">${col("Nền nhãn",b.bg,"badge.bg")}${col("Chữ nhãn",b.fg,"badge.fg")}<label class="ed-f"><span>Góc</span><select data-fr="badge.corner">${FR_CORNERS.map(([k,n])=>`<option value="${k}"${b.corner===k?" selected":""}>${n}</option>`).join("")}</select></label></div>`:""}
     </section>
     <section class="ed-sec"><h4>5. Chữ</h4>
+      <label class="ed-f"><span>Kiểu chữ cho cả khung</span><select data-fr="font">${[...new Set([FR.font,...FR_FONTS,...FR_LOCAL])].map(f=>`<option value="${esc(f)}"${f===FR.font?" selected":""}>${esc(f)}</option>`).join("")}</select></label>
+      <div class="sug-chips"><button class="btn" type="button" data-fra="fonts">Đọc font cài trên máy</button></div>
       <div class="ed-checks"><label><input type="checkbox" data-fr="title.on"${t.on?" checked":""}> Hiện chữ</label></div>
       ${t.on?`<label class="ed-f"><span>Nội dung · gõ {ten} để tự thay bằng tên file ảnh</span><input data-fr="title.text" value="${esc(t.text)}"></label>
       <div class="ed-3">${col("Màu chữ",t.color,"title.color")}<label class="ed-f"><span>Cỡ</span><input type="range" min="0.02" max="0.12" step="0.005" data-fr="title.size" value="${t.size}"></label><label class="ed-f"><span>Vị trí</span><select data-fr="title.pos"><option value="bottom"${t.pos==="bottom"?" selected":""}>Dưới</option><option value="top"${t.pos==="top"?" selected":""}>Trên</option></select></label></div>`:""}
@@ -2982,8 +3077,9 @@ function frForm(){
       <div class="sug-chips"><button class="btn" type="button" data-fra="logoup">${FR_LOGO?"Đổi logo":"Tải logo lên"}</button>${FR_LOGO?`<button class="btn warn" type="button" data-fra="logodel">Bỏ logo</button>`:""}</div>
       ${FR_LOGO?`<div class="ed-2"><label class="ed-f"><span>Góc</span><select data-fr="logoCorner">${FR_CORNERS.map(([k,n])=>`<option value="${k}"${FR.logoCorner===k?" selected":""}>${n}</option>`).join("")}</select></label><label class="ed-f"><span>Cỡ</span><input type="range" min="0.06" max="0.35" step="0.01" data-fr="logoSize" value="${FR.logoSize}"></label></div>`:""}
     </section>
+    ${specForm()}
     <section class="ed-sec"><h4>Khung của tôi</h4>
-      <div class="sug-chips"><button class="btn" type="button" data-fra="save">Lưu khung này</button><button class="btn" type="button" data-fra="reset">Về mặc định</button></div>
+      <div class="sug-chips">${FR_ID?`<button class="btn go" type="button" data-fra="update">Lưu đè “${esc(FR_NAME)}”</button>`:""}<button class="btn" type="button" data-fra="save">Lưu thành khung mới</button><button class="btn" type="button" data-fra="reset">Về mặc định</button></div>
       ${FR_SAVED.length?`<ul class="ed-list">${FR_SAVED.map(f=>`<li><button type="button" data-frload="${f.id}">${esc(f.name)}</button><button type="button" class="x" data-frdel="${f.id}" aria-label="Xoá">×</button></li>`).join("")}</ul>`:`<p class="sug-note">Chưa lưu khung nào.</p>`}
     </section>`;
 }
@@ -3046,7 +3142,7 @@ async function frRun(){
   FR_BUSY=true; renderFrame();
   const recs=[], now=Date.now(); let n=0;
   try{
-    await document.fonts.load('800 40px "Be Vietnam Pro"').catch(()=>{});
+    await frFonts();
     for(const f of FR_FILES){
       n++; frMsg(`Đang ghép ${n}/${FR_FILES.length}…`);
       let blob=await prepEditBlob(f);
@@ -3086,9 +3182,15 @@ $("fr-go").addEventListener("click",frRun);
 $("pane-frame").addEventListener("click",async e=>{
   const b=e.target.closest("button"); if(!b) return;
   if(b.dataset.frs){const [w,h]=b.dataset.frs.split("x").map(Number); FR.w=w; FR.h=h; frSave(); renderFrame(); return}
+  if(b.dataset.frp){const x=FR_PRESETS.find(y=>y.id===b.dataset.frp); if(x){
+    const keep={mode:FR.mode,w:FR.w,h:FR.h,cut:FR.cut,logoCorner:FR.logoCorner,logoSize:FR.logoSize,drag:"box"};
+    FR=Object.assign(JSON.parse(JSON.stringify(FR0)),JSON.parse(JSON.stringify(x.fr)),keep);
+    FR_ID=null; FR_NAME=""; frSave(); renderFrame(); frMsg(`Đã áp khung mẫu “${x.name}”. Chỉnh tiếp rồi bấm Lưu thành khung mới.`,"ok")} return}
+  if(b.dataset.frd){FR.drag=b.dataset.frd; frSave(); renderFrame(); return}
+  if(b.dataset.specrm!=null){FR.spec.rows.splice(+b.dataset.specrm,1); frSave(); renderFrame(); return}
   if(b.dataset.frbg){FR.bgType=b.dataset.frbg; frSave(); renderFrame(); return}
   if(b.dataset.frrm!=null){const f=FR_FILES.splice(+b.dataset.frrm,1)[0]; if(f&&f._u) URL.revokeObjectURL(f._u); await frThumb(); renderFrame(); return}
-  if(b.dataset.frload){const f=FR_SAVED.find(x=>x.id===b.dataset.frload); if(f){FR=Object.assign(JSON.parse(JSON.stringify(FR0)),f.fr); FR_BG=f.bg||null; FR_LOGO=f.logo||null;
+  if(b.dataset.frload){const f=FR_SAVED.find(x=>x.id===b.dataset.frload); if(f){FR=Object.assign(JSON.parse(JSON.stringify(FR0)),f.fr); FR_ID=f.id; FR_NAME=f.name; FR_BG=f.bg||null; FR_LOGO=f.logo||null;
     await DB.put({id:"fr-bg",blob:FR_BG},"misc"); await DB.put({id:"fr-logo",blob:FR_LOGO},"misc"); await frLoadImgs(); frSave(); renderFrame(); frMsg("Đã mở khung “"+f.name+"”.","ok")} return}
   if(b.dataset.frdel){await DB.del(b.dataset.frdel,"tpl"); FR_SAVED=FR_SAVED.filter(x=>x.id!==b.dataset.frdel); renderFrame(); return}
   if(b.dataset.fra2){const rec=HIST.find(r=>r.id===b.dataset.id); if(!rec) return;
@@ -3103,17 +3205,37 @@ $("pane-frame").addEventListener("click",async e=>{
   if(a==="bgdel"){FR_BG=null; FR.bgType="grad"; await DB.del("fr-bg","misc"); await frLoadImgs(); frSave(); renderFrame()}
   if(a==="logodel"){FR_LOGO=null; await DB.del("fr-logo","misc"); await frLoadImgs(); renderFrame()}
   if(a==="bgai") frAIBg();
+  if(a==="fonts") frReadFonts();
+  if(a==="specadd"){FR.spec.rows=(FR.spec.rows||[]).concat({t:"",v:""}).slice(0,8); FR.spec.on=true; frSave(); renderFrame()}
+  if(a==="specclr"){FR.spec.rows=[]; frSave(); renderFrame()}
+  if(a==="update"&&FR_ID){
+    const rec={id:FR_ID,name:FR_NAME,fr:JSON.parse(JSON.stringify(FR)),bg:FR_BG,logo:FR_LOGO,kind:"frame"};
+    await DB.put(rec,"tpl"); const i=FR_SAVED.findIndex(x=>x.id===FR_ID); if(i>=0) FR_SAVED[i]=rec;
+    renderFrame(); frMsg("Đã lưu đè khung “"+FR_NAME+"”.","ok");
+  }
   if(a==="reset"){FR=JSON.parse(JSON.stringify(FR0)); frSave(); renderFrame(); frMsg("Đã về khung mặc định.","ok")}
   if(a==="save"){
     const name=prompt("Đặt tên cho khung này:",FR.mode==="sp"?"Khung sàn của tôi":"Banner của tôi"); if(!name) return;
     const rec={id:"fr-"+Date.now().toString(36),name,fr:JSON.parse(JSON.stringify(FR)),bg:FR_BG,logo:FR_LOGO,kind:"frame"};
-    await DB.put(rec,"tpl"); FR_SAVED.unshift(rec); renderFrame(); frMsg("Đã lưu khung “"+name+"”.","ok");
+    await DB.put(rec,"tpl"); FR_SAVED.unshift(rec); FR_ID=rec.id; FR_NAME=name; renderFrame(); frMsg("Đã lưu khung “"+name+"”.","ok");
   }
 });
 $("pane-frame").addEventListener("input",async e=>{
-  const t=e.target, k=t.dataset.fr; if(!k) return;
+  const t=e.target;
+  if(t.dataset.spec){const [f,i]=t.dataset.spec.split(":"); const r=FR.spec.rows[+i]; if(r){r[f]=t.value; frSave(); frPreview()} return}
+  const k=t.dataset.fr; if(!k) return;
   if(k==="cut"){FR.cut=t.checked; frSave(); await frThumb(); renderFrame(); return}
-  if(t.type==="checkbox"){frSet(k,t.checked); renderFrame(); return}
+  if(t.type==="checkbox"){
+    frSet(k,t.checked);
+    if(k==="spec.on"&&t.checked){
+      if(!FR.spec.rows.length) FR.spec.rows=[{t:"Kích thước",v:""},{t:"Chất liệu",v:""}];
+      const lim=1-FR.spec.w;   // chừa chỗ cho bảng
+      if(FR.spec.side==="right"&&FR.box.x+FR.box.w>lim) FR.box.w=Math.max(.2,lim-FR.box.x-.02);
+      if(FR.spec.side==="left"&&FR.box.x<FR.spec.w) {FR.box.x=FR.spec.w+.02; FR.box.w=Math.min(FR.box.w,.96-FR.box.x)}
+      if(FR.spec.side==="bottom"&&FR.box.y+FR.box.h>lim) FR.box.h=Math.max(.2,lim-FR.box.y-.02);
+      frSave();
+    }
+    renderFrame(); return}
   if(t.type==="number"){frSet(k,Math.max(100,Math.min(4000,+t.value||100))); frPreview(); return}
   if(t.type==="range"){frSet(k,+t.value); const l=t.closest("label"); if(l){const sp=l.querySelector("span"), m=sp.textContent.match(/^([^:]+):/); if(m) sp.textContent=m[1]+": "+t.value} frPreview(); return}
   frSet(k,t.value); frPreview();
@@ -3355,8 +3477,8 @@ async function renderExt(){
     <button class="btn" type="button" id="x-all">Tải cả ${EXT_FILES.length} ảnh đính kèm</button>`
     :`<p class="sug-note">Không có ảnh cần đính kèm. Muốn giữ đúng sản phẩm thật, tải ảnh sản phẩm lên ở khung bên dưới.</p>`;
 }
-$("x-target").addEventListener("change",e=>{tool=e.target.value; store.set("brief-tool",tool); $("f-tool").value=tool; renderTips(); cards.forEach(c=>c._refresh()); renderExt()});
-$("f-tool").addEventListener("change",()=>{ if(S.engine==="ext") renderExt() });
+$("x-target").addEventListener("change",e=>{tool=e.target.value; store.set("brief-tool",tool); setToolSel(tool); renderTips(); cards.forEach(c=>c._refresh()); renderExt()});
+
 $("s-ext").addEventListener("click",async e=>{
   const p=extPrompt(); if(!$("s-prompt").value.trim()){e.preventDefault(); sMsg("Viết prompt hoặc chọn một mẫu bên dưới trước đã.","err"); return}
   await copyText(p);
