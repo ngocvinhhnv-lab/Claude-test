@@ -79,6 +79,12 @@ CHỮ VÀ LOGO
 "Thêm chữ" để đặt chữ tiếng Việt chuẩn dấu (font, màu, viền, bóng, nền chữ).
 "Chèn logo" để kéo thả ảnh logo. Lớp chữ sửa lại được sau khi lưu.
 
+ẢNH LÀM XONG NẰM Ở ĐÂU?
+Mọi ảnh app tạo ra đều vào mục "Ảnh đã tạo" - nằm ở TAB "TẠO ẢNH MỚI", kéo xuống
+dưới khung Xưởng tạo ảnh. Ở đó bấm "Tải về" để lấy file.
+Riêng ảnh ghép khung nằm ở mục "Ảnh đã ghép" ngay trong tab "Khung & Banner".
+Trong trình chỉnh sửa, sau khi tách lớp có sẵn nút tải về ngay tại chỗ, khỏi phải đi tìm.
+
 TÁCH LỚP (nền - chủ thể - chữ)
 - Tách nền ngay trên máy, MIỄN PHÍ: chỉ đúng khi nền trơn một màu hoặc nền trắng.
   Kéo thanh "Độ nhạy tách nền": còn sót nền thì tăng, bị ăn vào chủ thể thì giảm.

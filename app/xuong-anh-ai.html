@@ -237,6 +237,7 @@ dialog.ed::backdrop{background:var(--scrim)}
 #ed-print>summary span{font-family:var(--ff);font-size:11.5px;font-weight:600;color:var(--cyan)}
 #ed-print[open]>summary{margin-bottom:8px}
 .pr-body{display:flex;flex-direction:column;gap:8px}
+.lp-out{background:var(--ok-soft);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:6px;font-size:12.5px}
 #ed-print input,#ed-print select{min-width:0}
 .ed-f select,.ed-f textarea,.ed-f input[type=number]{box-sizing:border-box}
 .ed-f input[type=number]{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:6px 8px;font-size:13.5px;width:100%}
@@ -2233,6 +2234,7 @@ function renderEdSide(){
 const side=$("ed-side");
 side.addEventListener("click",async e=>{
   const b=e.target.closest("button"); if(!b) return;
+  if(b.dataset.lpdl){const r=HIST.find(x=>x.id===b.dataset.lpdl); if(r) download(r); return}
   if(b.dataset.lp){LP.pick[b.dataset.lp]=!LP.pick[b.dataset.lp]; renderEdSide(); return}
   if(b.dataset.fx){FX.mode=b.dataset.fx; store.set("xa-fix-mode",FX.mode); renderEdSide(); return}
   if(b.dataset.prsize){const [w,h]=b.dataset.prsize.split("x").map(Number); PR.w=w; PR.h=h; prSave(); side.querySelectorAll("[data-pr=w],[data-pr=h]").forEach(i=>i.value=PR[i.dataset.pr]); prRefresh(); return}
@@ -2254,6 +2256,7 @@ side.addEventListener("click",async e=>{
   if(a==="crop") await applyCrop();
   if(a==="ai") edAI();
   if(a==="print") edPrint();
+  if(a==="gohist"){closeEditor(true); setTab("new"); const el=document.getElementById("results"); if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); return}
   if(a==="lpfree") lpFree();
   if(a==="lpai") lpAI();
   if(a==="fxlocal") fxLocal();
@@ -2330,7 +2333,7 @@ async function edSave(toDl){
     prompt:rec0.prompt||"",userPrompt:rec0.userPrompt||"",ratio:nearestRatio(ED.W,ED.H),engine:"manual",model:"",label:("Đã chỉnh · "+baseLabel(rec0.label||ED.label)).slice(0,70),parent:rec0.id||null};
   if(toDl){await download(rec); return}
   fresh.clear(); fresh.add(rec.id); await addRecords([rec]); renderResults(); ED.rec=rec; ED.dirty=false;
-  edStatus("Đã lưu thành ảnh mới trong mục Ảnh đã tạo. Ảnh gốc vẫn còn nguyên.","ok");
+  edStatus("Đã lưu thành ảnh mới trong mục Ảnh đã tạo (tab Tạo ảnh mới). Ảnh gốc vẫn còn nguyên.","ok");
 }
 
 /* ---- chuẩn bị file in (PP, canvas bằng máy in kỹ thuật số) ---- */
@@ -2613,7 +2616,7 @@ function lpCost(){const n=Object.values(LP.pick).filter(Boolean).length; return 
 function layerSec(){
   const eng=S.engine, prob=engineProblem(eng), ai=eng==="gemini"||eng==="openai";
   return `<details class="ed-sec" id="ed-layer"${LP.open?" open":""}><summary>Tách lớp <span>nền · chủ thể · chữ</span></summary><div class="pr-body">
-    <p class="sug-note">Mỗi lớp xuất ra một file riêng, lưu vào mục Ảnh đã tạo.</p>
+    <p class="sug-note">Mỗi lớp xuất ra một file riêng. Tách xong, nút tải về hiện ngay bên dưới.</p>
     <div class="lp-free">
       <b>Tách nền ngay trên máy · miễn phí</b>
       <p class="sug-note">Chỉ đúng khi nền trơn một màu hoặc nền trắng. Nền phức tạp thì dùng AI bên dưới.</p>
@@ -2628,23 +2631,26 @@ function layerSec(){
         :`<p class="s-msg err">Chọn Gemini hoặc OpenAI ở khung Xưởng tạo ảnh để tách lớp bằng AI.</p>`}
     </div>
     <p class="s-msg${LP.msgKind?" "+LP.msgKind:""}" id="lp-msg" role="status">${esc(LP.msg||"")}</p>
+    ${LP.out&&LP.out.length?`<div class="lp-out"><b>File vừa tách — bấm để tải về máy:</b><div class="sug-chips">
+      ${LP.out.map(r=>`<button class="btn primary" type="button" data-lpdl="${r.id}">⤓ ${esc(r.label.split(" · ")[0])}</button>`).join("")}
+      <button class="btn" type="button" data-ed="gohist">Xem trong mục Ảnh đã tạo</button></div></div>`:""}
   </div></details>`;
 }
 function lpMsg(t,k){LP.msg=t; LP.msgKind=k||""; const el=$("lp-msg"); if(el){el.className="s-msg"+(k?" "+k:""); el.textContent=t}}
-async function lpSaveLayer(blob,name,cost){
+async function lpSaveLayer(blob,name,cost){ // trả về bản ghi để dựng nút tải về
   const now=Date.now(), rec={id:now.toString(36)+"-lp-"+Math.random().toString(36).slice(2,6),created:now,blob,
     prompt:"",userPrompt:"",ratio:nearestRatio(ED.W,ED.H),engine:cost?S.engine:"manual",model:cost?modelOf(S.engine):"",
     label:(name+" · "+baseLabel(ED.label)).slice(0,70),cost:cost||null,parent:(ED.rec||{}).id||null};
-  await addRecords([rec]); fresh.add(rec.id); return rec;
+  await addRecords([rec]); fresh.add(rec.id); LP.out=(LP.out||[]).concat(rec).slice(-4); return rec;
 }
 async function lpFree(){
-  if(LP.busy) return; LP.busy=true; renderEdSide(); lpMsg("Đang tách nền…");
+  if(LP.busy) return; LP.busy=true; LP.out=[]; renderEdSide(); lpMsg("Đang tách nền…");
   try{
     const r=await keyOut(await baseBlob(),LP.tol);
     if(r.ratio>0.98) lpMsg("Không tìm thấy vùng nền trơn nào để tách. Tăng độ nhạy, hoặc dùng cách tách bằng AI.","err");
     else{
       fresh.clear(); await lpSaveLayer(r.blob,"Lớp chủ thể",0); renderResults();
-      lpMsg(`Xong, giữ lại ${Math.round(r.ratio*100)}% ảnh. File PNG nền trong suốt đã vào mục Ảnh đã tạo. Còn sót nền thì tăng độ nhạy, bị ăn vào chủ thể thì giảm.`,"ok");
+      lpMsg(`Xong, giữ lại ${Math.round(r.ratio*100)}% ảnh. Còn sót nền thì tăng độ nhạy, bị ăn vào chủ thể thì giảm.`,"ok");
     }
   }catch(e){lpMsg("Không tách được ảnh này. "+errText(e),"err")}
   finally{LP.busy=false; renderEdSide()}
@@ -2653,7 +2659,7 @@ async function lpAI(){
   if(LP.busy) return;
   const picks=LAYERS.filter(l=>LP.pick[l.id]); if(!picks.length){lpMsg("Chọn ít nhất một lớp.","err"); return}
   const prob=engineProblem(S.engine); if(prob){lpMsg(prob,"err"); return}
-  LP.busy=true; ED.ctl=new AbortController(); renderEdSide();
+  LP.busy=true; LP.out=[]; ED.ctl=new AbortController(); renderEdSide();
   const base=await baseBlob(), ratio=nearestRatio(ED.W,ED.H); let spent=0, done=0, fail="";
   fresh.clear();
   try{
@@ -2668,7 +2674,7 @@ async function lpAI(){
       await lpSaveLayer(out,l.name,cost); done++;
     }
     addSpend(spent,done); renderResults();
-    lpMsg(done?`Xong ${done} lớp · ≈ ${vnd(spent)}. Các lớp đã vào mục Ảnh đã tạo, bấm Tải về để lấy file.${fail}`:("Không tách được lớp nào."+fail),done?"ok":"err");
+    lpMsg(done?`Xong ${done} lớp · ≈ ${vnd(spent)}.${fail}`:("Không tách được lớp nào."+fail),done?"ok":"err");
   }catch(e){ lpMsg(e&&e.code==="cancelled"?"Đã dừng.":errText(e),e&&e.code==="cancelled"?"":"err") }
   finally{LP.busy=false; ED.ctl=null; renderEdSide()}
 }
@@ -2761,7 +2767,7 @@ async function fxAI(){
       ED.W=ED.baseImg.naturalWidth; ED.H=ED.baseImg.naturalHeight; cv.width=ED.W; cv.height=ED.H; applyZoom();
     }
     ED.undo=[]; ED.redo=[]; edDraw();
-    fxMsg(`Đã phục dựng xong (≈ ${vnd(cost)}), ảnh mới ${ED.W}×${ED.H} px và đã lưu vào Ảnh đã tạo. Bấm giữ "Xem ảnh trước" để so sánh. Chưa ưng thì bấm lại.`,"ok");
+    fxMsg(`Đã phục dựng xong (≈ ${vnd(cost)}), ảnh mới ${ED.W}×${ED.H} px và đã lưu vào mục Ảnh đã tạo (tab Tạo ảnh mới). Bấm giữ "Xem ảnh trước" để so sánh, hoặc bấm Tải về ở dưới cùng. Chưa ưng thì bấm lại.`,"ok");
   }catch(e){ fxMsg(e&&e.code==="cancelled"?"Đã dừng.":errText(e),e&&e.code==="cancelled"?"":"err") }
   finally{FX.busy=false; ED.ctl=null; renderEdSide()}
 }
