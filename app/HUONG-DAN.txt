@@ -46,8 +46,11 @@ Dựng khung một lần, ghép hàng loạt ảnh sản phẩm vào. Không t�
    - Khung sàn: Shopee 1:1 1200x1200, TikTok 1:1 1200x1200, TikTok 3:4 1080x1440, vuông 1000.
    - Banner web: Slider lịch Tết 316x491, Slider sách 316x246, Banner danh mục 850x250
      (và bản gấp đôi 1700x500), Banner bài viết 1200x630.
-3. Hoặc bấm một KHUNG MẪU DỰNG SẴN ở đầu cột phải (Tết đỏ vàng, Studio trắng, Sale đỏ cam,
-   Thông số kỹ thuật, Sang trọng tối, Trơn không viền) rồi chỉnh tiếp.
+3. DẢI "CHỌN KHUNG" ngay trên bản xem trước: bấm một hình thu nhỏ là áp khung vào ngay.
+   Dải này gồm 6 khung mẫu dựng sẵn (Tết đỏ vàng, Studio trắng, Sale đỏ cam, Thông số kỹ thuật,
+   Sang trọng tối, Trơn không viền), các khung bạn đã lưu, rồi hai ô cuối là
+   "Tải ảnh khung lên" và "Nhập khung từ file". Khung đang dùng được viền xanh.
+   Hình thu nhỏ tự vẽ lại theo khổ bạn chọn.
 4. Dựng khung ở cột bên phải:
    - Nền: màu trơn, chuyển sắc hai màu, ảnh tải lên, hoặc bấm "Nhờ AI vẽ nền" (vẽ 1 lần
      khoảng 6.200 đ rồi dùng lại cho mọi sản phẩm, không tốn thêm).

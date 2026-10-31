@@ -176,6 +176,19 @@ table.pc input,.pc-fx input{width:72px;background:var(--sheet);border:1px solid 
 .layout.solo>aside.panel{display:none}
 .fr-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,340px);gap:18px;align-items:start}
 .fr-left,.fr-right{display:flex;flex-direction:column;gap:10px;min-width:0}
+#fr-pick{display:flex;flex-direction:column;gap:6px}
+.fr-picktop{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.fr-picktop b{font-family:var(--ff-d);font-size:15px}
+.fr-picktop span{font-size:12.5px;color:var(--muted)}
+.fr-tiles{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px}
+.fr-tile{flex:none;width:96px;border:1px solid var(--line);background:var(--sheet);border-radius:8px;padding:5px;cursor:pointer;display:flex;flex-direction:column;gap:4px;align-items:center;text-align:center}
+.fr-tile img{width:100%;height:68px;object-fit:contain;border-radius:4px;background:var(--paper)}
+.fr-tile i{font-style:normal;font-size:22px;line-height:68px;color:var(--cyan)}
+.fr-tile span{font-size:11px;line-height:1.25;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.fr-tile:hover{border-color:var(--ink)}
+.fr-tile.on{border-color:var(--cyan);box-shadow:0 0 0 2px var(--cyan-soft)}
+.fr-tile.up{border-style:dashed;border-color:var(--cyan)}
+.fr-tile.up span{color:var(--cyan);font-weight:600}
 .fr-stage{display:flex;align-items:center;justify-content:center;padding:14px;border-radius:6px;background:
   linear-gradient(45deg,var(--wire) 25%,transparent 25%,transparent 75%,var(--wire) 75%) 0 0/20px 20px,
   linear-gradient(45deg,var(--wire) 25%,transparent 25%,transparent 75%,var(--wire) 75%) 10px 10px/20px 20px,var(--paper)}
@@ -483,6 +496,7 @@ dl.ana dd{margin:0;color:var(--muted)}
         <div class="studio-body">
           <div class="fr-grid">
             <div class="fr-left">
+              <div id="fr-pick"></div>
               <div class="fr-stage"><canvas id="fr-cv" aria-label="Xem trước khung"></canvas></div>
               <p class="sug-note">Kéo khung xanh trên bản xem trước để đổi chỗ đặt ảnh sản phẩm, kéo ô vuông góc dưới để đổi cỡ.</p>
               <div id="fr-prods"></div>
@@ -3043,13 +3057,46 @@ function specForm(){
     <div class="sug-chips"><button class="btn" type="button" data-fra="specadd">+ Thêm dòng</button>${(sp.rows||[]).length?`<button class="btn" type="button" data-fra="specclr">Xoá hết</button>`:""}</div>`:""}
   </section>`;
 }
+/* ---- dải chọn khung ngay cạnh bản xem trước ---- */
+const FR_THUMBS=new Map();
+async function frTileImg(key,cfg,bgBlob,overBlob){
+  if(FR_THUMBS.has(key)) return FR_THUMBS.get(key);
+  const W=160,H=Math.round(160*(FR.h/FR.w))||160;
+  const c=mkCanvas(W,H), g=c.getContext("2d");
+  const keepFR=FR, keepBg=FR_BGIMG, keepOv=FR_OVERIMG, keepLogo=FR_LOGOIMG;
+  try{
+    FR=Object.assign(JSON.parse(JSON.stringify(FR0)),JSON.parse(JSON.stringify(cfg)),{w:W,h:H});
+    FR_BGIMG=bgBlob?await blobToImg(bgBlob).catch(()=>null):null;
+    FR_OVERIMG=overBlob?await blobToImg(overBlob).catch(()=>null):null;
+    FR_LOGOIMG=null;
+    await drawFrame(g,W,H,null,"");
+  }catch(_){}
+  finally{FR=keepFR; FR_BGIMG=keepBg; FR_OVERIMG=keepOv; FR_LOGOIMG=keepLogo}
+  const u=c.toDataURL("image/png"); c.width=c.height=1; FR_THUMBS.set(key,u); return u;
+}
+function frTilesHTML(){
+  const t=(k,cls,img,name,extra)=>`<button type="button" class="fr-tile${cls?" "+cls:""}" ${extra||""} title="${esc(name)}">${img}<span>${esc(name)}</span></button>`;
+  return `<div class="fr-tiles" id="fr-tiles">
+    ${FR_PRESETS.map(x=>t(x.id,FR_ID===null&&FR._p===x.id?"on":"",`<img data-tile="p:${x.id}" alt="">`,x.name,`data-frp="${x.id}"`)).join("")}
+    ${FR_SAVED.map(f=>t(f.id,FR_ID===f.id?"on":"",`<img data-tile="s:${f.id}" alt="">`,f.name,`data-frload="${f.id}"`)).join("")}
+    ${t("up","up",'<i>⤒</i>',"Tải ảnh khung lên",'data-fra="overup"')}
+    ${t("imp","up",'<i>⤓</i>',"Nhập khung từ file",'data-fra="imp"')}
+  </div>`;
+}
+async function frFillTiles(){
+  const box=$("fr-tiles"); if(!box) return;
+  for(const im of box.querySelectorAll("img[data-tile]")){
+    const [k,id]=im.dataset.tile.split(":");
+    try{
+      if(k==="p"){const x=FR_PRESETS.find(y=>y.id===id); if(x) im.src=await frTileImg("p:"+id+":"+FR.w+"x"+FR.h,x.fr,null,null)}
+      else{const f=FR_SAVED.find(y=>y.id===id); if(f) im.src=await frTileImg("s:"+id+":"+(f._v||0)+":"+FR.w+"x"+FR.h,f.fr,f.bg,f.over)}
+    }catch(_){}
+  }
+}
 function frForm(){
   const t=FR.title,b=FR.badge,bd=FR.border;
   const col=(lbl,v,p)=>`<label class="ed-f"><span>${lbl}</span><input type="color" data-fr="${p}" value="${v}"></label>`;
-  return `<section class="ed-sec"><h4>Khung mẫu dựng sẵn</h4>
-      <p class="sug-note">Bấm một mẫu là áp vào ngay, rồi chỉnh tiếp bên dưới.</p>
-      <div class="sug-chips">${FR_PRESETS.map(x=>`<button type="button" class="sug-chip" data-frp="${x.id}">${esc(x.name)}</button>`).join("")}</div>
-      <div class="ed-checks" style="padding-top:6px"><span class="s-label" style="margin:0">Đang kéo trên bản xem trước</span></div>
+  return `<section class="ed-sec"><h4>Đang kéo trên bản xem trước</h4>
       <div class="sug-chips">${[["box","Ô ảnh sản phẩm"],["spec","Ô đặc tính"]].map(([k,n])=>`<button type="button" class="sug-chip" data-frd="${k}" aria-pressed="${FR.drag===k}" ${k==="spec"&&!FR.spec.on?"disabled":""}>${n}</button>`).join("")}</div>
     </section>
     <section class="ed-sec"><h4>1. Khổ ảnh</h4>
@@ -3098,7 +3145,9 @@ function frForm(){
 function renderFrame(){
   if(!$("pane-frame")) return;
   $("fr-modes").innerHTML=[["sp","Khung sản phẩm sàn"],["bn","Banner website"]].map(([k,n])=>`<button type="button" class="sug-chip" data-frm="${k}" aria-pressed="${FR.mode===k}">${n}</button>`).join("");
+  $("fr-pick").innerHTML=`<div class="fr-picktop"><b>Chọn khung</b><span>Bấm một khung để áp vào, hoặc tải khung của bạn lên</span></div>`+frTilesHTML();
   $("fr-form").innerHTML=frForm();
+  frFillTiles();
   $("fr-prods").innerHTML=`<div class="prods" data-frprods>
       <div class="prods-top"><b>Ảnh sản phẩm (${FR_FILES.length})</b><span>Thả nhiều ảnh để ghép hàng loạt</span></div>
       <div class="prods-row">${FR_FILES.map((f,i)=>`<div class="pthumb"><img src="${f._u||(f._u=URL.createObjectURL(f))}" alt="${esc(f.name)}"><button type="button" data-frrm="${i}" aria-label="Bỏ">×</button>${i===0?'<em>Xem trước</em>':''}</div>`).join("")}
@@ -3208,7 +3257,7 @@ $("pane-frame").addEventListener("click",async e=>{
   if(b.dataset.frp){const x=FR_PRESETS.find(y=>y.id===b.dataset.frp); if(x){
     const keep={mode:FR.mode,w:FR.w,h:FR.h,cut:FR.cut,logoCorner:FR.logoCorner,logoSize:FR.logoSize,drag:"box"};
     FR=Object.assign(JSON.parse(JSON.stringify(FR0)),JSON.parse(JSON.stringify(x.fr)),keep);
-    FR_ID=null; FR_NAME=""; frSave(); renderFrame(); frMsg(`Đã áp khung mẫu “${x.name}”. Chỉnh tiếp rồi bấm Lưu thành khung mới.`,"ok")} return}
+    FR._p=x.id; FR_ID=null; FR_NAME=""; frSave(); renderFrame(); frMsg(`Đã áp khung mẫu “${x.name}”. Chỉnh tiếp rồi bấm Lưu thành khung mới.`,"ok")} return}
   if(b.dataset.frd){FR.drag=b.dataset.frd; frSave(); renderFrame(); return}
   if(b.dataset.specrm!=null){FR.spec.rows.splice(+b.dataset.specrm,1); frSave(); renderFrame(); return}
   if(b.dataset.frbg){FR.bgType=b.dataset.frbg; frSave(); renderFrame(); return}
@@ -3241,7 +3290,7 @@ $("pane-frame").addEventListener("click",async e=>{
   if(a==="specclr"){FR.spec.rows=[]; frSave(); renderFrame()}
   if(a==="update"&&FR_ID){
     const rec={id:FR_ID,name:FR_NAME,fr:JSON.parse(JSON.stringify(FR)),bg:FR_BG,logo:FR_LOGO,over:FR_OVER,kind:"frame"};
-    await DB.put(rec,"tpl"); const i=FR_SAVED.findIndex(x=>x.id===FR_ID); if(i>=0) FR_SAVED[i]=rec;
+    rec._v=Date.now(); await DB.put(rec,"tpl"); const i=FR_SAVED.findIndex(x=>x.id===FR_ID); if(i>=0) FR_SAVED[i]=rec;
     renderFrame(); frMsg("Đã lưu đè khung “"+FR_NAME+"”.","ok");
   }
   if(a==="reset"){FR=JSON.parse(JSON.stringify(FR0)); frSave(); renderFrame(); frMsg("Đã về khung mặc định.","ok")}
